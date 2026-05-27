@@ -53,15 +53,12 @@ export default function RootLayout({
           </a>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                const el = document.getElementById("reservar");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
-              }}
+            <a
+              href="#reservar"
               className="text-[0.78rem] text-gray px-3 py-1.5 rounded-md border-none bg-transparent cursor-pointer hover:text-g1 transition-colors hidden sm:block"
             >
               Menú
-            </button>
+            </a>
             <a
               href="/#reservar"
               className="text-[0.8rem] font-medium tracking-[0.03em] px-[18px] py-2 rounded-lg text-cream bg-g1 hover:bg-g0 transition-colors"

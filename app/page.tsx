@@ -140,39 +140,13 @@ export default async function HomePage() {
               <>
                 <a
                   href="#packs"
-                  className="px-8 py-[14px] rounded-[10px] text-[0.9rem] font-medium tracking-[0.05em] text-white transition-all"
-                  style={{
-                    background: "var(--terra)",
-                    boxShadow: "0 6px 28px rgba(200,90,42,0.4)",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "#d96535";
-                    (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "var(--terra)";
-                    (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-                  }}
+                  className="px-8 py-[14px] rounded-[10px] text-[0.9rem] font-medium tracking-[0.05em] text-white transition-all bg-[#c85a2a] shadow-terra hover:bg-[#d96535] hover:-translate-y-0.5"
                 >
                   Ver ofertas del día
                 </a>
                 <a
                   href="#reservar"
-                  className="px-7 py-[14px] rounded-[10px] text-[0.9rem] font-normal transition-all"
-                  style={{
-                    background: "rgba(255,255,255,0.08)",
-                    color: "rgba(255,255,255,0.8)",
-                    border: "1px solid rgba(255,255,255,0.18)",
-                    backdropFilter: "blur(4px)",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.14)";
-                    (e.currentTarget as HTMLElement).style.color = "white";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                    (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)";
-                  }}
+                  className="px-7 py-[14px] rounded-[10px] text-[0.9rem] font-normal transition-all bg-white/[0.08] text-white/80 border border-white/[0.18] backdrop-blur-[4px] hover:bg-white/[0.14] hover:text-white"
                 >
                   Ver la carta completa
                 </a>
