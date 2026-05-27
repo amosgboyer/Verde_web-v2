@@ -615,7 +615,7 @@ export default function ReservationForm({
 
   return (
     <section className="py-20 px-6" id="reservar">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
         {/* Header */}
         <div className="mb-14">
