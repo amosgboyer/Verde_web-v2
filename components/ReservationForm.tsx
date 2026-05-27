@@ -201,6 +201,14 @@ export default function ReservationForm({
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStep, setMaxStep] = useState(1);
   const [cart, setCart] = useState<Record<string, number>>({});
+  useEffect(() => {
+    const cartProducts = products.filter((p) => (cart[p.id] ?? 0) > 0);
+    const totalItems = cartProducts.reduce((s, p) => s + (cart[p.id] ?? 0), 0);
+    const totalDeposit = cartProducts.reduce((s, p) => s + p.depositAmount * (cart[p.id] ?? 0), 0);
+    window.dispatchEvent(new CustomEvent('verde:cart:update', {
+      detail: { items: totalItems, total: totalDeposit }
+    }));
+  }, [cart, products]);
   const [fields, setFields] = useState<FormFields>(INITIAL_FIELDS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
