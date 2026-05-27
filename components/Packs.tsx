@@ -10,6 +10,7 @@ const PACKS = [
     saving: "ahorras 3€",
     featured: true,
     ribbon: "Popular",
+    items: [{ id: "tigrillo-xl-mixto", qty: 2 }],
   },
   {
     id: "bolon-patacon",
@@ -19,6 +20,7 @@ const PACKS = [
     price: "14€",
     saving: "ahorras 2€",
     featured: false,
+    items: [{ id: "bolon-mixto-casa", qty: 1 }, { id: "racion-patacon", qty: 1 }],
   },
   {
     id: "grupo",
@@ -28,6 +30,7 @@ const PACKS = [
     price: "24€",
     saving: "ahorras 2€",
     featured: false,
+    items: [{ id: "ahora-comen-todos", qty: 1 }, { id: "racion-patacon", qty: 1 }],
   },
 ];
 
@@ -132,9 +135,15 @@ export default function Packs() {
                     {pack.saving}
                   </span>
                 </div>
-                <a
-                  href="#reservar"
-                  className="text-[0.78rem] font-medium px-[14px] py-2 rounded-lg text-white transition-colors"
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('verde:add-pack', {
+                      detail: { items: pack.items }
+                    }));
+                    document.getElementById('reservar')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="text-[0.78rem] font-medium px-[14px] py-2 rounded-lg text-white transition-colors cursor-pointer border-none"
                   style={{
                     background: pack.featured
                       ? "rgba(255,255,255,0.25)"
@@ -151,7 +160,7 @@ export default function Packs() {
                   }}
                 >
                   Pedir →
-                </a>
+                </button>
               </div>
             </div>
           ))}

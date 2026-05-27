@@ -211,6 +211,18 @@ export default function ReservationForm({
       }));
     }
   }, [cart, products]);
+  useEffect(() => {
+    function onAddPack(e: Event) {
+      const { items } = (e as CustomEvent<{items:{id:string,qty:number}[]}>).detail;
+      setCart(prev => {
+        const next = {...prev};
+        items.forEach(({id, qty}) => { next[id] = (next[id] ?? 0) + qty; });
+        return next;
+      });
+    }
+    window.addEventListener('verde:add-pack', onAddPack);
+    return () => window.removeEventListener('verde:add-pack', onAddPack);
+  }, []);
   const [fields, setFields] = useState<FormFields>(INITIAL_FIELDS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
