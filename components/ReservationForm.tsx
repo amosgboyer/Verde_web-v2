@@ -143,33 +143,15 @@ function StepSection({
   children,
 }: StepSectionProps) {
   return (
-    <div ref={stepRef} className="border-b border-negro/8 scroll-mt-24">
+    <div ref={stepRef} className="border-t border-negro/8 pt-8 mt-8 scroll-mt-24">
       {/* Header row */}
       <div className="flex items-center justify-between py-5">
         <div className="flex items-center gap-3 min-w-0">
-          <span
-            className={clsx(
-              "w-6 h-6 shrink-0 flex items-center justify-center text-[10px] font-bold transition-all duration-200",
-              isDone
-                ? "bg-verde-bosque text-crema"
-                : isActive
-                  ? "border border-verde-bosque text-verde-bosque"
-                  : "border border-negro/20 text-negro/30"
-            )}
-          >
+          <span className="bg-verde-bosque text-crema rounded-full w-7 h-7 shrink-0 flex items-center justify-center text-xs font-bold">
             {isDone ? "✓" : number}
           </span>
 
-          <span
-            className={clsx(
-              "text-[11px] font-semibold uppercase tracking-[0.2em] shrink-0",
-              isActive
-                ? "text-verde-bosque"
-                : isDone
-                  ? "text-negro/55"
-                  : "text-negro/35"
-            )}
-          >
+          <span className="text-verde-bosque font-semibold text-base shrink-0">
             {title}
           </span>
 
@@ -627,7 +609,7 @@ export default function ReservationForm({
 
         {/* Header */}
         <div className="mb-14">
-          <p className="text-negro/30 text-[10px] font-medium tracking-[0.4em] uppercase mb-3">
+          <p className="text-[#c85a2a]/70 text-[10px] font-medium tracking-[0.4em] uppercase mb-3">
             Tu pedido
           </p>
           <h2 className="text-verde-bosque text-3xl sm:text-4xl font-bold tracking-tight mb-3">
@@ -637,9 +619,9 @@ export default function ReservationForm({
             Añade uno o varios productos y paga online de forma segura.
           </p>
           {livePromotion?.isActive && (
-            <div className="mt-4 inline-flex items-center gap-2 border border-verde-bosque/20 bg-verde-bosque/5 px-3 py-1.5">
+            <div className="mt-4 inline-flex items-center gap-2 border border-[#c85a2a]/20 bg-[#c85a2a]/5 px-3 py-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-verde-platano shrink-0" />
-              <p className="text-[11px] font-medium text-verde-bosque/80">
+              <p className="text-[11px] font-medium text-[#c85a2a]/80">
                 {livePromotion.promoName}: {livePromotion.promoValue}% de descuento esta semana
               </p>
             </div>
@@ -717,7 +699,7 @@ export default function ReservationForm({
                 <button
                   type="button"
                   onClick={() => goToStep(2)}
-                  className="mt-5 w-full bg-verde-bosque text-crema text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 hover:bg-verde-platano transition-all duration-300"
+                  className="mt-5 w-full bg-[#c85a2a] text-crema text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 hover:bg-[#d96535] transition-all duration-300"
                 >
                   Continuar con la fecha
                 </button>
@@ -745,7 +727,7 @@ export default function ReservationForm({
                 className={clsx(
                   "mt-5 w-full text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
                   step2Done
-                    ? "bg-verde-bosque text-crema hover:bg-verde-platano"
+                    ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
                     : "bg-negro/8 text-negro/30 cursor-not-allowed"
                 )}
               >
@@ -777,7 +759,7 @@ export default function ReservationForm({
                         disabled={isSoldOut}
                         onClick={() => selectTime(slot.time)}
                         className={clsx(
-                          "px-4 py-2 text-sm font-medium border transition-all duration-150",
+                          "px-4 py-2 text-sm font-medium border rounded-lg transition-all duration-150",
                           isSelected &&
                             "bg-verde-bosque text-crema border-verde-bosque",
                           !isSelected &&
@@ -812,7 +794,7 @@ export default function ReservationForm({
                 className={clsx(
                   "w-full text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
                   step3Done
-                    ? "bg-verde-bosque text-crema hover:bg-verde-platano"
+                    ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
                     : "bg-negro/8 text-negro/30 cursor-not-allowed"
                 )}
               >
@@ -920,7 +902,7 @@ export default function ReservationForm({
                 className={clsx(
                   "mt-6 w-full text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
                   step4Done
-                    ? "bg-verde-bosque text-crema hover:bg-verde-platano"
+                    ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
                     : "bg-negro/8 text-negro/30 cursor-not-allowed"
                 )}
               >
@@ -1077,7 +1059,7 @@ export default function ReservationForm({
                 className={clsx(
                   "w-full text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
                   step5Done
-                    ? "bg-verde-bosque text-crema hover:bg-verde-platano"
+                    ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
                     : "bg-negro/8 text-negro/30 cursor-not-allowed"
                 )}
               >
@@ -1098,6 +1080,7 @@ export default function ReservationForm({
               onEdit={() => {}}
               showEditButton={false}
             >
+              <div className="bg-verde-bosque/5 rounded-xl p-6 mb-6">
               {/* Products */}
               <div className="space-y-2 mb-6">
                 {cartProducts.map((p) => (
@@ -1179,9 +1162,10 @@ export default function ReservationForm({
                   </div>
                 )}
               </div>
+              </div>
 
               {/* ── Aceptación legal ── */}
-              <div className="space-y-3 mb-6 border border-negro/8 p-4 bg-negro/[0.02]">
+              <div className="space-y-3 mb-6 border border-negro/8 p-4 bg-crema rounded-lg">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
