@@ -48,7 +48,7 @@ export default function RootLayout({
                 href="/#reservar"
                 className="bg-verde-bosque text-crema text-[10px] font-semibold tracking-[0.2em] uppercase px-5 py-2.5 hover:bg-verde-platano transition-colors duration-200"
               >
-                Reservar
+                Pedir
               </a>
             </div>
           </div>

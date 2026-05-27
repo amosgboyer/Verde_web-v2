@@ -1,0 +1,129 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "Verde" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img "Verde" [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: Madrid · Dark Kitchen
+        - link "Pedir" [ref=e8] [cursor=pointer]:
+          - /url: /#Pedir
+  - main [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e12]:
+        - paragraph [ref=e13]: Madrid · Dark Kitchen
+        - img "Verde" [ref=e15]
+        - paragraph [ref=e16]: Realiza tus pedidos con antelación.
+        - paragraph [ref=e17]: Del plátano verde a tu mesa. Pide con antelación y recíbelo el día que elijas.
+        - link "Hacer mi pedido" [ref=e19] [cursor=pointer]:
+          - /url: "#Pedir"
+      - img [ref=e21]
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - paragraph [ref=e26]: El proceso
+        - heading "Cómo funciona" [level=2] [ref=e27]
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - paragraph [ref=e30]: "01"
+          - heading "Elige tu producto" [level=3] [ref=e31]
+          - paragraph [ref=e32]: Selecciona el que mas te guste, la cantidad y el día de entrega.
+        - generic [ref=e33]:
+          - paragraph [ref=e34]: "02"
+          - heading "Paga online de forma segura" [level=3] [ref=e35]
+          - paragraph [ref=e36]: Paga el total del pedido online con Stripe. Confirmamos tu pedido de inmediato.
+        - generic [ref=e37]:
+          - paragraph [ref=e38]: "03"
+          - heading "Recibe el dia que tu elijas" [level=3] [ref=e39]
+          - paragraph [ref=e40]: Te avisamos por WhatsApp y correo electrónico para coordinar la entrega. No te preocupes, no hay colas, no hay sorpresas.
+    - navigation [ref=e41]:
+      - list [ref=e43]:
+        - listitem [ref=e44]:
+          - link "Verde y Solo Verde" [ref=e45] [cursor=pointer]:
+            - /url: "#cat-verde"
+        - listitem [ref=e46]:
+          - link "Amantes del Maduro" [ref=e47] [cursor=pointer]:
+            - /url: "#cat-maduro"
+        - listitem [ref=e48]:
+          - link "Otros productos" [ref=e49] [cursor=pointer]:
+            - /url: "#cat-otros"
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - paragraph [ref=e53]: Combos
+        - heading "Packs para compartir" [level=2] [ref=e54]
+        - paragraph [ref=e55]: Combina tus favoritos y ahorra. Pídelos en el formulario de abajo.
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - heading "Los Dos Tigrillos" [level=3] [ref=e59]
+            - paragraph [ref=e60]: 2× Tigrillo XL Mixto
+          - generic [ref=e61]:
+            - paragraph [ref=e62]: 27 €
+            - generic [ref=e63]: Ahorras 3 €
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - heading "Bolón + Patacón" [level=3] [ref=e66]
+            - paragraph [ref=e67]: Bolón verde + ración de patacón
+          - generic [ref=e68]:
+            - paragraph [ref=e69]: 14 €
+            - generic [ref=e70]: Ahorras 2 €
+        - generic [ref=e71]:
+          - generic [ref=e72]:
+            - heading "Para Todo el Grupo" [level=3] [ref=e73]
+            - paragraph [ref=e74]: Ahora Comen Todos + Ración Patacón
+          - generic [ref=e75]:
+            - paragraph [ref=e76]: 24 €
+            - generic [ref=e77]: Ahorras 2 €
+      - link "Pedir ahora" [ref=e78] [cursor=pointer]:
+        - /url: "#Pedir"
+    - generic [ref=e81]:
+      - generic [ref=e82]:
+        - paragraph [ref=e83]: Tu pedido
+        - heading "Pide tu verde" [level=2] [ref=e84]
+        - paragraph [ref=e85]: Añade uno o varios productos y paga online de forma segura.
+      - generic [ref=e87]:
+        - generic [ref=e89]:
+          - generic [ref=e90]: "1"
+          - generic [ref=e91]: Elige tu producto
+        - generic [ref=e95]:
+          - generic [ref=e96]:
+            - generic [ref=e97]:
+              - generic [ref=e98]:
+                - heading "Bolón Clásico" [level=3] [ref=e99]
+                - paragraph [ref=e100]: Bolón de verde relleno de queso y chicharrón. Crujiente por fuera, suave por dentro.
+                - paragraph [ref=e101]: "Contiene: gluten, lácteos"
+              - generic [ref=e102]:
+                - paragraph [ref=e103]: 1 €
+                - paragraph [ref=e104]: Pago online
+            - button "+ Añadir" [ref=e106] [cursor=pointer]
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - generic [ref=e109]:
+                - heading "Bolón Mixto" [level=3] [ref=e110]
+                - paragraph [ref=e111]: "Bolón de verde con relleno doble: queso fresco y carne mechada. La combinación perfecta."
+                - paragraph [ref=e112]: "Contiene: gluten, lácteos"
+              - generic [ref=e113]:
+                - paragraph [ref=e114]: 1 €
+                - paragraph [ref=e115]: Pago online
+            - button "+ Añadir" [ref=e117] [cursor=pointer]
+          - generic [ref=e118]:
+            - generic [ref=e119]:
+              - generic [ref=e120]:
+                - heading "Combo Verde" [level=3] [ref=e121]
+                - paragraph [ref=e122]: Dos bolones a elegir + ají casero + bebida natural. Ideal para compartir o comer bien.
+                - paragraph [ref=e123]: "Contiene: gluten, lácteos"
+              - generic [ref=e124]:
+                - paragraph [ref=e125]: 1 €
+                - paragraph [ref=e126]: Pago online
+            - button "+ Añadir" [ref=e128] [cursor=pointer]
+  - contentinfo [ref=e129]:
+    - generic [ref=e130]:
+      - generic [ref=e131]:
+        - generic [ref=e132]:
+          - img "Verde" [ref=e133]
+          - generic [ref=e134]:
+            - paragraph [ref=e135]: Verde
+            - paragraph [ref=e136]: Madrid · Dark Kitchen
+        - paragraph [ref=e137]: Recibe tu verde en el día que tu elijas.
+      - paragraph [ref=e138]: © 2026 Verde · Todos los derechos reservados
+  - button "Open Next.js Dev Tools" [ref=e144] [cursor=pointer]:
+    - img [ref=e145]
