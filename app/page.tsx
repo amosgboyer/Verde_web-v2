@@ -59,7 +59,7 @@ export default async function HomePage() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse at 50% 50%, #2d5a1b 0%, #1c3a10 55%, #0e1e08 100%)",
+              "radial-gradient(ellipse at 50% 50%, #1a3d0e 0%, #0f2408 55%, #071503 100%)",
           }}
         />
         {/* Textura grain */}
@@ -108,7 +108,7 @@ export default async function HomePage() {
               width={110}
               height={110}
               priority
-              style={{ opacity: 0.95 }}
+              style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))", opacity: 1 }}
             />
           </div>
 
