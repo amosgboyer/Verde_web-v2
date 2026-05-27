@@ -205,11 +205,9 @@ export default function ReservationForm({
     const cartProducts = products.filter((p) => (cart[p.id] ?? 0) > 0);
     const totalItems = cartProducts.reduce((s, p) => s + (cart[p.id] ?? 0), 0);
     const totalDeposit = cartProducts.reduce((s, p) => s + p.depositAmount * (cart[p.id] ?? 0), 0);
-    if (totalItems > 0) {
-      window.dispatchEvent(new CustomEvent('verde:cart:update', {
-        detail: { items: totalItems, total: totalDeposit }
-      }));
-    }
+    window.dispatchEvent(new CustomEvent('verde:cart:update', {
+      detail: { items: totalItems, total: totalDeposit }
+    }));
   }, [cart, products]);
   useEffect(() => {
     function onAddPack(e: Event) {
