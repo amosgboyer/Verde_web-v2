@@ -662,7 +662,7 @@ export default function ReservationForm({
               return (
                 <div className="space-y-8">
                   {activeGroups.map((cat) => (
-                    <div key={cat}>
+                    <div key={cat} id={cat === "Verde" ? "cat-verde" : cat === "Maduro" ? "cat-maduro" : "cat-otros"}>
                       {showHeadings && (
                         <div className="mb-4">
                           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-verde-bosque/70 mb-1">
