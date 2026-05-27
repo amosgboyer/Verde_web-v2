@@ -31,7 +31,7 @@ export default function ProductCard({
         !product.available && "opacity-40"
       )}
       style={{
-        background: "var(--cream, #f2ead8)",
+        background: "#e8ddc4",
         border: inCart
           ? "1.5px solid var(--g2, #4a7c2f)"
           : "1px solid var(--border, rgba(44,90,27,0.13))",
