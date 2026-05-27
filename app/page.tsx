@@ -51,7 +51,7 @@ export default async function HomePage() {
     <>
       {/* ── HERO ── */}
       <section
-        className="relative flex items-center justify-center overflow-hidden"
+        className="relative flex items-center justify-center overflow-hidden w-full"
         style={{ minHeight: "92vh" }}
       >
         {/* Fondo con gradiente oscuro verde */}
@@ -85,7 +85,7 @@ export default async function HomePage() {
         </div>
 
         {/* Contenido */}
-        <div className="relative z-10 text-center px-8 max-w-[680px] mx-auto">
+        <div className="relative z-10 text-center px-8 max-w-[680px] mx-auto w-full">
           {/* Eyebrow */}
           <span
             className="inline-block text-[0.68rem] tracking-[0.22em] uppercase mb-6 px-[14px] py-[5px] rounded-full"
