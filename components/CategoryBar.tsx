@@ -9,7 +9,10 @@ const CATS = [
 export default function CategoryBar() {
   function goTo(id: string) {
     const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!el) return;
+    const offset = 58 + 46 + 16; // nav + category bar + margen
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: "smooth" });
   }
 
   return (
