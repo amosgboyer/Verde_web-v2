@@ -57,10 +57,7 @@ export default async function HomePage() {
         {/* Fondo con gradiente oscuro verde */}
         <div
           className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 50% 50%, #1a3d0e 0%, #0f2408 55%, #071503 100%)",
-          }}
+          style={{ background: "radial-gradient(ellipse at 50% 50%, #2d5a1b 0%, #1c3a10 55%, #0e1e08 100%)", position: "absolute", inset: 0 }}
         />
         {/* Textura grain */}
         <div
@@ -103,12 +100,12 @@ export default async function HomePage() {
           {/* Logo principal */}
           <div className="flex justify-center mb-6">
             <Image
-              src="/verdeart.png"
+              src="/iconVerde.png"
               alt="Verde"
               width={110}
               height={110}
               priority
-              style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))", opacity: 1 }}
+              style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))", opacity: 1 }}
             />
           </div>
 
