@@ -1,56 +1,47 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
-  --color-verde-bosque: #2E4F20;
-  --color-verde-platano: #509234;
-  --color-oro: #FFBC23;
-  --color-crema: #F5EDD8;
-  --color-tierra: #9A4F0D;
-  --color-negro: #1A1A1A;
+  --g0: #1c3a10;
+  --g1: #2d5a1b;
+  --g2: #4a7c2f;
+  --g3: #7ab356;
+  --g4: #b8d89a;
+  --cream: #f2ead8;
+  --cream2: #e8ddc4;
+  --cream3: #d9ccb0;
+  --terra: #c85a2a;
+  --terra2: #e07040;
+  --gold: #c8960a;
+  --dark: #1a1a0e;
+  --ink: #2e2e1e;
+  --gray: #6e6e5a;
+  --lgray: #a8a892;
+  --white: #fffef8;
+  --border: rgba(44, 90, 27, 0.13);
+  --r: 14px;
+  --shadow: 0 6px 32px rgba(28, 58, 16, 0.12);
 }
 
-@layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-
-  body {
-    background-color: #F5EDD8;
-    color: #1A1A1A;
-  }
-
-  ::selection {
-    background-color: #FFBC23;
-    color: #1A1A1A;
-  }
-
-  * {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+* {
+  box-sizing: border-box;
 }
 
-@layer utilities {
-  .animation-delay-100 {
-    animation-delay: 100ms;
-    animation-fill-mode: both;
-  }
-  .animation-delay-200 {
-    animation-delay: 200ms;
-    animation-fill-mode: both;
-  }
-  .animation-delay-300 {
-    animation-delay: 300ms;
-    animation-fill-mode: both;
-  }
-  .animation-delay-400 {
-    animation-delay: 400ms;
-    animation-fill-mode: both;
-  }
-  .animation-delay-500 {
-    animation-delay: 500ms;
-    animation-fill-mode: both;
-  }
+html {
+  scroll-behavior: smooth;
 }
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+/* Scrollbar fino */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(44,90,27,0.2); border-radius: 10px; }
+
+/* Utilidades que usa el ReservationForm original */
+.animation-delay-100 { animation-delay: 0.1s; }
+.animation-delay-200 { animation-delay: 0.2s; }
+.animation-delay-300 { animation-delay: 0.3s; }
