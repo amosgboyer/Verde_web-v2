@@ -31,7 +31,7 @@ export default function ProductCard({
         !product.available && "opacity-40"
       )}
       style={{
-        background: "var(--white, #fffef8)",
+        background: "var(--cream, #f2ead8)",
         border: inCart
           ? "1.5px solid var(--g2, #4a7c2f)"
           : "1px solid var(--border, rgba(44,90,27,0.13))",
@@ -55,7 +55,7 @@ export default function ProductCard({
             className="w-full h-full flex items-end justify-start p-3"
             style={{
               background:
-                "linear-gradient(135deg, var(--cream2) 0%, var(--cream3) 100%)",
+                "linear-gradient(135deg, #d9ccb0 0%, #c8bb9a 100%)",
             }}
           />
         )}
