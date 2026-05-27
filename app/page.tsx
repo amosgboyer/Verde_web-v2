@@ -193,7 +193,7 @@ export default async function HomePage() {
 
       {/* ── MENÚ / RESERVA ── */}
       {reservationsOpen ? (
-        <section className="bg-cream py-2" id="reservar">
+        <section className="bg-cream2 py-2" id="reservar">
           <ReservationForm
             products={products}
             config={config}
