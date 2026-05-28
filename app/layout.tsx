@@ -47,7 +47,7 @@ export default function RootLayout({
         >
           <a href="/" className="flex items-center gap-3 opacity-90 hover:opacity-100 transition-opacity">
             <Image src="/iconVerde.png" alt="Verde" width={34} height={34} className="object-contain" />
-            <span className="text-[0.68rem] tracking-[0.16em] uppercase text-gray hidden sm:block">
+            <span className="text-[0.68rem] tracking-[0.16em] uppercase text-gray">
               Madrid · Dark Kitchen
             </span>
           </a>

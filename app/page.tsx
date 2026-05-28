@@ -57,7 +57,7 @@ export default async function HomePage() {
       >
         {/* Fondo con imagen */}
         <Image src="/Fondo_Home.png" alt="" fill className="object-cover object-center" priority />
-        <div className="absolute inset-0" style={{ background: "rgba(10,20,5,0.25)" }} />
+        <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0)" }} />
         {/* Textura grain */}
         <div
           className="absolute inset-0 pointer-events-none"
