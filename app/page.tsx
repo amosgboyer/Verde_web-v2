@@ -55,11 +55,9 @@ export default async function HomePage() {
         className="relative flex items-center justify-center overflow-hidden w-full"
         style={{ minHeight: "92vh" }}
       >
-        {/* Fondo con gradiente oscuro verde */}
-        <div
-          className="absolute inset-0"
-          style={{ background: "radial-gradient(ellipse at 50% 50%, #2d5a1b 0%, #1c3a10 55%, #0e1e08 100%)", position: "absolute", inset: 0 }}
-        />
+        {/* Fondo con imagen */}
+        <Image src="/Fondo_Home.png" alt="" fill className="object-cover object-center" priority />
+        <div className="absolute inset-0" style={{ background: "rgba(10,20,5,0.55)" }} />
         {/* Textura grain */}
         <div
           className="absolute inset-0 pointer-events-none"
