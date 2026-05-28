@@ -9,6 +9,7 @@ import ClosedState from "@/components/ClosedState";
 import Packs from "@/components/Packs";
 import CategoryBar from "@/components/CategoryBar";
 import ZoneMap from "@/components/ZoneMap";
+import Reviews from "@/components/Reviews";
 import FloatingCart from "@/components/FloatingCart";
 import type { Product } from "@/lib/products";
 import Image from "next/image";
@@ -203,6 +204,9 @@ export default async function HomePage() {
       ) : (
         <ClosedState message={storeConfig.closedMessage} />
       )}
+
+      {/* ── RESEÑAS ── */}
+      <Reviews />
 
       {/* ── ZONA DE REPARTO ── */}
       <ZoneMap />
