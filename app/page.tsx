@@ -57,7 +57,7 @@ export default async function HomePage() {
       >
         {/* Fondo con imagen */}
         <Image src="/Fondo_Home.png" alt="" fill className="object-cover object-center" priority />
-        <div className="absolute inset-0" style={{ background: "rgba(10,20,5,0.55)" }} />
+        <div className="absolute inset-0" style={{ background: "rgba(10,20,5,0.25)" }} />
         {/* Textura grain */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -67,22 +67,6 @@ export default async function HomePage() {
             backgroundSize: "180px",
           }}
         />
-        {/* Logo campesino watermark */}
-        <div
-          className="absolute right-[8%] bottom-0 h-[72%] pointer-events-none select-none"
-          style={{ opacity: 0.12 }}
-        >
-          <Image
-            src="/verdeart.png"
-            alt=""
-            width={400}
-            height={600}
-            className="h-full w-auto object-contain"
-            style={{ filter: "brightness(10)" }}
-            priority
-          />
-        </div>
-
         {/* Contenido */}
         <div className="relative z-10 text-center px-8 max-w-[680px] mx-auto w-full">
           {/* Eyebrow */}
