@@ -76,9 +76,8 @@ export default function RootLayout({
           <div className="max-w-[900px] mx-auto flex justify-between items-start flex-wrap gap-8">
 
             <div>
-              <Image src="/Verde.png" alt="Verde" width={40} height={40}
+              <Image src="/iconVerde.png" alt="Verde" width={40} height={40}
                 className="opacity-85 mb-3"
-                style={{ filter: "brightness(0) invert(1)" }}
               />
               <p className="text-[0.76rem] leading-relaxed max-w-[200px]"
                 style={{ color: "rgba(255,255,255,0.4)" }}>
