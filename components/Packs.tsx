@@ -62,7 +62,7 @@ export default function Packs() {
         </p>
 
         {/* Grid */}
-        <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+        <div className="gsap-stagger grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           {PACKS.map((pack) => (
             <div
               key={pack.id}

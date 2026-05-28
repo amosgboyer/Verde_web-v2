@@ -54,7 +54,7 @@ export default function HowItWorks() {
         </div>
 
         {/* Steps */}
-        <div className="grid sm:grid-cols-3 gap-px" style={{ background: "rgba(245,237,216,0.08)" }}>
+        <div className="gsap-stagger grid sm:grid-cols-3 gap-px" style={{ background: "rgba(245,237,216,0.08)" }}>
           {steps.map((step, i) => (
             <div
               key={step.number}

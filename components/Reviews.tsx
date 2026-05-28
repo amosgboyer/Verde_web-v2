@@ -71,7 +71,7 @@ export default function Reviews() {
         </div>
 
         {/* Grid reseñas */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="gsap-stagger grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {REVIEWS.map((r) => (
             <div
               key={r.id}

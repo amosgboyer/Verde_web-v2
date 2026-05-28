@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Lilita_One, Caveat, Space_Mono, DM_Sans } from "next/font/google";
 import Image from "next/image";
+import ScrollAnimations from "@/components/ScrollAnimations";
 import "./globals.css";
 
 const lilitaOne = Lilita_One({
@@ -82,7 +83,10 @@ export default function RootLayout({
           </div>
         </nav>
 
-        <main>{children}</main>
+        <main>
+          {children}
+          <ScrollAnimations />
+        </main>
 
         {/* ── FOOTER ── */}
         <footer style={{ background: "var(--g0, #1c3a10)" }} className="px-8 pt-12 pb-7">
