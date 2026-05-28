@@ -71,7 +71,7 @@ export default async function HomePage() {
         <div className="relative z-10 text-center px-8 max-w-[680px] mx-auto w-full">
           {/* Eyebrow */}
           <span
-            className="inline-block text-[0.68rem] tracking-[0.22em] uppercase mb-6 px-[14px] py-[5px] rounded-full"
+            className="inline-block font-mono text-[0.68rem] tracking-[0.22em] uppercase mb-6 px-[14px] py-[5px] rounded-full"
             style={{
               color: "rgba(255,255,255,0.45)",
               border: "1px solid rgba(255,255,255,0.12)",
@@ -92,7 +92,7 @@ export default async function HomePage() {
             />
           </div>
 
-          <p className="text-[0.7rem] tracking-[0.2em] uppercase mb-4" style={{color:"rgba(255,255,255,0.4)"}}>
+          <p className="font-caveat text-[1.4rem] leading-tight mb-4" style={{color:"rgba(255,255,255,0.7)"}}>
             Hecha a mano · Exportación latina
           </p>
 
@@ -156,7 +156,7 @@ export default async function HomePage() {
           style={{ color: "rgba(255,255,255,0.25)" }}
           aria-hidden="true"
         >
-          <span className="text-[0.65rem] tracking-[0.15em] uppercase">scroll</span>
+          <span className="font-mono text-[0.65rem] tracking-[0.15em] uppercase">scroll</span>
           <div style={{ width: 1, height: 28, background: "rgba(255,255,255,0.15)" }} />
         </div>
       </section>

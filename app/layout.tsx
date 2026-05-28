@@ -1,13 +1,26 @@
 import type { Metadata } from "next";
-import { Fraunces, DM_Sans } from "next/font/google";
+import { Lilita_One, Caveat, Space_Mono, DM_Sans } from "next/font/google";
 import Image from "next/image";
 import "./globals.css";
 
-const fraunces = Fraunces({
+const lilitaOne = Lilita_One({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-lilita",
+  display: "swap",
+});
+
+const caveat = Caveat({
   subsets: ["latin"],
   weight: ["400", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-fraunces",
+  variable: "--font-caveat",
+  display: "swap",
+});
+
+const spaceMono = Space_Mono({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-space",
   display: "swap",
 });
 
@@ -35,7 +48,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={`${fraunces.variable} ${dmSans.variable} font-sans bg-cream text-ink antialiased`}>
+      <body className={`${lilitaOne.variable} ${caveat.variable} ${spaceMono.variable} ${dmSans.variable} font-sans bg-cream text-ink antialiased`}>
 
         {/* ── NAV ── */}
         <nav className="sticky top-0 z-[100] flex items-center justify-between px-8 h-[58px]"

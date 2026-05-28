@@ -30,8 +30,8 @@ export default function CategoryBar() {
         <button
           key={cat.id}
           onClick={() => goTo(cat.id)}
-          className="px-4 py-3 text-xs font-medium border-b-2 border-transparent transition-colors duration-200 shrink-0"
-          style={{ color: "#6e6e5a", fontFamily: "inherit" }}
+          className="font-mono px-4 py-3 text-[0.7rem] font-medium tracking-[0.12em] uppercase border-b-2 border-transparent transition-colors duration-200 shrink-0"
+          style={{ color: "#6e6e5a" }}
           onMouseEnter={(e) => {
             (e.target as HTMLButtonElement).style.color = "#2d5a1b";
             (e.target as HTMLButtonElement).style.borderBottomColor = "#4a7c2f";

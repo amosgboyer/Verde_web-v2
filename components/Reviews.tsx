@@ -54,7 +54,7 @@ export default function Reviews() {
         {/* Header */}
         <div className="mb-12">
           <p
-            className="text-[0.68rem] tracking-[0.22em] uppercase mb-3"
+            className="font-mono text-[0.68rem] tracking-[0.22em] uppercase mb-3"
             style={{ color: "#509234" }}
           >
             Lo que dicen

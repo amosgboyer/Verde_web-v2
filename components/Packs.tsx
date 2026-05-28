@@ -42,7 +42,7 @@ export default function Packs() {
     >
       <div className="max-w-[1060px] mx-auto">
         {/* Header */}
-        <p className="text-[0.68rem] tracking-[0.2em] uppercase mb-2"
+        <p className="font-mono text-[0.68rem] tracking-[0.2em] uppercase mb-2"
           style={{ color: "var(--g3, #7ab356)" }}>
           Combinaciones
         </p>
@@ -114,7 +114,7 @@ export default function Packs() {
               <div className="flex items-center justify-between">
                 <div>
                   <span
-                    className="font-serif font-bold text-[1.4rem]"
+                    className="font-mono font-bold text-[1.4rem]"
                     style={{
                       color: pack.featured
                         ? "white"

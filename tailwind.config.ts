@@ -34,7 +34,10 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-dm)", "sans-serif"],
-        serif: ["var(--font-fraunces)", "Georgia", "serif"],
+        serif: ["var(--font-lilita)", "sans-serif"],
+        display: ["var(--font-lilita)", "sans-serif"],
+        caveat: ["var(--font-caveat)", "cursive"],
+        mono: ["var(--font-space)", "monospace"],
       },
       borderRadius: {
         r: "14px",

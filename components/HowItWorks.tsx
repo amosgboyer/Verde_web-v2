@@ -30,7 +30,7 @@ export default function HowItWorks() {
         <div className="mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <p
-              className="text-[0.68rem] tracking-[0.22em] uppercase mb-3"
+              className="font-mono text-[0.68rem] tracking-[0.22em] uppercase mb-3"
               style={{ color: "#509234" }}
             >
               El proceso
@@ -64,7 +64,7 @@ export default function HowItWorks() {
               <div className="flex items-start justify-between mb-6">
                 <span className="text-2xl">{step.icon}</span>
                 <span
-                  className="font-serif font-bold text-[2.5rem] leading-none"
+                  className="font-mono font-bold text-[2.5rem] leading-none"
                   style={{ color: "rgba(245,237,216,0.08)" }}
                 >
                   {step.number}

@@ -74,7 +74,7 @@ export default function ProductCard({
         <div className="flex items-center justify-between mt-auto pt-1">
           <div>
             <span
-              className="font-serif font-bold leading-none"
+              className="font-mono font-bold leading-none"
               style={{
                 fontSize: "1.2rem",
                 color: "var(--g1, #2d5a1b)",

@@ -42,7 +42,7 @@ export default function FloatingCart({ onOpen }: { onOpen?: () => void }) {
         <div className="text-[11px]" style={{ color: "rgba(245,240,232,0.6)" }}>
           {cart.items} {cart.items === 1 ? "producto" : "productos"}
         </div>
-        <div className="font-bold text-base" style={{ color: "#f2ead8", fontFamily: "Georgia, serif" }}>
+        <div className="font-mono font-bold text-base" style={{ color: "#f2ead8" }}>
           {fmt(cart.total)}
         </div>
       </div>
