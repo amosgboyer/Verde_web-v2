@@ -37,57 +37,6 @@ export default function ProductCard({
           : "1px solid var(--border, rgba(44,90,27,0.13))",
       }}
     >
-      {/* Imagen */}
-      <div
-        className="w-full relative overflow-hidden"
-        style={{ aspectRatio: "4/3", background: "var(--cream2, #e8ddc4)" }}
-      >
-        {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-[1.04]"
-            style={{ objectPosition: "center 30%", display: "block" }}
-          />
-        ) : (
-          /* Placeholder sin foto — gradiente verde sutil */
-          <div
-            className="w-full h-full flex items-end justify-start p-3"
-            style={{
-              background:
-                "linear-gradient(135deg, #d9ccb0 0%, #c8bb9a 100%)",
-            }}
-          />
-        )}
-
-        {/* Badge */}
-        {badge && (
-          <span
-            className="absolute top-[10px] left-[10px] z-10 text-[0.62rem] font-medium tracking-[0.07em] uppercase px-[10px] py-1 rounded-full"
-            style={
-              badge.type === "hot"
-                ? { background: "var(--terra, #c85a2a)", color: "white" }
-                : { background: "var(--gold, #c8960a)", color: "var(--dark, #1a1a0e)" }
-            }
-          >
-            {badge.label}
-          </span>
-        )}
-
-        {/* Indicador en carrito */}
-        {inCart && (
-          <span
-            className="absolute top-[10px] right-[10px] z-10 text-[0.62rem] font-medium px-[10px] py-1 rounded-full"
-            style={{
-              background: "var(--g1, #2d5a1b)",
-              color: "white",
-            }}
-          >
-            ×{quantity} en carrito
-          </span>
-        )}
-      </div>
-
       {/* Body */}
       <div className="p-[0.95rem_1.05rem_1.05rem]" style={{ padding: "0.95rem 1.05rem 1.05rem" }}>
         <h3
