@@ -3,34 +3,31 @@
 const PACKS = [
   {
     id: "tigrillos",
-    icon: "🔥",
     name: "Los Dos Tigrillos",
-    desc: "2× Tigrillo XL Mixto. Hecho en caldo madre, chicharrón, rabo desmenuzado, mix de quesos y sal prieta.",
+    desc: "2× Tigrillo XL Mixto. Hecho en demiglass de carne, chicharrón, mix de quesos y sal prieta.",
     price: "27€",
     saving: "ahorras 3€",
     featured: true,
     ribbon: "Popular",
-    items: [{ id: "tigrillo-xl-mixto", qty: 2 }],
+    items: [{ id: "pack-dos-tigrillos", qty: 1 }],
   },
   {
     id: "bolon-patacon",
-    icon: "🫘",
     name: "Bolón + Patacón",
     desc: "Bolón Mixto de la Casa + Ración de Patacón con salsa verde de queso y queso manaba.",
     price: "14€",
     saving: "ahorras 2€",
     featured: false,
-    items: [{ id: "bolon-mixto-casa", qty: 1 }, { id: "racion-patacon", qty: 1 }],
+    items: [{ id: "pack-bolon-patacon", qty: 1 }],
   },
   {
     id: "grupo",
-    icon: "🤝",
     name: "Para Todo el Grupo",
     desc: "Ahora Comen Todos + Ración de Patacón. Para 3–4 personas con ganas de verde.",
     price: "24€",
     saving: "ahorras 2€",
     featured: false,
-    items: [{ id: "ahora-comen-todos", qty: 1 }, { id: "racion-patacon", qty: 1 }],
+    items: [{ id: "pack-grupo", qty: 1 }],
   },
 ];
 
@@ -42,31 +39,33 @@ export default function Packs() {
     >
       <div className="max-w-[1060px] mx-auto">
         {/* Header */}
-        <p className="font-mono text-[0.68rem] tracking-[0.2em] uppercase mb-2"
-          style={{ color: "var(--g3, #7ab356)" }}>
-          Combinaciones
-        </p>
-        <h2
-          className="font-serif font-semibold mb-2"
-          style={{
-            color: "var(--cream, #f2ead8)",
-            fontSize: "clamp(1.6rem, 4vw, 2.4rem)",
-            lineHeight: 1.15,
-          }}
-        >
-          Packs de la casa
-        </h2>
-        <p className="text-[0.85rem] leading-relaxed mb-10 max-w-[480px]"
-          style={{ color: "rgba(255,255,255,0.45)" }}>
-          Las combinaciones que más piden. Un poco de todo lo mejor, al mejor precio.
-        </p>
+        <div className="text-center max-w-[480px] mx-auto mb-10">
+          <p className="font-mono text-[0.68rem] tracking-[0.2em] uppercase mb-2"
+            style={{ color: "var(--g3, #7ab356)" }}>
+            Combinaciones
+          </p>
+          <h2
+            className="font-sans font-bold mb-2"
+            style={{
+              color: "var(--cream, #f2ead8)",
+              fontSize: "clamp(1.6rem, 4vw, 2.4rem)",
+              lineHeight: 1.15,
+            }}
+          >
+            Packs de la casa
+          </h2>
+          <p className="text-[0.85rem] leading-relaxed"
+            style={{ color: "rgba(255,255,255,0.45)" }}>
+            Las combinaciones que más piden. Un poco de todo lo mejor, al mejor precio.
+          </p>
+        </div>
 
         {/* Grid */}
         <div className="gsap-stagger grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           {PACKS.map((pack) => (
             <div
               key={pack.id}
-              className="relative rounded-[14px] p-[1.4rem] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1"
+              className="relative rounded-[14px] p-[1.6rem] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 flex flex-col items-center text-center"
               style={
                 pack.featured
                   ? {
@@ -94,14 +93,13 @@ export default function Packs() {
                 </div>
               )}
 
-              <div className="text-[2rem] mb-3">{pack.icon}</div>
               <h3
-                className="font-serif font-semibold text-[1.15rem] mb-[0.4rem] text-white"
+                className="font-sans font-bold text-[1.15rem] mb-[0.5rem] text-white"
               >
                 {pack.name}
               </h3>
               <p
-                className="text-[0.78rem] leading-relaxed mb-4"
+                className="text-[0.78rem] leading-relaxed mb-5 max-w-[280px]"
                 style={{
                   color: pack.featured
                     ? "rgba(255,255,255,0.8)"
@@ -111,10 +109,10 @@ export default function Packs() {
                 {pack.desc}
               </p>
 
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex flex-col items-center gap-3 mt-auto">
+                <div className="flex items-center justify-center gap-2">
                   <span
-                    className="font-mono font-bold text-[1.4rem]"
+                    className="font-mono font-bold text-[1.5rem]"
                     style={{
                       color: pack.featured
                         ? "white"
@@ -124,7 +122,7 @@ export default function Packs() {
                     {pack.price}
                   </span>
                   <span
-                    className="ml-2 text-[0.7rem] px-2 py-0.5 rounded-full"
+                    className="text-[0.7rem] px-2 py-0.5 rounded-full"
                     style={{
                       background: pack.featured
                         ? "rgba(255,255,255,0.2)"
@@ -141,9 +139,8 @@ export default function Packs() {
                     window.dispatchEvent(new CustomEvent('verde:add-pack', {
                       detail: { items: pack.items }
                     }));
-                    document.getElementById('reservar')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="text-[0.78rem] font-medium px-[14px] py-2 rounded-lg text-white transition-colors cursor-pointer border-none"
+                  className="text-[0.78rem] font-medium px-6 py-2 rounded-lg text-white transition-colors cursor-pointer border-none"
                   style={{
                     background: pack.featured
                       ? "rgba(255,255,255,0.25)"

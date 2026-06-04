@@ -1,19 +1,32 @@
-# Verde — Web de preventa
+# Verde — Web de pedidos
 
-MVP funcional para la dark kitchen Verde. Preventa semanal con reserva de 1 € vía Stripe, confirmación por webhook, registro en Google Sheets y emails automáticos con Resend.
+Web de preventa para la dark kitchen **Verde** (cocina ecuatoriana, Madrid). Pedido anticipado con pago **completo online** vía Stripe, confirmación por webhook, registro en Google Sheets y emails automáticos con Resend. En producción: **www.verdemadrid.com**.
+
+---
+
+## Funcionalidades
+
+- **Carta dinámica** por categorías (Verde / Maduro / Otros), gestionada desde Google Sheets.
+- **Packs / combos** con precio cerrado y descuento (p. ej. *Los Dos Tigrillos* 27 €). Se cobran como un único producto, así el carrito y Stripe cobran exactamente lo anunciado.
+- **Carrito multiproducto** con carrito flotante que lleva directo al checkout.
+- **Reserva por fecha y hora** con disponibilidad y aforo por slot (Google Sheets).
+- **Zonas de reparto**: el cliente introduce su dirección, se calcula la zona y el **coste de envío se suma al carrito y al cobro** (recalculado en el servidor).
+- **Promociones** por % configurables desde Google Sheets (fechas, valor).
+- **Atención al cliente** con WhatsApp + llamada (en el checkout y en la home).
+- **Emails automáticos** (confirmación al cliente + aviso interno) con Resend.
+- **Vercel Web Analytics** para tráfico.
 
 ---
 
 ## Stack
 
-- **Next.js 14** (App Router) + TypeScript
-- **Tailwind CSS**
-- **Stripe Checkout** — pago del abono de reserva
-- **Stripe Webhooks** — confirmación del pedido
-- **Google Sheets API** — panel operativo
+- **Next.js 16** (App Router, Turbopack) + TypeScript
+- **Tailwind CSS** + **GSAP** (animaciones de scroll)
+- **Stripe Checkout** + **Webhooks** — pago y confirmación
+- **Google Sheets API** — productos, ajustes, disponibilidad y registro de pedidos
 - **Resend** — emails transaccionales
-- **Zod** — validación de datos en backend
-- **Vercel** — hosting
+- **Zod** — validación en backend
+- **Vercel** — hosting + analytics
 
 ---
 
@@ -21,15 +34,11 @@ MVP funcional para la dark kitchen Verde. Preventa semanal con reserva de 1 € 
 
 ```bash
 npm install
+cp .env.example .env.local   # rellena con credenciales reales
+npm run dev                  # http://localhost:3000
 ```
 
-Copia el archivo de variables de entorno:
-
-```bash
-cp .env.example .env.local
-```
-
-Rellena `.env.local` con tus credenciales reales (ver secciones abajo).
+> Para recibir webhooks de Stripe en local: `stripe listen --forward-to localhost:3000/api/stripe-webhook` (deja el `whsec_...` en `STRIPE_WEBHOOK_SECRET`).
 
 ---
 
@@ -37,178 +46,74 @@ Rellena `.env.local` con tus credenciales reales (ver secciones abajo).
 
 | Variable | Descripción |
 |---|---|
-| `STRIPE_SECRET_KEY` | Clave secreta de Stripe (`sk_test_...`) |
-| `STRIPE_WEBHOOK_SECRET` | Secreto del webhook de Stripe (`whsec_...`) |
+| `STRIPE_SECRET_KEY` | Clave secreta de Stripe (`sk_live_...` / `sk_test_...`) |
+| `STRIPE_WEBHOOK_SECRET` | Secreto del webhook (`whsec_...`) |
 | `RESEND_API_KEY` | API key de Resend |
-| `RESEND_FROM_EMAIL` | Email remitente (verificado en Resend) |
-| `VERDE_TEAM_EMAIL` | Email interno del equipo Verde |
+| `VERDE_FROM_EMAIL` | Email remitente (dominio verificado en Resend) |
+| `VERDE_INTERNAL_EMAIL` | Email interno donde llegan los avisos de pedido |
 | `GOOGLE_SHEETS_CLIENT_EMAIL` | Email de la cuenta de servicio de Google |
-| `GOOGLE_SHEETS_PRIVATE_KEY` | Clave privada de la cuenta de servicio |
+| `GOOGLE_SHEETS_PRIVATE_KEY` | Clave privada de la cuenta de servicio (con `\n`) |
 | `GOOGLE_SHEETS_SPREADSHEET_ID` | ID de la hoja de cálculo |
-| `NEXT_PUBLIC_APP_URL` | URL base de la app (`http://localhost:3000` en dev) |
+| `NEXT_PUBLIC_SITE_URL` | URL base pública (`http://localhost:3000` en dev) |
 
 ---
 
-## Configurar Stripe
+## Google Sheets (panel operativo)
 
-1. Crea una cuenta en [stripe.com](https://stripe.com) si no tienes.
-2. Ve a **Developers > API Keys** y copia tu `Secret key` (modo test).
-3. Pégala en `STRIPE_SECRET_KEY` en tu `.env.local`.
+El negocio se gestiona desde la hoja de cálculo. Pestañas que lee/escribe la app:
 
----
+- **Products** (`A:I`) — `productId · name · description · finalPrice · depositAmount · available · allergens · imageUrl · category`. La carta sale de aquí.
+- **Settings** (`A:C`, clave/valor) — `reservationsOpen`, `startTime`, `endTime`, `slotIntervalMinutes`, `minLeadDays`, `currency`, y los `promo*` (promoEnabled / promoName / promoType / promoValue / promoStartDate / promoEndDate).
+- **Availability** (`A:E`) — `date · isOpen · maxOrdersPerSlot · manuallySoldOut · note`. Capacidad y apertura por día.
+- **SlotOverrides** (`A:E`) — excepciones por fecha+hora.
+- **Orders** (`A:AC`) — registro de pedidos (lo escribe el webhook). Los packs se guardan con `productId = pack-*` y el envío como línea `envio-delivery`.
 
-## Configurar el webhook de Stripe en local
+> Comparte la hoja con el `client_email` de la cuenta de servicio (permiso Editor).
 
-Instala la [Stripe CLI](https://stripe.com/docs/stripe-cli):
+### Reglas de negocio en código
 
-```bash
-# macOS
-brew install stripe/stripe-cli/stripe
-
-# Windows
-scoop install stripe
-```
-
-Autentícate:
-
-```bash
-stripe login
-```
-
-Escucha eventos y reenvía al servidor local:
-
-```bash
-stripe listen --forward-to localhost:3000/api/stripe-webhook
-```
-
-Copia el `whsec_...` que aparece en la consola y pégalo en `STRIPE_WEBHOOK_SECRET`.
-
-> Deja este comando corriendo mientras desarrollas.
-
----
-
-## Configurar Google Sheets
-
-### 1. Crear proyecto en Google Cloud
-
-1. Ve a [console.cloud.google.com](https://console.cloud.google.com).
-2. Crea un nuevo proyecto (o usa uno existente).
-3. Activa la **Google Sheets API**:
-   - APIs & Services > Library > busca "Google Sheets API" > Enable.
-
-### 2. Crear cuenta de servicio
-
-1. IAM & Admin > Service Accounts > Create Service Account.
-2. Dale un nombre (ej. `verde-sheets`).
-3. En el paso de permisos, selecciona el rol **Editor** (o solo "Sheets Editor" si prefieres mínimos permisos).
-4. Crea y descarga una clave JSON: Actions > Manage keys > Add key > JSON.
-
-### 3. Copiar credenciales
-
-Del JSON descargado:
-- `client_email` → `GOOGLE_SHEETS_CLIENT_EMAIL`
-- `private_key` → `GOOGLE_SHEETS_PRIVATE_KEY`
-
-> En Vercel: pega la clave privada completa incluyendo `-----BEGIN PRIVATE KEY-----` y los saltos de línea como `\n`. El código los convierte automáticamente.
-
-### 4. Preparar la hoja de cálculo
-
-1. Crea una Google Spreadsheet nueva.
-2. Crea dos pestañas:
-   - `Pedidos` — con estas cabeceras en la fila 1:
-     ```
-     Created At | Status | Stripe Session ID | Customer Name | Email | Phone | Product ID | Product Name | Quantity | Delivery Day | Notes | Final Price | Deposit Paid | Pending Amount
-     ```
-   - `Waitlist` — con estas cabeceras:
-     ```
-     Created At | Name | Email | Phone | Message
-     ```
-3. Comparte la hoja con el `client_email` de la cuenta de servicio con permiso de **Editor**.
-4. Copia el ID de la hoja desde la URL y pégalo en `GOOGLE_SHEETS_SPREADSHEET_ID`.
-
----
-
-## Configurar Resend
-
-1. Crea una cuenta en [resend.com](https://resend.com).
-2. Verifica tu dominio (o usa el dominio sandbox `@resend.dev` en desarrollo).
-3. Crea una API Key en el dashboard.
-4. Copia la key en `RESEND_API_KEY`.
-5. Pon en `RESEND_FROM_EMAIL` el email desde el que se enviarán los correos.
-6. Pon en `VERDE_TEAM_EMAIL` el email donde quieres recibir las notificaciones internas.
-
----
-
-## Ejecutar en local
-
-```bash
-npm run dev
-```
-
-La app estará en `http://localhost:3000`.
-
-> Recuerda tener corriendo `stripe listen` en otra terminal para recibir webhooks.
-
----
-
-## Gestionar productos y configuración
-
-- **Productos**: edita `/lib/products.ts`. Cada producto tiene `id`, `name`, `description`, `finalPrice`, `depositAmount`, `available`.
-- **Abrir/cerrar reservas**: cambia `reservationsOpen` en `/lib/store-config.ts`.
-- **Días de entrega**: edita `deliveryDays` en el mismo archivo.
-- **Máximo por pedido**: `maxQuantityPerOrder`.
+- **Packs**: definidos en [`lib/products.ts`](lib/products.ts) (`PACKS`). No se muestran en la carta; se inyectan al formulario y se cobran como producto cerrado.
+- **Zonas/envío**: límites y precios en [`lib/delivery.ts`](lib/delivery.ts) (`ZONE_LIMITS`, `ZONE_PRICES`). El origen no se expone en la UI.
+- **Horas bloqueadas** (p. ej. comida) y **capacidad por defecto**: en [`lib/availability.ts`](lib/availability.ts) (`BLOCKED_TIMES`, `DEFAULT_MAX_ORDERS_PER_SLOT`).
+- **Teléfono de atención al cliente**: en [`components/ContactHelp.tsx`](components/ContactHelp.tsx).
 
 ---
 
 ## Desplegar en Vercel
 
-1. Conecta el repositorio en [vercel.com](https://vercel.com).
-2. En **Settings > Environment Variables**, añade todas las variables de `.env.example` con sus valores reales.
-3. Para `GOOGLE_SHEETS_PRIVATE_KEY`, pega el valor completo con los `\n` literales — Vercel los gestiona correctamente.
-4. Despliega.
-
-### Configurar el webhook de Stripe en producción
-
-1. En el [dashboard de Stripe](https://dashboard.stripe.com/webhooks) ve a **Developers > Webhooks > Add endpoint**.
-2. URL del endpoint: `https://tudominio.vercel.app/api/stripe-webhook`
-3. Selecciona el evento: `checkout.session.completed`
-4. Copia el `Signing secret` y ponlo en `STRIPE_WEBHOOK_SECRET` en Vercel.
+1. Proyecto conectado al repo. En **Settings → Environment Variables** añade todas las variables (Production + Preview).
+2. Para `GOOGLE_SHEETS_PRIVATE_KEY`, pega el valor completo con los `\n` literales.
+3. Webhook de Stripe: **Developers → Webhooks → Add endpoint** → `https://www.verdemadrid.com/api/stripe-webhook`, evento `checkout.session.completed`. Copia el `whsec_...` a `STRIPE_WEBHOOK_SECRET`. ⚠️ El webhook debe estar en el **mismo modo** (live/test) que la clave secreta.
 
 ---
 
-## Estructura del proyecto
+## Estructura
 
 ```
 /app
-  page.tsx                              # Página principal
-  /gracias/page.tsx                     # Página tras pago exitoso
-  /cancelado/page.tsx                   # Página tras cancelar
-  /api/create-checkout-session/route.ts # Crea sesión Stripe
-  /api/stripe-webhook/route.ts          # Procesa confirmación Stripe
-  /api/waitlist/route.ts                # Registro lista de espera
+  page.tsx                              # Home (hero, packs, carta, reseñas, zonas, atención)
+  layout.tsx                            # Nav, footer, fuentes, Analytics
+  /api/create-checkout-session/route.ts # Crea sesión Stripe (productos + promo + envío)
+  /api/stripe-webhook/route.ts          # Confirma pago → guarda pedido + emails
+  /api/availability/route.ts            # Disponibilidad por día/slot
+  /api/promotion · waitlist · test-email · debug-*
 
 /lib
-  stripe.ts         # Cliente de Stripe
-  products.ts       # Catálogo de productos
-  store-config.ts   # Config de la tienda (open/closed, días, etc.)
-  google-sheets.ts  # Helpers para escribir en Google Sheets
-  email.ts          # Helpers de email con Resend
-  validators.ts     # Schemas Zod
+  stripe.ts · products.ts · delivery.ts · availability.ts
+  google-sheets.ts · email.ts · promotions.ts · store-config.ts · validators.ts
 
 /components
-  ProductCard.tsx      # Tarjeta de producto
-  ReservationForm.tsx  # Formulario completo de reserva
-  ClosedState.tsx      # Vista cuando las reservas están cerradas
-  HowItWorks.tsx       # Sección explicativa del proceso
-  WaitlistForm.tsx     # Formulario de lista de espera
+  ReservationForm.tsx  # Checkout por pasos (producto → fecha → hora → datos → entrega → pago)
+  ProductCard.tsx · Packs.tsx · CategoryBar.tsx · FloatingCart.tsx
+  ZoneMap.tsx · ContactHelp.tsx · Reviews.tsx · HowItWorks.tsx
+  ScrollAnimations.tsx · ClosedState.tsx · WaitlistForm.tsx
 ```
 
 ---
 
 ## Seguridad
 
-- El precio nunca se calcula ni se confía en el frontend. El backend recibe solo `productId` y `quantity`, y calcula todos los importes.
+- El precio **nunca** se confía al frontend: el backend recibe `productId` + `quantity` y recalcula todos los importes (productos, promo y envío).
+- El envío se recalcula en el servidor desde la zona (no se confía en el precio del cliente).
 - La firma del webhook de Stripe se verifica en cada llamada.
-- No se guardan datos de tarjeta en ningún momento (Stripe Checkout alojado).
-- Todas las claves están en variables de entorno, nunca en el código.
-# Verde_web
+- No se guardan datos de tarjeta (Stripe Checkout alojado). Todas las claves van en variables de entorno.

@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
     const deliveryDetails = meta.deliveryDetails ?? "";
     const postalCode = meta.postalCode ?? "";
     const deliveryZone = meta.deliveryZone ?? "";
+    const deliveryFee = Number(meta.deliveryFee ?? "0") || 0;
 
     const privacyAccepted = meta.privacyAccepted === "true";
     const termsAccepted = meta.termsAccepted === "true";
@@ -137,6 +138,41 @@ export async function POST(req: NextRequest) {
           discountAmount,
           subtotalBeforeDiscount,
           totalAfterDiscount,
+        });
+      }
+
+      // Línea de envío — para que la suma de Orders cuadre con el cobro de Stripe
+      if (deliveryFee > 0) {
+        await appendOrderToSheet({
+          createdAt: new Date().toISOString(),
+          status: orderStatus,
+          stripeSessionId: session.id,
+          customerName: meta.customerName,
+          email: meta.email,
+          phone: meta.phone,
+          productId: "envio-delivery",
+          productName: "Envío a domicilio",
+          quantity: 1,
+          reservationDate,
+          reservationTime,
+          notes: "",
+          finalPrice: deliveryFee,
+          depositPaid: deliveryFee,
+          pendingAmount: 0,
+          deliveryMethod,
+          deliveryAddress,
+          deliveryDetails,
+          postalCode,
+          deliveryZone,
+          privacyAccepted,
+          termsAccepted,
+          acceptedAt,
+          discountName: "",
+          discountType: "",
+          discountValue: 0,
+          discountAmount: 0,
+          subtotalBeforeDiscount: 0,
+          totalAfterDiscount: deliveryFee,
         });
       }
 

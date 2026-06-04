@@ -27,7 +27,16 @@ export default function ScrollAnimations() {
       );
     });
 
-    return () => ScrollTrigger.getAll().forEach(t => t.kill());
+    // Cuando el formulario colapsa/expande pasos, cambia el alto de la página y
+    // las posiciones de ScrollTrigger quedan obsoletas (las reseñas se quedaban
+    // ocultas en móvil). Recalcular al recibir el evento de cambio de layout.
+    const onLayoutChange = () => ScrollTrigger.refresh();
+    window.addEventListener("verde:layout:changed", onLayoutChange);
+
+    return () => {
+      window.removeEventListener("verde:layout:changed", onLayoutChange);
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, []);
 
   return null;

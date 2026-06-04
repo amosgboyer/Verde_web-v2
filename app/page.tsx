@@ -1,4 +1,4 @@
-import { getAvailableProducts } from "@/lib/products";
+import { getAvailableProducts, getPacks } from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { storeConfig } from "@/lib/store-config";
 import { getActivePromotion } from "@/lib/promotions";
@@ -10,6 +10,7 @@ import Packs from "@/components/Packs";
 import CategoryBar from "@/components/CategoryBar";
 import ZoneMap from "@/components/ZoneMap";
 import Reviews from "@/components/Reviews";
+import ContactHelp from "@/components/ContactHelp";
 import FloatingCart from "@/components/FloatingCart";
 import type { Product } from "@/lib/products";
 import Image from "next/image";
@@ -37,6 +38,7 @@ export default async function HomePage() {
         allergens: p.allergens,
         image: p.imageUrl || undefined,
         category: p.category || undefined,
+        isPack: (p.category || "").trim().toLowerCase() === "pack",
       }));
     }
     reservationsOpen = settings.reservationsOpen;
@@ -92,30 +94,8 @@ export default async function HomePage() {
             />
           </div>
 
-          <p className="font-caveat text-[1.4rem] leading-tight mb-4" style={{color:"rgba(255,255,255,0.7)"}}>
+          <p className="font-caveat text-[1.4rem] leading-tight mb-10" style={{color:"rgba(255,255,255,0.7)"}}>
             Hecha a mano · Exportación latina
-          </p>
-
-          {/* Headline */}
-          <p
-            className="font-serif mb-10 leading-relaxed"
-            style={{
-              fontSize: "clamp(1.1rem, 3vw, 1.5rem)",
-              color: "rgba(255,255,255,0.7)",
-              fontStyle: "italic",
-              fontWeight: 400,
-            }}
-          >
-            Del plátano verde a tu mesa.{" "}
-            <strong
-              style={{
-                color: "rgba(255,255,255,0.95)",
-                fontStyle: "normal",
-                fontWeight: 600,
-              }}
-            >
-              Pide hoy, recíbelo cuando quieras.
-            </strong>
           </p>
 
           {/* CTAs */}
@@ -178,7 +158,10 @@ export default async function HomePage() {
       {reservationsOpen ? (
         <section className="bg-cream2 py-2" id="reservar">
           <ReservationForm
-            products={products}
+            products={[
+              ...products,
+              ...getPacks().filter((pk) => !products.some((p) => p.id === pk.id)),
+            ]}
             config={config}
             promotion={activePromotion}
           />
@@ -192,6 +175,9 @@ export default async function HomePage() {
 
       {/* ── ZONA DE REPARTO ── */}
       <ZoneMap />
+
+      {/* ── ATENCIÓN AL CLIENTE ── */}
+      <ContactHelp variant="section" />
 
       {/* ── CARRITO FLOTANTE ── */}
       <FloatingCart />

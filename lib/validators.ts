@@ -26,6 +26,7 @@ export const reservationSchema = z.object({
   deliveryDetails: z.string().max(500).optional().or(z.literal("")),
   postalCode: z.string().max(20).optional().or(z.literal("")),
   deliveryZone: z.string().max(100).optional().or(z.literal("")),
+  deliveryZoneLevel: z.number().int().min(1).max(3).nullable().optional(),
   privacyAccepted: z.literal(true, {
     errorMap: () => ({ message: "Debes aceptar la política de privacidad." }),
   }),

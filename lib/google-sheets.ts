@@ -129,8 +129,12 @@ export async function getSettings(): Promise<Settings> {
     map[keyTrimmed] = (row[1] ?? "").trim();
   }
   return {
-    reservationStartTime: map["reservationStartTime"] ?? "09:00",
-    reservationEndTime: map["reservationEndTime"] ?? "19:00",
+    // La hoja Settings usa las claves `startTime` / `endTime`.
+    // Se mantienen los nombres antiguos como respaldo por compatibilidad.
+    reservationStartTime:
+      map["startTime"] ?? map["reservationStartTime"] ?? "10:00",
+    reservationEndTime:
+      map["endTime"] ?? map["reservationEndTime"] ?? "19:00",
     slotIntervalMinutes: parseInt(map["slotIntervalMinutes"] ?? "60", 10) || 60,
     minLeadDays: parseInt(map["minLeadDays"] ?? "1", 10) || 1,
     currency: map["currency"] ?? "eur",

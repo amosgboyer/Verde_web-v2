@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Lilita_One, Caveat, Space_Mono, DM_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import Image from "next/image";
 import ScrollAnimations from "@/components/ScrollAnimations";
+import NavCart from "@/components/NavCart";
 import "./globals.css";
 
 const lilitaOne = Lilita_One({
@@ -73,13 +75,7 @@ export default function RootLayout({
             >
               Menú
             </a>
-            <a
-              href="/#reservar"
-              className="text-[0.8rem] font-medium tracking-[0.03em] px-[18px] py-2 rounded-lg text-cream bg-g1 hover:bg-g0 transition-colors"
-              style={{ transition: "background .18s, transform .1s" }}
-            >
-              Pedir
-            </a>
+            <NavCart />
           </div>
         </nav>
 
@@ -143,6 +139,7 @@ export default function RootLayout({
           </div>
         </footer>
 
+        <Analytics />
       </body>
     </html>
   );

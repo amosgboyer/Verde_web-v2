@@ -31,6 +31,14 @@ export interface DayAvailability {
   slots: TimeSlot[];
 }
 
+// Horas que NO se ofrecen para reservar (p. ej. franja de comida). Editar aquí.
+const BLOCKED_TIMES = ["14:00"];
+
+// Capacidad por slot por defecto cuando la pestaña Availability no la define
+// (columna C vacía/0 en un día abierto). Evita que la web salga "sold out"
+// por una casilla sin rellenar. Se puede sobreescribir por día en el Sheet.
+const DEFAULT_MAX_ORDERS_PER_SLOT = 10;
+
 export function buildTimeSlots(
   startTime: string,
   endTime: string,
@@ -44,7 +52,8 @@ export function buildTimeSlots(
   while (current <= end) {
     const h = Math.floor(current / 60).toString().padStart(2, "0");
     const m = (current % 60).toString().padStart(2, "0");
-    slots.push(`${h}:${m}`);
+    const slot = `${h}:${m}`;
+    if (!BLOCKED_TIMES.includes(slot)) slots.push(slot);
     current += intervalMinutes;
   }
   return slots;
@@ -102,10 +111,14 @@ export async function getAvailabilityDays(): Promise<DayAvailability[]> {
         return { time: normTime, status: "sold_out", remaining: 0 };
       }
 
+      const dayCapacity =
+        day.maxOrdersPerSlot > 0
+          ? day.maxOrdersPerSlot
+          : DEFAULT_MAX_ORDERS_PER_SLOT;
       const capacity =
         override?.maxOrdersOverride != null
           ? override.maxOrdersOverride
-          : day.maxOrdersPerSlot;
+          : dayCapacity;
 
       const matchedOrders = paidOrders.filter(
         (o) => o.reservationDate === dayDate && o.reservationTime === normTime

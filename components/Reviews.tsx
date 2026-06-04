@@ -60,7 +60,7 @@ export default function Reviews() {
             Lo que dicen
           </p>
           <h2
-            className="font-serif font-semibold"
+            className="font-sans font-bold"
             style={{
               color: "#2E4F20",
               fontSize: "clamp(1.8rem, 4vw, 2.4rem)",

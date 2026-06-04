@@ -28,6 +28,8 @@ export default function FloatingCart({ onOpen }: { onOpen?: () => void }) {
     <div
       onClick={() => {
         onOpen?.();
+        // Avanza al primer paso pendiente del checkout (lo gestiona ReservationForm)
+        window.dispatchEvent(new CustomEvent("verde:cart:open"));
         document.getElementById("reservar")?.scrollIntoView({ behavior: "smooth" });
       }}
       className="fixed bottom-6 right-6 z-[999] flex items-center gap-3 px-5 py-3 rounded-xl cursor-pointer transition-all duration-200 hover:-translate-y-1"

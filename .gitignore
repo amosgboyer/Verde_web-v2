@@ -30,3 +30,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env*
+
+# test / QA artifacts
+.playwright-mcp/
+/mobile-calendar.png

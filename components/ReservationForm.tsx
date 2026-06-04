@@ -4,8 +4,16 @@ import { useState, useEffect, useRef } from "react";
 import type { Product } from "@/lib/products";
 import type { StoreConfig } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
+import { quoteDelivery } from "@/lib/delivery";
 import ProductCard from "./ProductCard";
+import ContactHelp from "./ContactHelp";
 import clsx from "clsx";
+
+interface DeliveryInfo {
+  deliverable: boolean;
+  zone: number | null;
+  fee: number;
+}
 
 interface TimeSlot {
   time: string;
@@ -128,6 +136,8 @@ interface StepSectionProps {
   summary: string;
   onEdit: () => void;
   showEditButton?: boolean;
+  editLabel?: string;
+  editProminent?: boolean;
   children: React.ReactNode;
 }
 
@@ -140,6 +150,8 @@ function StepSection({
   summary,
   onEdit,
   showEditButton = true,
+  editLabel = "Cambiar",
+  editProminent = false,
   children,
 }: StepSectionProps) {
   return (
@@ -167,9 +179,13 @@ function StepSection({
           <button
             type="button"
             onClick={onEdit}
-            className="ml-4 shrink-0 text-[10px] font-semibold uppercase tracking-[0.15em] text-verde-bosque/60 hover:text-verde-bosque transition-colors duration-150 border-b border-verde-bosque/20 hover:border-verde-bosque pb-px"
+            className={
+              editProminent
+                ? "ml-4 shrink-0 text-[10px] font-semibold uppercase tracking-[0.15em] text-crema bg-verde-bosque hover:bg-verde-platano transition-colors duration-150 rounded-full px-3 py-1.5"
+                : "ml-4 shrink-0 text-[10px] font-semibold uppercase tracking-[0.15em] text-verde-bosque/60 hover:text-verde-bosque transition-colors duration-150 border-b border-verde-bosque/20 hover:border-verde-bosque pb-px"
+            }
           >
-            Cambiar
+            {editLabel}
           </button>
         )}
       </div>
@@ -202,14 +218,6 @@ export default function ReservationForm({
   const [maxStep, setMaxStep] = useState(1);
   const [cart, setCart] = useState<Record<string, number>>({});
   useEffect(() => {
-    const cartProducts = products.filter((p) => (cart[p.id] ?? 0) > 0);
-    const totalItems = cartProducts.reduce((s, p) => s + (cart[p.id] ?? 0), 0);
-    const totalDeposit = cartProducts.reduce((s, p) => s + p.depositAmount * (cart[p.id] ?? 0), 0);
-    window.dispatchEvent(new CustomEvent('verde:cart:update', {
-      detail: { items: totalItems, total: totalDeposit }
-    }));
-  }, [cart, products]);
-  useEffect(() => {
     function onAddPack(e: Event) {
       const { items } = (e as CustomEvent<{items:{id:string,qty:number}[]}>).detail;
       setCart(prev => {
@@ -217,9 +225,28 @@ export default function ReservationForm({
         items.forEach(({id, qty}) => { next[id] = (next[id] ?? 0) + qty; });
         return next;
       });
+      // Llevar al formulario pero SIN colapsar la carta, por si quiere añadir más
+      goToStep(1);
     }
     window.addEventListener('verde:add-pack', onAddPack);
     return () => window.removeEventListener('verde:add-pack', onAddPack);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Coste de envío calculado en el comprobador de zonas → se sincroniza aquí
+  useEffect(() => {
+    function onDelivery(e: Event) {
+      const d = (e as CustomEvent<DeliveryInfo & { address?: string }>).detail;
+      setDelivery({ deliverable: d.deliverable, zone: d.zone, fee: d.fee });
+      setDeliveryError(null);
+      setFields((prev) =>
+        d.address && !prev.deliveryAddress
+          ? { ...prev, deliveryAddress: d.address }
+          : prev
+      );
+    }
+    window.addEventListener('verde:delivery:update', onDelivery);
+    return () => window.removeEventListener('verde:delivery:update', onDelivery);
   }, []);
   const [fields, setFields] = useState<FormFields>(INITIAL_FIELDS);
   const [loading, setLoading] = useState(false);
@@ -231,6 +258,9 @@ export default function ReservationForm({
   const [saveData, setSaveData] = useState(false);
   const [savedDataDetected, setSavedDataDetected] = useState(false);
   const [livePromotion, setLivePromotion] = useState<ActivePromotion | null>(promotion ?? null);
+  const [delivery, setDelivery] = useState<DeliveryInfo | null>(null);
+  const [deliveryLoading, setDeliveryLoading] = useState(false);
+  const [deliveryError, setDeliveryError] = useState<string | null>(null);
 
   // Individual refs — hooks cannot be in arrays
   const ref1 = useRef<HTMLDivElement>(null);
@@ -325,6 +355,40 @@ export default function ReservationForm({
     });
   }
 
+  function removeItem(productId: string) {
+    setCart((prev) => {
+      const { [productId]: _, ...rest } = prev;
+      return rest;
+    });
+  }
+
+  // Calcula el envío a partir de la dirección introducida en el paso de entrega
+  async function calcDelivery() {
+    const query = [fields.deliveryAddress, fields.postalCode].filter(Boolean).join(", ");
+    if (query.trim().length < 4) {
+      setDeliveryError("Introduce tu dirección para calcular el envío.");
+      return;
+    }
+    setDeliveryLoading(true);
+    setDeliveryError(null);
+    try {
+      const quote = await quoteDelivery(query);
+      if (!quote) {
+        setDeliveryError("No encontramos esa dirección. Prueba con calle + número.");
+        setDelivery(null);
+      } else if (!quote.deliverable) {
+        setDelivery({ deliverable: false, zone: null, fee: 0 });
+        setDeliveryError("Aún no llegamos a tu zona. Te contactaremos por WhatsApp.");
+      } else {
+        setDelivery({ deliverable: true, zone: quote.zone, fee: quote.fee });
+      }
+    } catch {
+      setDeliveryError("Error al calcular el envío. Inténtalo de nuevo.");
+    } finally {
+      setDeliveryLoading(false);
+    }
+  }
+
   // ── Fields ──
 
   function handleFieldChange(
@@ -388,6 +452,18 @@ export default function ReservationForm({
   const discountAmount = discountCents / 100;
   const totalAfterDiscount = (subtotalCents - discountCents) / 100;
 
+  // Envío — solo aplica con método "delivery" y zona cubierta
+  const effectiveDeliveryFee =
+    fields.deliveryMethod === "delivery" && delivery?.deliverable ? delivery.fee : 0;
+  const grandTotal = totalAfterDiscount + effectiveDeliveryFee;
+
+  // Carrito flotante — productos + envío
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('verde:cart:update', {
+      detail: { items: totalItems, total: totalDeposit + effectiveDeliveryFee },
+    }));
+  }, [totalItems, totalDeposit, effectiveDeliveryFee]);
+
   const monthMap: Record<string, DayAvailability[]> = {};
   for (const day of availability) {
     if (day.status === "past_or_today") continue;
@@ -409,6 +485,30 @@ export default function ReservationForm({
   const step5Done =
     fields.deliveryMethod === "pickup" ||
     !!(fields.deliveryAddress.trim().length >= 5 && fields.postalCode.trim());
+
+  // Carrito flotante → avanzar al primer paso pendiente (hacia el pago)
+  useEffect(() => {
+    function onCartOpen() {
+      if (!step1Done) goToStep(1);
+      else if (!step2Done) goToStep(2);
+      else if (!step3Done) goToStep(3);
+      else if (!step4Done) goToStep(4);
+      else if (!step5Done) goToStep(5);
+      else goToStep(6);
+    }
+    window.addEventListener("verde:cart:open", onCartOpen);
+    return () => window.removeEventListener("verde:cart:open", onCartOpen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step1Done, step2Done, step3Done, step4Done, step5Done]);
+
+  // Recalcular animaciones GSAP cuando cambia el alto (al colapsar/expandir pasos)
+  useEffect(() => {
+    const t = setTimeout(
+      () => window.dispatchEvent(new Event("verde:layout:changed")),
+      120
+    );
+    return () => clearTimeout(t);
+  }, [currentStep, maxStep]);
 
   // ── Submit (logic unchanged — same payload to /api/create-checkout-session) ──
 
@@ -444,6 +544,16 @@ export default function ReservationForm({
       }
       if (!fields.postalCode.trim()) {
         setError("El código postal es obligatorio.");
+        goToStep(5);
+        return;
+      }
+      if (!delivery) {
+        setError('Pulsa "Calcular envío" para tu dirección antes de continuar.');
+        goToStep(5);
+        return;
+      }
+      if (!delivery.deliverable) {
+        setError("Aún no llegamos a tu zona. Elige recogida en local o prueba otra dirección.");
         goToStep(5);
         return;
       }
@@ -490,6 +600,10 @@ export default function ReservationForm({
           deliveryDetails: fields.deliveryDetails,
           postalCode: fields.postalCode,
           deliveryZone: fields.deliveryZone,
+          deliveryZoneLevel:
+            fields.deliveryMethod === "delivery" && delivery?.deliverable
+              ? delivery.zone
+              : null,
           privacyAccepted,
           termsAccepted,
         }),
@@ -633,7 +747,7 @@ export default function ReservationForm({
             Tu pedido
           </p>
           <h2 className="text-verde-bosque text-3xl sm:text-4xl font-bold tracking-tight mb-3">
-            Pide tu verde
+            Haz tu pedido
           </h2>
           <p className="text-negro/50 text-sm leading-relaxed">
             Añade uno o varios productos y paga online de forma segura.
@@ -646,6 +760,7 @@ export default function ReservationForm({
               </p>
             </div>
           )}
+          <ContactHelp variant="inline" />
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
@@ -659,10 +774,13 @@ export default function ReservationForm({
             isDone={currentStep > 1}
             summary={cartProducts.map((p) => `${p.name} ×${cart[p.id]}`).join(" · ")}
             onEdit={() => goToStep(1)}
+            editLabel="+ Añadir más"
+            editProminent
           >
             {(() => {
               const grouped: Partial<Record<NormalizedCategory, typeof products>> = {};
               for (const p of products) {
+                if (p.isPack) continue; // los packs no se muestran en la carta
                 const cat = normalizeCategory(p.category ?? "");
                 (grouped[cat] ??= []).push(p);
               }
@@ -701,6 +819,32 @@ export default function ReservationForm({
                 </div>
               );
             })()}
+
+            {cartProducts.some((p) => p.isPack) && (
+              <div className="mt-5 space-y-2">
+                {cartProducts
+                  .filter((p) => p.isPack)
+                  .map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between bg-verde-bosque/5 border border-verde-bosque/15 rounded-lg px-3 py-2"
+                    >
+                      <span className="text-sm text-verde-bosque">
+                        {p.name}{" "}
+                        <span className="text-negro/40">×{cart[p.id]}</span> ·{" "}
+                        {(p.depositAmount * (cart[p.id] ?? 0)).toFixed(2).replace(".", ",")} €
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(p.id)}
+                        className="ml-3 shrink-0 text-[10px] font-semibold uppercase tracking-[0.15em] text-tierra/70 hover:text-tierra"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            )}
 
             {cartProducts.length > 0 && (
               <>
@@ -1037,19 +1181,40 @@ export default function ReservationForm({
                     </div>
                     <div className="sm:col-span-2">
                       <label htmlFor="deliveryDetails" className={labelClass}>
-                        Detalles de entrega (opcional)
+                        Piso, puerta y detalles de entrega
                       </label>
                       <input
                         id="deliveryDetails"
                         name="deliveryDetails"
                         type="text"
-                        placeholder="Timbre, referencia, indicaciones para el repartidor"
+                        placeholder="Piso, puerta, escalera, timbre, referencia para el repartidor..."
                         value={fields.deliveryDetails}
                         onChange={handleFieldChange}
                         className={inputClass}
                       />
                     </div>
                   </div>
+
+                  {/* Cálculo de envío */}
+                  <div className="mt-6 flex flex-wrap items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={calcDelivery}
+                      disabled={deliveryLoading}
+                      className="text-[11px] font-semibold tracking-[0.15em] uppercase px-5 py-3 bg-verde-bosque text-crema transition-colors hover:bg-verde-platano disabled:opacity-50"
+                    >
+                      {deliveryLoading ? "Calculando..." : "Calcular envío"}
+                    </button>
+                    {delivery?.deliverable && effectiveDeliveryFee > 0 && (
+                      <span className="text-sm font-medium text-verde-bosque">
+                        Envío{delivery.zone ? ` · Zona ${delivery.zone}` : ""}:{" "}
+                        {effectiveDeliveryFee.toFixed(2).replace(".", ",")} €
+                      </span>
+                    )}
+                  </div>
+                  {deliveryError && (
+                    <p className="mt-2 text-xs text-tierra">{deliveryError}</p>
+                  )}
                 </>
               )}
 
@@ -1160,27 +1325,26 @@ export default function ReservationForm({
 
               {/* Totals */}
               <div className="space-y-2 border-t border-negro/10 pt-4 mb-8 text-sm">
-                {livePromotion?.isActive && discountAmount > 0 ? (
-                  <>
-                    <div className="flex justify-between text-negro/50">
-                      <span>Subtotal</span>
-                      <span>{totalDeposit} €</span>
-                    </div>
-                    <div className="flex justify-between text-verde-bosque/75">
-                      <span>{livePromotion.promoName} −{livePromotion.promoValue}%</span>
-                      <span>−{discountAmount} €</span>
-                    </div>
-                    <div className="flex justify-between pt-2 mt-1 font-semibold text-verde-bosque border-t border-negro/8">
-                      <span>Total a pagar hoy</span>
-                      <span>{totalAfterDiscount} €</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex justify-between pt-2 font-semibold text-verde-bosque">
-                    <span>Total a pagar hoy</span>
-                    <span>{totalDeposit} €</span>
+                <div className="flex justify-between text-negro/50">
+                  <span>Subtotal</span>
+                  <span>{totalDeposit.toFixed(2).replace(".", ",")} €</span>
+                </div>
+                {livePromotion?.isActive && discountAmount > 0 && (
+                  <div className="flex justify-between text-verde-bosque/75">
+                    <span>{livePromotion.promoName} −{livePromotion.promoValue}%</span>
+                    <span>−{discountAmount.toFixed(2).replace(".", ",")} €</span>
                   </div>
                 )}
+                {effectiveDeliveryFee > 0 && (
+                  <div className="flex justify-between text-negro/50">
+                    <span>Envío{delivery?.zone ? ` · Zona ${delivery.zone}` : ""}</span>
+                    <span>{effectiveDeliveryFee.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-2 mt-1 font-semibold text-verde-bosque border-t border-negro/8">
+                  <span>Total a pagar hoy</span>
+                  <span>{grandTotal.toFixed(2).replace(".", ",")} €</span>
+                </div>
               </div>
               </div>
 

@@ -8,6 +8,7 @@ export interface Product {
   allergens?: string[];
   image?: string;           // ruta a /public o URL externa
   category?: string;
+  isPack?: boolean;         // true = combo/pack con precio propio (no se muestra en la carta)
 }
 
 export const PRODUCTS: Product[] = [
@@ -27,7 +28,7 @@ export const PRODUCTS: Product[] = [
     id: "tigrillo-xl-mixto",
     name: "Tigrillo XL Mixto",
     description:
-      "Hecho en caldo madre, chicharrón, rabo desmenuzado, mix de quesos, salsa de maní de la casa y sal prieta.",
+      "Hecho en demiglass de carne, chicharrón, mix de quesos, salsa de maní de la casa y sal prieta.",
     finalPrice: 15,
     depositAmount: 15,
     available: true,
@@ -117,8 +118,54 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
+// ─── PACKS / COMBOS — precio propio con descuento ya aplicado ───
+// Se cobran como un único producto (precio cerrado) para que el carrito y
+// Stripe cobren exactamente el precio anunciado. No se muestran en la carta.
+export const PACKS: Product[] = [
+  {
+    id: "pack-dos-tigrillos",
+    name: "Pack · Los Dos Tigrillos",
+    description:
+      "2× Tigrillo XL Mixto. Hecho en demiglass de carne, chicharrón, mix de quesos y sal prieta.",
+    finalPrice: 27,
+    depositAmount: 27,
+    available: true,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    id: "pack-bolon-patacon",
+    name: "Pack · Bolón + Patacón",
+    description:
+      "Bolón Mixto de la Casa + Ración de Patacón con salsa verde de queso y queso manaba.",
+    finalPrice: 14,
+    depositAmount: 14,
+    available: true,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    id: "pack-grupo",
+    name: "Pack · Para Todo el Grupo",
+    description:
+      "Ahora Comen Todos + Ración de Patacón. Para 3–4 personas con ganas de verde.",
+    finalPrice: 24,
+    depositAmount: 24,
+    available: true,
+    allergens: ["Consultar"],
+    category: "pack",
+    isPack: true,
+  },
+];
+
+export function getPacks(): Product[] {
+  return PACKS.filter((p) => p.available);
+}
+
 export function getProductById(id: string): Product | undefined {
-  return PRODUCTS.find((p) => p.id === id);
+  return [...PRODUCTS, ...PACKS].find((p) => p.id === id);
 }
 
 export function getAvailableProducts(): Product[] {

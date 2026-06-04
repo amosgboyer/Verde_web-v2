@@ -5,6 +5,7 @@ import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { isSlotAvailable } from "@/lib/availability";
 import { reservationSchema } from "@/lib/validators";
 import { getActivePromotion, calculateDiscount } from "@/lib/promotions";
+import { feeForZone } from "@/lib/delivery";
 import { ZodError } from "zod";
 
 export async function POST(req: NextRequest) {
@@ -114,10 +115,19 @@ export async function POST(req: NextRequest) {
     const promo = getActivePromotion(settings);
     const discount = calculateDiscount(productsSubtotal, promo);
 
+    // Envío — recalculado en servidor desde la zona (no se confía en el cliente).
+    // Solo aplica con entrega a domicilio; recogida = 0.
+    const deliveryFee =
+      parsed.deliveryMethod === "delivery"
+        ? feeForZone(parsed.deliveryZoneLevel ?? null)
+        : 0;
+    const chargeTotal = discount.totalAfterDiscount + deliveryFee;
+
     console.log(
       `[checkout] subtotal=${discount.subtotalBeforeDiscount} ` +
       `discount=${discount.discountAmount} ` +
-      `total=${discount.totalAfterDiscount} ` +
+      `delivery=${deliveryFee} ` +
+      `charge=${chargeTotal} ` +
       `promoActive=${discount.isActive} promoName="${discount.promoName}"`
     );
 
@@ -129,9 +139,11 @@ export async function POST(req: NextRequest) {
       .map(({ product, quantity }) => `${product.name} ×${quantity}`)
       .join(", ");
 
-    const lineItemDescription = discount.isActive
-      ? `${productSummary} — ${discount.promoName} −${discount.promoValue}%`
-      : productSummary;
+    const lineItemDescription =
+      (discount.isActive
+        ? `${productSummary} — ${discount.promoName} −${discount.promoValue}%`
+        : productSummary) +
+      (deliveryFee > 0 ? ` · Envío ${deliveryFee.toFixed(2)} €` : "");
 
     // Stripe Checkout mostrará métodos de pago disponibles según la configuración del Dashboard,
     // el país, la moneda, el dominio y el dispositivo. No limitar con payment_method_types
@@ -140,7 +152,7 @@ export async function POST(req: NextRequest) {
       {
         price_data: {
           currency: settings.currency,
-          unit_amount: Math.round(discount.totalAfterDiscount * 100),
+          unit_amount: Math.round(chargeTotal * 100),
           product_data: {
             name: "Pedido Verde",
             description: lineItemDescription,
@@ -178,8 +190,10 @@ export async function POST(req: NextRequest) {
         deliveryZone: parsed.deliveryZone ?? "",
         totalItems: String(totalItems),
         totalFinal: String(productsSubtotal),
-        totalDeposit: String(discount.totalAfterDiscount), // monto real cobrado
+        totalDeposit: String(chargeTotal), // monto real cobrado (productos − promo + envío)
         totalPending: "0",
+        deliveryFee: String(deliveryFee),
+        deliveryZoneLevel: String(parsed.deliveryZoneLevel ?? ""),
         privacyAccepted: String(parsed.privacyAccepted),
         termsAccepted: String(parsed.termsAccepted),
         acceptedAt,
