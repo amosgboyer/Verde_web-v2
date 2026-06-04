@@ -53,6 +53,15 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${lilitaOne.variable} ${caveat.variable} ${spaceMono.variable} ${dmSans.variable} font-sans bg-cream text-ink antialiased`}>
 
+        {/* Empezar siempre arriba: evita que un #hash de sección o la
+            restauración de scroll del navegador salte al formulario al cargar. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if('scrollRestoration' in history){history.scrollRestoration='manual';}if(location.hash){history.replaceState(null,'',location.pathname+location.search);}}catch(e){}",
+          }}
+        />
+
         {/* ── NAV ── */}
         <nav className="sticky top-0 z-[100] flex items-center justify-between px-8 h-[58px]"
           style={{
