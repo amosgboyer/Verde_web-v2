@@ -118,6 +118,10 @@ export default function RootLayout({
                     className="text-g3 hover:text-g4 transition-colors">
                     @verde_madrid
                   </a><br />
+                  <a href="https://wa.me/34605442809" target="_blank" rel="noopener"
+                    className="text-g3 hover:text-g4 transition-colors">
+                    WhatsApp · +34 605 442 809
+                  </a><br />
                   Guindalera, Madrid<br />
                   28028
                 </p>
