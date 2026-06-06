@@ -6,6 +6,7 @@ import type { ActivePromotion } from "@/lib/promotions";
 import HowItWorks from "@/components/HowItWorks";
 import ReservationForm from "@/components/ReservationForm";
 import ClosedState from "@/components/ClosedState";
+import MenuShowcase from "@/components/MenuShowcase";
 import Packs from "@/components/Packs";
 import CategoryBar from "@/components/CategoryBar";
 import ZoneMap from "@/components/ZoneMap";
@@ -170,7 +171,10 @@ export default async function HomePage() {
           />
         </section>
       ) : (
-        <ClosedState message={storeConfig.closedMessage} />
+        <>
+          <ClosedState message={storeConfig.closedMessage} />
+          <MenuShowcase products={products} />
+        </>
       )}
 
       {/* ── RESEÑAS ── */}

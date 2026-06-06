@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import Image from "next/image";
 import ScrollAnimations from "@/components/ScrollAnimations";
 import NavCart from "@/components/NavCart";
+import { SOLD_OUT } from "@/lib/store-config";
 import "./globals.css";
 
 const lilitaOne = Lilita_One({
@@ -79,7 +80,7 @@ export default function RootLayout({
 
           <div className="flex items-center gap-3">
             <a
-              href="#reservar"
+              href={SOLD_OUT ? "/#carta" : "/#reservar"}
               className="text-[0.78rem] text-gray px-3 py-1.5 rounded-md border-none bg-transparent cursor-pointer hover:text-g1 transition-colors hidden sm:block"
             >
               Menú
