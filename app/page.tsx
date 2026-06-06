@@ -1,6 +1,6 @@
 import { getAvailableProducts, getPacks } from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
-import { storeConfig } from "@/lib/store-config";
+import { storeConfig, SOLD_OUT } from "@/lib/store-config";
 import { getActivePromotion } from "@/lib/promotions";
 import type { ActivePromotion } from "@/lib/promotions";
 import HowItWorks from "@/components/HowItWorks";
@@ -47,6 +47,9 @@ export default async function HomePage() {
   } catch {
     // fallback to static config/products
   }
+
+  // SOLD OUT general (cierre del mes) — anula cualquier valor del Sheet.
+  if (SOLD_OUT) reservationsOpen = false;
 
   const config = { ...storeConfig, reservationsOpen };
 

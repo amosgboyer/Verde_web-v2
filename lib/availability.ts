@@ -4,6 +4,7 @@ import {
   getSlotOverridesRows,
   getOrdersRows,
 } from "./google-sheets";
+import { SOLD_OUT } from "./store-config";
 
 // Normalizes "9:00" → "09:00", "9:5" → "09:05", already-padded values unchanged
 export function normalizeTime(t: string): string {
@@ -60,6 +61,8 @@ export function buildTimeSlots(
 }
 
 export async function getAvailabilityDays(): Promise<DayAvailability[]> {
+  if (SOLD_OUT) return []; // sold out general → sin fechas disponibles
+
   const [settings, availRows, overrides, orders] = await Promise.all([
     getSettings(),
     getAvailabilityRows(),

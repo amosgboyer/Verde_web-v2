@@ -35,3 +35,4 @@ next-env.d.ts
 # test / QA artifacts
 .playwright-mcp/
 /mobile-calendar.png
+/soldout.png

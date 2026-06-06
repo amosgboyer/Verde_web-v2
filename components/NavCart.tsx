@@ -22,7 +22,10 @@ export default function NavCart() {
 
   function go() {
     window.dispatchEvent(new CustomEvent("verde:cart:open"));
-    document.getElementById("reservar")?.scrollIntoView({ behavior: "smooth" });
+    // Si el formulario no existe (sold out), llevar al aviso de waitlist
+    const target =
+      document.getElementById("reservar") || document.getElementById("waitlist");
+    target?.scrollIntoView({ behavior: "smooth" });
   }
 
   const hasItems = cart.items > 0;

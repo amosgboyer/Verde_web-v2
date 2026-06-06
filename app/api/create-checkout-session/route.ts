@@ -6,10 +6,18 @@ import { isSlotAvailable } from "@/lib/availability";
 import { reservationSchema } from "@/lib/validators";
 import { getActivePromotion, calculateDiscount } from "@/lib/promotions";
 import { feeForZone } from "@/lib/delivery";
+import { SOLD_OUT } from "@/lib/store-config";
 import { ZodError } from "zod";
 
 export async function POST(req: NextRequest) {
   try {
+    if (SOLD_OUT) {
+      return NextResponse.json(
+        { error: "Estamos completos este mes. ¡Vuelve pronto!" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const parsed = reservationSchema.parse(body);
 
