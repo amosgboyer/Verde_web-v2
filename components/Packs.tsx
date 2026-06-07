@@ -31,7 +31,7 @@ const PACKS = [
   },
 ];
 
-export default function Packs() {
+export default function Packs({ readOnly = false }: { readOnly?: boolean }) {
   return (
     <section
       className="px-8 py-[4.5rem]"
@@ -133,31 +133,33 @@ export default function Packs() {
                     {pack.saving}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.dispatchEvent(new CustomEvent('verde:add-pack', {
-                      detail: { items: pack.items }
-                    }));
-                  }}
-                  className="text-[0.78rem] font-medium px-6 py-2 rounded-lg text-white transition-colors cursor-pointer border-none"
-                  style={{
-                    background: pack.featured
-                      ? "rgba(255,255,255,0.25)"
-                      : "rgba(255,255,255,0.12)",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background =
-                      "rgba(255,255,255,0.3)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = pack.featured
-                      ? "rgba(255,255,255,0.25)"
-                      : "rgba(255,255,255,0.12)";
-                  }}
-                >
-                  Pedir →
-                </button>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('verde:add-pack', {
+                        detail: { items: pack.items }
+                      }));
+                    }}
+                    className="text-[0.78rem] font-medium px-6 py-2 rounded-lg text-white transition-colors cursor-pointer border-none"
+                    style={{
+                      background: pack.featured
+                        ? "rgba(255,255,255,0.25)"
+                        : "rgba(255,255,255,0.12)",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background =
+                        "rgba(255,255,255,0.3)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = pack.featured
+                        ? "rgba(255,255,255,0.25)"
+                        : "rgba(255,255,255,0.12)";
+                    }}
+                  >
+                    Pedir →
+                  </button>
+                )}
               </div>
             </div>
           ))}

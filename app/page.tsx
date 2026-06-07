@@ -174,6 +174,7 @@ export default async function HomePage() {
         <>
           <ClosedState message={storeConfig.closedMessage} />
           <MenuShowcase products={products} />
+          <Packs readOnly />
         </>
       )}
 
