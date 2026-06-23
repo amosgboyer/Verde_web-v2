@@ -36,3 +36,5 @@ next-env.d.ts
 .playwright-mcp/
 /mobile-calendar.png
 /soldout.png
+/gate-*.png
+/calendario-*.png

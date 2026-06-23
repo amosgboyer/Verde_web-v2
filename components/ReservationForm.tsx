@@ -7,6 +7,7 @@ import type { ActivePromotion } from "@/lib/promotions";
 import { quoteDelivery } from "@/lib/delivery";
 import ProductCard from "./ProductCard";
 import ContactHelp from "./ContactHelp";
+import AccessGate from "./AccessGate";
 import clsx from "clsx";
 
 interface DeliveryInfo {
@@ -33,6 +34,7 @@ interface ReservationFormProps {
   config: StoreConfig;
   promotion?: ActivePromotion | null;
   requireAccessCode?: boolean;
+  accessCodeValue?: string;
 }
 
 interface FormFields {
@@ -215,6 +217,7 @@ export default function ReservationForm({
   config,
   promotion,
   requireAccessCode = false,
+  accessCodeValue = "",
 }: ReservationFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStep, setMaxStep] = useState(1);
@@ -264,6 +267,28 @@ export default function ReservationForm({
   const [deliveryLoading, setDeliveryLoading] = useState(false);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [accessCode, setAccessCode] = useState("");
+  const [unlocked, setUnlocked] = useState(!requireAccessCode);
+
+  // Recordar desbloqueo entre recargas (acceso anticipado)
+  useEffect(() => {
+    if (!requireAccessCode) return;
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("verde_access_unlocked") === "1") {
+      const saved = localStorage.getItem("verde_access_code") ?? "";
+      setAccessCode(saved);
+      setUnlocked(true);
+    }
+  }, [requireAccessCode]);
+
+  function handleUnlock() {
+    const clean = accessCodeValue.replace(/\s+/g, "");
+    setAccessCode(clean);
+    setUnlocked(true);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("verde_access_unlocked", "1");
+      localStorage.setItem("verde_access_code", clean);
+    }
+  }
 
   // Individual refs — hooks cannot be in arrays
   const ref1 = useRef<HTMLDivElement>(null);
@@ -772,6 +797,11 @@ export default function ReservationForm({
           <ContactHelp variant="inline" />
         </div>
 
+        {requireAccessCode && !unlocked && (
+          <AccessGate code={accessCodeValue} onUnlock={handleUnlock} />
+        )}
+
+        {(!requireAccessCode || unlocked) && (
         <form onSubmit={handleSubmit} noValidate>
 
           {/* ── PASO 1: PRODUCTO ── */}
@@ -1274,29 +1304,6 @@ export default function ReservationForm({
               onEdit={() => {}}
               showEditButton={false}
             >
-              {requireAccessCode && (
-                <div className="mb-6 border border-[#c85a2a]/25 bg-[#c85a2a]/5 rounded-xl p-5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c85a2a] mb-2">
-                    🔑 Acceso anticipado
-                  </p>
-                  <p className="text-sm text-negro/55 mb-3">
-                    Estos días el pedido es solo para la lista de espera. Introduce el
-                    código que te enviamos por WhatsApp. El martes abrimos para todos.
-                  </p>
-                  <input
-                    type="text"
-                    value={accessCode}
-                    onChange={(e) => {
-                      setAccessCode(e.target.value);
-                      setError(null);
-                    }}
-                    placeholder="Tu código de acceso"
-                    autoComplete="off"
-                    className={inputClass}
-                  />
-                </div>
-              )}
-
               <div className="bg-verde-bosque/5 rounded-xl p-6 mb-6">
               {/* Products */}
               <div className="space-y-2 mb-6">
@@ -1456,6 +1463,7 @@ export default function ReservationForm({
           )}
 
         </form>
+        )}
       </div>
     </section>
   );

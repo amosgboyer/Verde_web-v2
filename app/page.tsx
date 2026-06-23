@@ -1,7 +1,7 @@
 import { getAvailableProducts, getPacks } from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { storeConfig, SOLD_OUT } from "@/lib/store-config";
-import { getLaunchPhase } from "@/lib/launch";
+import { getLaunchPhase, EARLY_ACCESS_CODE } from "@/lib/launch";
 import LaunchBanner from "@/components/LaunchBanner";
 import { getActivePromotion } from "@/lib/promotions";
 import type { ActivePromotion } from "@/lib/promotions";
@@ -175,6 +175,9 @@ export default async function HomePage() {
             config={config}
             promotion={activePromotion}
             requireAccessCode={launchPhase === "early_access"}
+            accessCodeValue={
+              launchPhase === "early_access" ? EARLY_ACCESS_CODE : ""
+            }
           />
         </section>
       ) : (
