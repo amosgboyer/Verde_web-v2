@@ -7,6 +7,7 @@ import { reservationSchema } from "@/lib/validators";
 import { getActivePromotion, calculateDiscount } from "@/lib/promotions";
 import { feeForZone } from "@/lib/delivery";
 import { SOLD_OUT } from "@/lib/store-config";
+import { getLaunchPhase, isAccessCodeValid } from "@/lib/launch";
 import { ZodError } from "zod";
 
 export async function POST(req: NextRequest) {
@@ -20,6 +21,17 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const parsed = reservationSchema.parse(body);
+
+    // Acceso anticipado: durante la fase de lista de espera se exige código válido.
+    if (getLaunchPhase() === "early_access" && !isAccessCodeValid(parsed.accessCode)) {
+      return NextResponse.json(
+        {
+          error:
+            "Código de acceso no válido. Estos días solo reservan los de la lista de espera con su código; el martes abrimos para todos.",
+        },
+        { status: 403 }
+      );
+    }
 
     const settings = await getSettings();
 

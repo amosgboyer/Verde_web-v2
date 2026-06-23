@@ -1,6 +1,8 @@
 import { getAvailableProducts, getPacks } from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { storeConfig, SOLD_OUT } from "@/lib/store-config";
+import { getLaunchPhase } from "@/lib/launch";
+import LaunchBanner from "@/components/LaunchBanner";
 import { getActivePromotion } from "@/lib/promotions";
 import type { ActivePromotion } from "@/lib/promotions";
 import HowItWorks from "@/components/HowItWorks";
@@ -52,6 +54,7 @@ export default async function HomePage() {
   // SOLD OUT general (cierre del mes) — anula cualquier valor del Sheet.
   if (SOLD_OUT) reservationsOpen = false;
 
+  const launchPhase = getLaunchPhase();
   const config = { ...storeConfig, reservationsOpen };
 
   return (
@@ -145,6 +148,9 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── BANNER DE GRACIAS + FASES DE APERTURA ── */}
+      {reservationsOpen && <LaunchBanner phase={launchPhase} />}
+
       {/* ── PACKS ── */}
       {reservationsOpen && (
         <section id="packs">
@@ -168,6 +174,7 @@ export default async function HomePage() {
             ]}
             config={config}
             promotion={activePromotion}
+            requireAccessCode={launchPhase === "early_access"}
           />
         </section>
       ) : (

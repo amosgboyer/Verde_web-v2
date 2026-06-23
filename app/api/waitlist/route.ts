@@ -2,10 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { appendWaitlistToSheet } from "@/lib/google-sheets";
 import { sendWaitlistNotification } from "@/lib/email";
 import { waitlistSchema } from "@/lib/validators";
+import { WAITLIST_CLOSED } from "@/lib/launch";
 import { ZodError } from "zod";
 
 export async function POST(req: NextRequest) {
   try {
+    if (WAITLIST_CLOSED) {
+      return NextResponse.json(
+        { error: "La lista de espera está cerrada. ¡Gracias por el apoyo!" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const parsed = waitlistSchema.parse(body);
 

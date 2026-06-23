@@ -32,6 +32,7 @@ interface ReservationFormProps {
   products: Product[];
   config: StoreConfig;
   promotion?: ActivePromotion | null;
+  requireAccessCode?: boolean;
 }
 
 interface FormFields {
@@ -213,6 +214,7 @@ export default function ReservationForm({
   products,
   config,
   promotion,
+  requireAccessCode = false,
 }: ReservationFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStep, setMaxStep] = useState(1);
@@ -261,6 +263,7 @@ export default function ReservationForm({
   const [delivery, setDelivery] = useState<DeliveryInfo | null>(null);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
+  const [accessCode, setAccessCode] = useState("");
 
   // Individual refs — hooks cannot be in arrays
   const ref1 = useRef<HTMLDivElement>(null);
@@ -559,6 +562,11 @@ export default function ReservationForm({
       }
     }
 
+    if (requireAccessCode && !accessCode.trim()) {
+      setError("Introduce tu código de acceso anticipado (lista de espera) para reservar.");
+      return;
+    }
+
     if (!privacyAccepted || !termsAccepted) {
       setError("Debes aceptar la política de privacidad y las condiciones para continuar.");
       return;
@@ -606,6 +614,7 @@ export default function ReservationForm({
               : null,
           privacyAccepted,
           termsAccepted,
+          accessCode: requireAccessCode ? accessCode.trim() : undefined,
         }),
       });
 
@@ -1265,6 +1274,29 @@ export default function ReservationForm({
               onEdit={() => {}}
               showEditButton={false}
             >
+              {requireAccessCode && (
+                <div className="mb-6 border border-[#c85a2a]/25 bg-[#c85a2a]/5 rounded-xl p-5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c85a2a] mb-2">
+                    🔑 Acceso anticipado
+                  </p>
+                  <p className="text-sm text-negro/55 mb-3">
+                    Estos días el pedido es solo para la lista de espera. Introduce el
+                    código que te enviamos por WhatsApp. El martes abrimos para todos.
+                  </p>
+                  <input
+                    type="text"
+                    value={accessCode}
+                    onChange={(e) => {
+                      setAccessCode(e.target.value);
+                      setError(null);
+                    }}
+                    placeholder="Tu código de acceso"
+                    autoComplete="off"
+                    className={inputClass}
+                  />
+                </div>
+              )}
+
               <div className="bg-verde-bosque/5 rounded-xl p-6 mb-6">
               {/* Products */}
               <div className="space-y-2 mb-6">
