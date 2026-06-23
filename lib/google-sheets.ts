@@ -369,3 +369,54 @@ export async function appendWaitlistToSheet(entry: WaitlistRow): Promise<void> {
     requestBody: { values: [row] },
   });
 }
+
+// ─── Setup admin: abrir días + actualizar horario ──────────────────────────────
+
+// Añade días a la pestaña Availability (isOpen=TRUE, capacidad, no sold out).
+export async function appendAvailabilityDays(
+  days: { date: string; capacity: number }[]
+): Promise<void> {
+  const auth = getAuth();
+  const sheets = google.sheets({ version: "v4", auth });
+  const rows = days.map((d) => [
+    d.date,
+    "TRUE",
+    String(d.capacity),
+    "FALSE",
+    "Disponible",
+  ]);
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: getSpreadsheetId(),
+    range: "Availability!A:E",
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values: rows },
+  });
+}
+
+// Actualiza (o crea) una clave de la pestaña Settings (columna B = valor).
+export async function updateSetting(key: string, value: string): Promise<void> {
+  const auth = getAuth();
+  const sheets = google.sheets({ version: "v4", auth });
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getSpreadsheetId(),
+    range: "Settings!A:A",
+  });
+  const keys = res.data.values ?? [];
+  const idx = keys.findIndex((r) => (r[0] ?? "").trim() === key);
+  if (idx === -1) {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: getSpreadsheetId(),
+      range: "Settings!A:B",
+      valueInputOption: "USER_ENTERED",
+      requestBody: { values: [[key, value]] },
+    });
+    return;
+  }
+  const sheetRow = idx + 1; // values.get A:A → índice 0 = fila 1
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: getSpreadsheetId(),
+    range: `Settings!B${sheetRow}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values: [[value]] },
+  });
+}
