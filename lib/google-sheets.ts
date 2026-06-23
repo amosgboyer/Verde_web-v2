@@ -370,6 +370,20 @@ export async function appendWaitlistToSheet(entry: WaitlistRow): Promise<void> {
   });
 }
 
+// Lee las filas de la lista de espera.
+export async function getWaitlistRows(): Promise<WaitlistRow[]> {
+  const rows = await getSheetValues("Waitlist!A2:E");
+  return rows
+    .filter((r) => r[1] || r[3]) // tiene nombre o teléfono
+    .map((r) => ({
+      createdAt: r[0] ?? "",
+      name: r[1] ?? "",
+      email: r[2] ?? "",
+      phone: r[3] ?? "",
+      message: r[4] ?? "",
+    }));
+}
+
 // ─── Setup admin: abrir días + actualizar horario ──────────────────────────────
 
 // Añade días a la pestaña Availability (isOpen=TRUE, capacidad, no sold out).
