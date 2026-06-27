@@ -147,12 +147,15 @@ export async function POST(req: NextRequest) {
     const promo = getActivePromotion(settings);
     const discount = calculateDiscount(productsSubtotal, promo);
 
+    // Si es recogida, se ignoran por completo los campos de entrega (aunque el
+    // cliente haya escrito una dirección antes de cambiar a "Recogida").
+    const isPickup = parsed.deliveryMethod === "pickup";
+
     // Envío — recalculado en servidor desde la zona (no se confía en el cliente).
     // Solo aplica con entrega a domicilio; recogida = 0.
-    const deliveryFee =
-      parsed.deliveryMethod === "delivery"
-        ? feeForZone(parsed.deliveryZoneLevel ?? null)
-        : 0;
+    const deliveryFee = isPickup
+      ? 0
+      : feeForZone(parsed.deliveryZoneLevel ?? null);
     const chargeTotal = discount.totalAfterDiscount + deliveryFee;
 
     console.log(
@@ -216,16 +219,16 @@ export async function POST(req: NextRequest) {
         phone: parsed.phone,
         notes: parsed.notes ?? "",
         deliveryMethod: parsed.deliveryMethod ?? "delivery",
-        deliveryAddress: parsed.deliveryAddress ?? "",
-        deliveryDetails: parsed.deliveryDetails ?? "",
-        postalCode: parsed.postalCode ?? "",
-        deliveryZone: parsed.deliveryZone ?? "",
+        deliveryAddress: isPickup ? "" : parsed.deliveryAddress ?? "",
+        deliveryDetails: isPickup ? "" : parsed.deliveryDetails ?? "",
+        postalCode: isPickup ? "" : parsed.postalCode ?? "",
+        deliveryZone: isPickup ? "" : parsed.deliveryZone ?? "",
         totalItems: String(totalItems),
         totalFinal: String(productsSubtotal),
         totalDeposit: String(chargeTotal), // monto real cobrado (productos − promo + envío)
         totalPending: "0",
         deliveryFee: String(deliveryFee),
-        deliveryZoneLevel: String(parsed.deliveryZoneLevel ?? ""),
+        deliveryZoneLevel: isPickup ? "" : String(parsed.deliveryZoneLevel ?? ""),
         privacyAccepted: String(parsed.privacyAccepted),
         termsAccepted: String(parsed.termsAccepted),
         acceptedAt,
