@@ -75,6 +75,18 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+      // El envío DEBE estar calculado: sin zona válida (1 o 2) no se permite la
+      // entrega. Evita que se cuele un pedido a domicilio con envío 0 € cuando el
+      // cliente no pulsa "Calcular envío".
+      if (parsed.deliveryZoneLevel !== 1 && parsed.deliveryZoneLevel !== 2) {
+        return NextResponse.json(
+          {
+            error:
+              'Antes de pagar, calcula el envío de tu dirección con el botón "Calcular envío".',
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate slot availability (backend is source of truth)

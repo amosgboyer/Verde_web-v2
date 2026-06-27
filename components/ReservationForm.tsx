@@ -428,6 +428,11 @@ export default function ReservationForm({
   ) {
     setFields((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError(null);
+    // Si cambian la dirección o el CP, invalidar el cálculo de envío anterior
+    // para obligar a recalcular (no se puede pagar con un envío sin recalcular).
+    if (e.target.name === "deliveryAddress" || e.target.name === "postalCode") {
+      setDelivery(null);
+    }
   }
 
   function selectDate(date: string) {
@@ -516,7 +521,11 @@ export default function ReservationForm({
   );
   const step5Done =
     fields.deliveryMethod === "pickup" ||
-    !!(fields.deliveryAddress.trim().length >= 5 && fields.postalCode.trim());
+    !!(
+      delivery?.deliverable &&
+      fields.deliveryAddress.trim().length >= 5 &&
+      fields.postalCode.trim()
+    );
 
   // Carrito flotante → avanzar al primer paso pendiente (hacia el pago)
   useEffect(() => {
