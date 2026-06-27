@@ -1,8 +1,9 @@
 import { getAvailableProducts, getPacks } from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { storeConfig, SOLD_OUT } from "@/lib/store-config";
-import { getLaunchPhase, EARLY_ACCESS_CODE } from "@/lib/launch";
+import { getLaunchPhase, EARLY_ACCESS_CODE, PUBLIC_OPEN_AT } from "@/lib/launch";
 import LaunchBanner from "@/components/LaunchBanner";
+import Countdown from "@/components/Countdown";
 import { getActivePromotion } from "@/lib/promotions";
 import type { ActivePromotion } from "@/lib/promotions";
 import HowItWorks from "@/components/HowItWorks";
@@ -104,6 +105,18 @@ export default async function HomePage() {
           <p className="font-caveat text-[1.4rem] leading-tight mb-10" style={{color:"rgba(255,255,255,0.7)"}}>
             Hecha a mano · Exportación latina
           </p>
+
+          {/* Countdown a la apertura al público (solo en fase de lista) */}
+          {reservationsOpen && launchPhase === "early_access" && (
+            <div className="mb-10">
+              <Countdown
+                target={PUBLIC_OPEN_AT}
+                label="Abrimos al público en"
+                finishedLabel="¡Ya estamos abiertos! 🌱"
+                variant="hero"
+              />
+            </div>
+          )}
 
           {/* CTAs */}
           <div className="flex gap-4 justify-center flex-wrap">

@@ -13,6 +13,11 @@ export const EARLY_ACCESS_CODE = "0111011001100101011100100110010001100101";
 // Antes de esta fecha = acceso anticipado (lista de espera con código).
 export const PUBLIC_OPEN_DATE = "2026-06-30"; // martes 30 jun
 
+// Instante exacto en que abre al público: martes 30 jun, 00:00 horario de Madrid.
+// (verano CEST = UTC+2, así que 00:00 Madrid = 22:00 UTC del día anterior).
+// Lo usan los countdowns para contar hacia el momento de apertura.
+export const PUBLIC_OPEN_AT = "2026-06-29T22:00:00.000Z";
+
 // La lista de espera ya está cerrada (no se aceptan nuevas altas).
 export const WAITLIST_CLOSED = true;
 

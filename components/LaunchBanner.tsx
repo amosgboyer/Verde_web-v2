@@ -1,4 +1,6 @@
 import type { LaunchPhase } from "@/lib/launch";
+import { PUBLIC_OPEN_AT } from "@/lib/launch";
+import Countdown from "@/components/Countdown";
 
 // Banner de agradecimiento + calendario de apertura por fases.
 export default function LaunchBanner({ phase }: { phase: LaunchPhase }) {
@@ -39,6 +41,31 @@ export default function LaunchBanner({ phase }: { phase: LaunchPhase }) {
           Por vuestro apoyo nos hemos llenado. Reabrimos cupos por fases — gracias
           por hacer crecer lo verde.
         </p>
+
+        {/* Countdown con gancho por fase */}
+        {phase === "early_access" && (
+          <div
+            className="mx-auto mb-12 max-w-xl rounded-3xl px-5 py-8"
+            style={{
+              background: "rgba(0,0,0,0.18)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <Countdown
+              target={PUBLIC_OPEN_AT}
+              label="Tu acceso exclusivo termina en"
+              finishedLabel="¡Abierto para todos! 🌱"
+              variant="banner"
+            />
+            <p
+              className="text-[0.78rem] mt-6 text-center"
+              style={{ color: "rgba(255,255,255,0.5)" }}
+            >
+              Después, abrimos para todo el mundo. Reserva con tu código antes de
+              que vuele.
+            </p>
+          </div>
+        )}
 
         {/* Calendario de fases */}
         <div className="grid sm:grid-cols-2 gap-4 max-w-lg mx-auto text-left">
