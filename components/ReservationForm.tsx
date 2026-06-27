@@ -395,11 +395,15 @@ export default function ReservationForm({
   }
 
   // Calcula el envío a partir de la dirección introducida en el paso de entrega
-  async function calcDelivery() {
+  async function calcDelivery(): Promise<{
+    deliverable: boolean;
+    zone: number | null;
+    fee: number;
+  } | null> {
     const query = [fields.deliveryAddress, fields.postalCode].filter(Boolean).join(", ");
     if (query.trim().length < 4) {
       setDeliveryError("Introduce tu dirección para calcular el envío.");
-      return;
+      return null;
     }
     setDeliveryLoading(true);
     setDeliveryError(null);
@@ -408,17 +412,40 @@ export default function ReservationForm({
       if (!quote) {
         setDeliveryError("No encontramos esa dirección. Prueba con calle + número.");
         setDelivery(null);
+        return null;
       } else if (!quote.deliverable) {
-        setDelivery({ deliverable: false, zone: null, fee: 0 });
+        const d = { deliverable: false, zone: null, fee: 0 };
+        setDelivery(d);
         setDeliveryError("Aún no llegamos a tu zona. Te contactaremos por WhatsApp.");
+        return d;
       } else {
-        setDelivery({ deliverable: true, zone: quote.zone, fee: quote.fee });
+        const d = { deliverable: true, zone: quote.zone, fee: quote.fee };
+        setDelivery(d);
+        return d;
       }
     } catch {
       setDeliveryError("Error al calcular el envío. Inténtalo de nuevo.");
+      return null;
     } finally {
       setDeliveryLoading(false);
     }
+  }
+
+  // Avanzar al pago: si es entrega y no se ha calculado el envío, se calcula
+  // automáticamente aquí (el cliente no tiene que pulsar "Calcular envío").
+  async function continueFromDelivery() {
+    if (fields.deliveryMethod === "pickup") {
+      goToStep(6);
+      return;
+    }
+    if (delivery?.deliverable) {
+      goToStep(6);
+      return;
+    }
+    const r = await calcDelivery();
+    if (r?.deliverable) goToStep(6);
+    // Si no es entregable o no se pudo geolocalizar, calcDelivery ya muestra el
+    // aviso y NO avanzamos (debe ajustar la dirección o elegir recogida).
   }
 
   // ── Fields ──
@@ -521,11 +548,7 @@ export default function ReservationForm({
   );
   const step5Done =
     fields.deliveryMethod === "pickup" ||
-    !!(
-      delivery?.deliverable &&
-      fields.deliveryAddress.trim().length >= 5 &&
-      fields.postalCode.trim()
-    );
+    !!(fields.deliveryAddress.trim().length >= 5 && fields.postalCode.trim());
 
   // Carrito flotante → avanzar al primer paso pendiente (hacia el pago)
   useEffect(() => {
@@ -588,8 +611,10 @@ export default function ReservationForm({
         goToStep(5);
         return;
       }
+      // El envío se calcula al pulsar "Ver resumen y pagar" (continueFromDelivery).
+      // Este guard solo salta si se llega sin cálculo: vuelve al paso de envío.
       if (!delivery) {
-        setError('Pulsa "Calcular envío" para tu dirección antes de continuar.');
+        setError("Revisa tu dirección de envío en el paso anterior.");
         goToStep(5);
         return;
       }
@@ -1291,16 +1316,16 @@ export default function ReservationForm({
 
               <button
                 type="button"
-                disabled={!step5Done}
-                onClick={() => step5Done && goToStep(6)}
+                disabled={!step5Done || deliveryLoading}
+                onClick={() => step5Done && continueFromDelivery()}
                 className={clsx(
                   "w-full text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
-                  step5Done
+                  step5Done && !deliveryLoading
                     ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
                     : "bg-negro/8 text-negro/30 cursor-not-allowed"
                 )}
               >
-                Ver resumen y pagar
+                {deliveryLoading ? "Calculando envío…" : "Ver resumen y pagar"}
               </button>
             </StepSection>
           )}
