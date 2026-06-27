@@ -10,7 +10,8 @@ export const ZONE_PRICES = [3.9, 5.9]; // € de envío por banda
 export const MAX_MINS = 45;
 
 // Punto de salida (uso interno para calcular distancia — nunca se muestra).
-const ORIGIN: [number, number] = [40.4295, -3.6658];
+// Calle de la Araucaria 19, 28039 Madrid (Tetuán).
+const ORIGIN: [number, number] = [40.4602, -3.6999];
 
 export interface DeliveryQuote {
   deliverable: boolean;
