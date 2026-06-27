@@ -4,7 +4,6 @@ import { storeConfig, SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, EARLY_ACCESS_CODE, PUBLIC_OPEN_AT } from "@/lib/launch";
 import LaunchBanner from "@/components/LaunchBanner";
 import Countdown from "@/components/Countdown";
-import AccessGate from "@/components/AccessGate";
 import { getActivePromotion } from "@/lib/promotions";
 import type { ActivePromotion } from "@/lib/promotions";
 import HowItWorks from "@/components/HowItWorks";
@@ -162,16 +161,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── BANNER DE GRACIAS + FASES DE APERTURA ── */}
-      {reservationsOpen && <LaunchBanner phase={launchPhase} />}
-
-      {/* ── GATE DE CÓDIGO (acceso anticipado) — junto al countdown ── */}
-      {reservationsOpen && launchPhase === "early_access" && (
-        <section className="px-6 pb-16" style={{ background: "var(--g0, #1c3a10)" }}>
-          <div className="max-w-xl mx-auto">
-            <AccessGate code={EARLY_ACCESS_CODE} />
-          </div>
-        </section>
+      {/* ── BANNER DE GRACIAS + CUENTA ATRÁS + CÓDIGO + FASES ── */}
+      {reservationsOpen && (
+        <LaunchBanner
+          phase={launchPhase}
+          code={launchPhase === "early_access" ? EARLY_ACCESS_CODE : undefined}
+        />
       )}
 
       {/* ── PACKS ── */}

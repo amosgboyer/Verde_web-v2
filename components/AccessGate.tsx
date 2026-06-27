@@ -12,9 +12,11 @@ const GLYPHS = "01010110<>/\\#%&{}[]=+*01ABCDEF01";
 export default function AccessGate({
   code,
   onUnlock,
+  bare = false,
 }: {
   code: string;
   onUnlock?: () => void;
+  bare?: boolean;
 }) {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -86,14 +88,29 @@ export default function AccessGate({
 
   return (
     <div
-      className="relative my-6 rounded-2xl overflow-hidden"
-      style={{
-        background: "linear-gradient(160deg, #0d1f08 0%, #16300d 100%)",
-        border: "1px solid rgba(122,179,86,0.35)",
-        boxShadow: "0 12px 48px rgba(13,31,8,0.45)",
-      }}
+      className={
+        bare ? "relative font-mono" : "relative my-6 rounded-2xl overflow-hidden"
+      }
+      style={
+        bare
+          ? undefined
+          : {
+              background: "linear-gradient(160deg, #0d1f08 0%, #16300d 100%)",
+              border: "1px solid rgba(122,179,86,0.35)",
+              boxShadow: "0 12px 48px rgba(13,31,8,0.45)",
+            }
+      }
     >
-      <div className="p-8 sm:p-10 text-center font-mono">
+      <div
+        className={
+          bare
+            ? "pt-6 mt-6 text-center font-mono"
+            : "p-8 sm:p-10 text-center font-mono"
+        }
+        style={
+          bare ? { borderTop: "1px solid rgba(255,255,255,0.12)" } : undefined
+        }
+      >
         {!decoding && !granted && (
           <>
             <p
