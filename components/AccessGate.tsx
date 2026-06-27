@@ -1,33 +1,57 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const TARGET = "VERDE MADRID";
 const GLYPHS = "01010110<>/\\#%&{}[]=+*01ABCDEF01";
 
-// Gate de acceso anticipado: el usuario pega su código binario; al acertar,
-// una animación lo "descifra" hasta revelar VERDE MADRID y desbloquea reservar.
+// Gate de acceso anticipado: el usuario pega su código binario; al acertar, una
+// animación lo "descifra" hasta revelar VERDE MADRID y desbloquea reservar.
+// Es autónomo: guarda el desbloqueo en localStorage, avisa por evento a las
+// demás instancias (banner + formulario) y se oculta solo si ya está desbloqueado.
 export default function AccessGate({
   code,
   onUnlock,
 }: {
   code: string;
-  onUnlock: () => void;
+  onUnlock?: () => void;
 }) {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [decoding, setDecoding] = useState(false);
   const [granted, setGranted] = useState(false);
   const [scramble, setScramble] = useState(TARGET);
+  const [hidden, setHidden] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clean = (s: string) => s.replace(/\s+/g, "");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("verde_access_unlocked") === "1") setHidden(true);
+    const onUnlockedEvent = () => setHidden(true);
+    window.addEventListener("verde:access:unlocked", onUnlockedEvent);
+    return () =>
+      window.removeEventListener("verde:access:unlocked", onUnlockedEvent);
+  }, []);
+
+  function finishUnlock() {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("verde_access_unlocked", "1");
+      localStorage.setItem("verde_access_code", clean(code));
+      window.dispatchEvent(new CustomEvent("verde:access:unlocked"));
+      document
+        .getElementById("reservar")
+        ?.scrollIntoView({ behavior: "smooth" });
+    }
+    onUnlock?.();
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (decoding || granted) return;
     if (clean(value) !== clean(code)) {
-      setError("Código incorrecto. Revisa el que te enviamos por WhatsApp.");
+      setError("Código incorrecto. Revisa el que te enviamos por WhatsApp/email.");
       return;
     }
     setError(null);
@@ -53,10 +77,12 @@ export default function AccessGate({
         if (intervalRef.current) clearInterval(intervalRef.current);
         setScramble(TARGET);
         setGranted(true);
-        setTimeout(onUnlock, 1100);
+        setTimeout(finishUnlock, 1100);
       }
     }, 45);
   }
+
+  if (hidden) return null;
 
   return (
     <div
@@ -86,8 +112,8 @@ export default function AccessGate({
               className="text-xs mb-6 max-w-sm mx-auto leading-relaxed"
               style={{ color: "rgba(245,237,216,0.5)" }}
             >
-              Pega el código que te enviamos por WhatsApp para desbloquear tu
-              reserva. El martes abrimos para todos.
+              Pega el código que te enviamos por WhatsApp o email para desbloquear
+              tu reserva. El martes abrimos para todos.
             </p>
 
             <form onSubmit={handleSubmit} className="max-w-md mx-auto">

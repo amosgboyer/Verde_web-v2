@@ -51,20 +51,36 @@ Es "verde" en binario. Al pegarlo en la web hace una **animación de descifrado*
 
 ---
 
-## 📲 WHATSAPP (con DoubleTick · función "Broadcasting")
+## 📲 WHATSAPP — Meta Cloud API (barato: ~8 € una vez, sin cuota)
 
-**Antes (haz esto ya, no esperes al domingo):**
-1. **Conecta tu número** de WhatsApp Business en DoubleTick (verificación inicial).
-2. Crea una **plantilla de mensaje** con el texto de arriba (Meta la aprueba en minutos–1 día).
-3. Mira que tu **prueba/créditos** cubran ~140 mensajes.
+> Sale **desde un número secundario** con el nombre **"Verde Madrid"**. No se toca
+> el WhatsApp diario de Verde (un número no puede estar en la app y en la API a la vez).
 
-**El domingo:**
-4. Ve a **Broadcasting** → nueva difusión.
-5. **Importa el CSV** (`waitlist-whatsapp.csv` — ver abajo).
-6. Elige la plantilla → **Enviar**.
-7. Las respuestas te caen en **Unified Inbox** (gestiónalas ahí).
+**Lo que necesitas conseguir:**
+- [ ] Un **número secundario** (SIM prepago o línea que NO uses en WhatsApp) que reciba SMS/llamada.
+- [ ] Cuenta de **Meta Business** (la del Instagram/Facebook de Verde vale).
+- [ ] Una **tarjeta** para añadir a Meta (cobran ~0,06 €/mensaje → ~8 € por 129).
 
-> **Formato de teléfonos:** DoubleTick necesita el número con prefijo internacional (ej. `+34600000000`). Revisa que el CSV los tenga así.
+**Setup en Meta (tú, ~1h):**
+1. **developers.facebook.com** → Crear app → tipo **Empresa** → añadir producto **WhatsApp**.
+2. *WhatsApp → Configuración de API* → **Añadir número** = tu número secundario → verifícalo por SMS → nombre que se mostrará: **Verde Madrid**.
+3. Añade el **método de pago** (Meta Business Settings → Facturación de WhatsApp).
+4. Crea la **plantilla**: *WhatsApp Manager → Plantillas → Crear* → categoría **Marketing**, idioma **Español** → pega el mensaje (con el código) → enviar a aprobar (minutos–horas).
+5. Apunta el **Phone Number ID** (en la pantalla de API Setup).
+6. Consigue un **token**:
+   - **Fácil:** el token temporal (24h) que sale en *Configuración de API* → genéralo el **domingo** justo antes y enviamos dentro de 24h.
+   - **Robusto:** token permanente (Business Settings → Usuarios del sistema → permiso `whatsapp_business_messaging`).
+
+**Pasarme las credenciales (sin chat):**
+7. En **Vercel → Settings → Environment Variables** añade:
+   - `WHATSAPP_TOKEN` = tu token
+   - `WHATSAPP_PHONE_ID` = el Phone Number ID
+8. Dime el **nombre de la plantilla** aprobada.
+
+**El envío (lo hago YO):**
+9. Monto un endpoint temporal que lee tu lista (del Google Sheet) y **envía la plantilla a los 129** vía Cloud API → te devuelvo "enviados: N" → borro el endpoint. Coste: ~8 € a Meta.
+
+> No hace falta el CSV para esta vía (leo la lista directa del Sheet). El CSV te lo dejé igual por si lo quieres.
 
 ---
 

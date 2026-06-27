@@ -13,6 +13,44 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.VERDE_FROM_EMAIL ?? "verde@ejemplo.com";
 const TEAM_EMAIL = process.env.VERDE_INTERNAL_EMAIL ?? "equipo@ejemplo.com";
 
+// ─── Email de lanzamiento a la lista de espera ────────────────────────────────
+const LAUNCH_REPLY_TO = "verdeysoloverdemadrid@gmail.com";
+const ACCESS_CODE_SPACED = "01110110 01100101 01110010 01100100 01100101";
+
+export async function sendLaunchAnnouncement(
+  to: string,
+  name: string
+): Promise<void> {
+  const hello = name && name.trim() ? name.trim().split(/\s+/)[0] : "hola";
+  const html = `
+  <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#2e2e1e;background:#f5edd8;">
+    <div style="background:#1c3a10;padding:24px;text-align:center;">
+      <span style="color:#7ab356;font-size:12px;letter-spacing:3px;text-transform:uppercase;">Verde · Madrid</span>
+    </div>
+    <div style="padding:28px 24px;">
+      <p style="font-size:16px;">¡Hola ${hello}!</p>
+      <h1 style="color:#2E4F20;font-size:24px;margin:8px 0 16px;">El momento ha llegado 🌱</h1>
+      <p style="font-size:15px;line-height:1.6;">Te apuntaste a la lista de espera de <b>Verde</b> y por eso hoy entras <b>antes que nadie</b>. El fruto de tu interés ya está aquí… pero solo unos días: <b>el martes abrimos para todo el mundo.</b> Reserva cuanto antes y disfruta.</p>
+      <p style="margin-top:22px;font-size:13px;color:#6e6e5a;">🔓 Tu código de acceso anticipado (cópialo y pégalo en la web):</p>
+      <div style="background:#0d1f08;color:#b8d89a;font-family:monospace;padding:14px;border-radius:8px;text-align:center;letter-spacing:2px;font-size:14px;word-break:break-all;">${ACCESS_CODE_SPACED}</div>
+      <p style="margin-top:22px;font-size:15px;line-height:1.6;">👉 Entra en la web, baja a <i>"Haz tu pedido"</i>, pega el código y verás la magia ✨. Elige tu pack o plato y reserva tu día (entregamos miércoles a domingo).</p>
+      <div style="text-align:center;margin:28px 0;">
+        <a href="https://www.verdemadrid.com" style="background:#c85a2a;color:#ffffff;padding:14px 30px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Reservar ahora →</a>
+      </div>
+      <p style="font-size:13px;color:#6e6e5a;">⚡ Plazas limitadas — 1 cupo por hora. ¡Corre que vuelan!</p>
+      <p style="margin-top:22px;font-size:15px;">Con cariño,<br/><b>Verde Madrid</b><br/><a href="https://www.verdemadrid.com" style="color:#2E4F20;">verdemadrid.com</a></p>
+    </div>
+  </div>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    reply_to: LAUNCH_REPLY_TO,
+    subject: "El momento ha llegado 🌱",
+    html,
+  });
+}
+
 export interface OrderItem {
   productName: string;
   quantity: number;

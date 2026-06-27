@@ -269,15 +269,19 @@ export default function ReservationForm({
   const [accessCode, setAccessCode] = useState("");
   const [unlocked, setUnlocked] = useState(!requireAccessCode);
 
-  // Recordar desbloqueo entre recargas (acceso anticipado)
+  // Recordar desbloqueo entre recargas + escuchar el gate de arriba (banner)
   useEffect(() => {
     if (!requireAccessCode) return;
     if (typeof window === "undefined") return;
-    if (localStorage.getItem("verde_access_unlocked") === "1") {
+    function applyUnlock() {
       const saved = localStorage.getItem("verde_access_code") ?? "";
       setAccessCode(saved);
       setUnlocked(true);
     }
+    if (localStorage.getItem("verde_access_unlocked") === "1") applyUnlock();
+    window.addEventListener("verde:access:unlocked", applyUnlock);
+    return () =>
+      window.removeEventListener("verde:access:unlocked", applyUnlock);
   }, [requireAccessCode]);
 
   function handleUnlock() {
