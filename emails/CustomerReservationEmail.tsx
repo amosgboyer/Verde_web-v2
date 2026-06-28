@@ -7,6 +7,7 @@ import {
   Hr,
 } from "@react-email/components";
 import React from "react";
+import { PICKUP_ADDRESS } from "../lib/store-config";
 
 // ─── Shared types (mirror of lib/email OrderItem, no circular import) ───────
 interface OrderItem {
@@ -292,7 +293,10 @@ export function CustomerReservationEmail({
                           )}
                         </>
                       ) : (
-                        <Row label="Entrega" value="Recogida en local" />
+                        <>
+                          <Row label="Entrega" value="Recogida en local" />
+                          <Row label="Recoges en" value={PICKUP_ADDRESS} />
+                        </>
                       )}
                     </tbody>
                   </table>

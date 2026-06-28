@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { Product } from "@/lib/products";
 import type { StoreConfig } from "@/lib/store-config";
+import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
 import { quoteDelivery } from "@/lib/delivery";
 import ProductCard from "./ProductCard";
@@ -1204,6 +1205,29 @@ export default function ReservationForm({
                 </div>
               </div>
 
+              {fields.deliveryMethod === "pickup" && (
+                <div className="mb-2 border border-verde-bosque/25 bg-verde-bosque/[0.05] p-5">
+                  <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-verde-bosque mb-1">
+                    Recoges tu pedido en
+                  </p>
+                  <p className="text-sm font-medium text-negro/80">
+                    {PICKUP_ADDRESS}
+                  </p>
+                  <a
+                    href={PICKUP_MAPS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-2 text-xs text-verde-bosque underline underline-offset-2 hover:text-verde-platano"
+                  >
+                    Ver cómo llegar ↗
+                  </a>
+                  <p className="text-[11px] text-negro/40 mt-2 leading-relaxed">
+                    Te avisaremos cuando tu pedido esté listo para recoger en el
+                    día y hora elegidos.
+                  </p>
+                </div>
+              )}
+
               {fields.deliveryMethod === "delivery" && (
                 <>
                   <p className="text-negro/35 text-xs leading-relaxed mb-6 max-w-sm">
@@ -1394,8 +1418,10 @@ export default function ReservationForm({
                   </>
                 ) : (
                   <div className="flex justify-between text-sm text-negro/45">
-                    <span>Entrega</span>
-                    <span>Recogida en local</span>
+                    <span>Recoges en</span>
+                    <span className="text-right max-w-[60%] text-negro/70">
+                      {PICKUP_ADDRESS}
+                    </span>
                   </div>
                 )}
               </div>
