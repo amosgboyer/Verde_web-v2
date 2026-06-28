@@ -367,7 +367,20 @@ export function CustomerReservationEmail({
                       lineHeight: "1.5",
                     }}
                   >
-                    Si tienes alguna duda, responde este correo y te atendemos.
+                    Si tienes alguna duda, responde este correo o escríbenos por
+                    WhatsApp:
+                  </p>
+                  <p style={{ margin: "6px 0 0 0", fontSize: "14px" }}>
+                    <a
+                      href="https://wa.me/34605442809"
+                      style={{
+                        color: V.platano,
+                        fontWeight: "bold",
+                        textDecoration: "none",
+                      }}
+                    >
+                      📲 WhatsApp · +34 605 442 809
+                    </a>
                   </p>
                 </td>
               </tr>

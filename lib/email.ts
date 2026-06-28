@@ -38,7 +38,8 @@ export async function sendLaunchAnnouncement(
         <a href="https://www.verdemadrid.com" style="background:#c85a2a;color:#ffffff;padding:14px 30px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Reservar ahora →</a>
       </div>
       <p style="font-size:13px;color:#6e6e5a;">⚡ Plazas limitadas — 1 cupo por hora. ¡Corre que vuelan!</p>
-      <p style="margin-top:22px;font-size:15px;">Con cariño,<br/><b>Verde Madrid</b><br/><a href="https://www.verdemadrid.com" style="color:#2E4F20;">verdemadrid.com</a></p>
+      <p style="margin-top:18px;font-size:13px;color:#6e6e5a;">¿Dudas? Escríbenos por WhatsApp: <a href="https://wa.me/34605442809" style="color:#509234;font-weight:bold;text-decoration:none;">📲 +34 605 442 809</a></p>
+      <p style="margin-top:14px;font-size:15px;">Con cariño,<br/><b>Verde Madrid</b><br/><a href="https://www.verdemadrid.com" style="color:#2E4F20;">verdemadrid.com</a></p>
     </div>
   </div>`;
 
