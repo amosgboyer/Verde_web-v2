@@ -2,11 +2,11 @@
 // reserva y el backend de checkout. El punto de origen NO se expone en la UI.
 
 // Bandas de reparto:
-//  Banda 1 (interior, ≤3,5 km): 3,90 €
-//  Banda 2 (resto M-30, 3,5-7 km): 5,90 €
+//  Banda 1 (interior, ≤3,5 km): 2,90 €
+//  Banda 2 (resto M-30, 3,5-7 km): 3,90 €
 //  Más de 7 km → fuera de cobertura.
 export const ZONE_LIMITS = [3.5, 7]; // km máximos por banda
-export const ZONE_PRICES = [3.9, 5.9]; // € de envío por banda
+export const ZONE_PRICES = [2.9, 3.9]; // € de envío por banda
 export const MAX_MINS = 45;
 
 // Punto de salida (uso interno para calcular distancia — nunca se muestra).
