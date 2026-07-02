@@ -2,7 +2,6 @@ import { getAvailableProducts, getPacks } from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { storeConfig, SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, EARLY_ACCESS_CODE, PUBLIC_OPEN_AT } from "@/lib/launch";
-import LaunchBanner from "@/components/LaunchBanner";
 import Countdown from "@/components/Countdown";
 import { getActivePromotion } from "@/lib/promotions";
 import type { ActivePromotion } from "@/lib/promotions";
@@ -160,14 +159,6 @@ export default async function HomePage() {
           <div style={{ width: 1, height: 28, background: "rgba(255,255,255,0.15)" }} />
         </div>
       </section>
-
-      {/* ── BANNER DE GRACIAS + CUENTA ATRÁS + CÓDIGO + FASES ── */}
-      {reservationsOpen && (
-        <LaunchBanner
-          phase={launchPhase}
-          code={launchPhase === "early_access" ? EARLY_ACCESS_CODE : undefined}
-        />
-      )}
 
       {/* ── PACKS ── */}
       {reservationsOpen && (
