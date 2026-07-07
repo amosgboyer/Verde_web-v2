@@ -31,6 +31,7 @@ export interface CustomerReservationEmailProps {
   subtotalBeforeDiscount?: number;
   discountAmount?: number;
   promoName?: string;
+  orderCode?: string;
 }
 
 // ─── Brand palette ───────────────────────────────────────────────────────────
@@ -120,6 +121,7 @@ export function CustomerReservationEmail({
   subtotalBeforeDiscount,
   discountAmount,
   promoName,
+  orderCode,
 }: CustomerReservationEmailProps) {
   const isDelivery = !deliveryMethod || deliveryMethod === "delivery";
   const hasDiscount = !!discountAmount && discountAmount > 0;
@@ -337,6 +339,80 @@ export function CustomerReservationEmail({
 
                 </td>
               </tr>
+
+              {/* ── Añadir a tu pedido ── */}
+              {orderCode && (
+                <tr>
+                  <td style={{ padding: "20px 32px 0 32px" }}>
+                    <table
+                      width="100%"
+                      cellPadding={0}
+                      cellSpacing={0}
+                      style={{
+                        background: "rgba(80,146,52,0.08)",
+                        borderRadius: "10px",
+                      }}
+                    >
+                      <tbody>
+                        <tr>
+                          <td style={{ padding: "18px 20px" }}>
+                            <p
+                              style={{
+                                margin: "0 0 4px 0",
+                                fontSize: "11px",
+                                fontWeight: "bold",
+                                letterSpacing: "1.5px",
+                                textTransform: "uppercase",
+                                color: V.verde,
+                              }}
+                            >
+                              ¿Se te olvidó algo?
+                            </p>
+                            <p
+                              style={{
+                                margin: "0 0 14px 0",
+                                fontSize: "13px",
+                                color: "#555",
+                                lineHeight: "1.5",
+                              }}
+                            >
+                              Puedes añadir más cosas a este pedido hasta el día
+                              antes. Solo pagas lo nuevo.
+                            </p>
+                            <a
+                              href={`https://www.verdemadrid.com/anadir?codigo=${orderCode}`}
+                              style={{
+                                display: "inline-block",
+                                background: V.platano,
+                                color: "#ffffff",
+                                fontWeight: "bold",
+                                fontSize: "13px",
+                                textDecoration: "none",
+                                padding: "11px 22px",
+                                borderRadius: "8px",
+                              }}
+                            >
+                              ➕ Añadir a tu pedido
+                            </a>
+                            <p
+                              style={{
+                                margin: "12px 0 0 0",
+                                fontSize: "12px",
+                                color: "#888",
+                              }}
+                            >
+                              Tu nº de pedido:{" "}
+                              <b style={{ color: "#555", letterSpacing: "1px" }}>
+                                {orderCode}
+                              </b>
+                            </p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              )}
 
               {/* Divider */}
               <tr>

@@ -79,6 +79,7 @@ export interface ConfirmationEmailData {
   subtotalBeforeDiscount?: number;
   discountAmount?: number;
   promoName?: string;
+  orderCode?: string;
 }
 
 // ─── Customer confirmation ────────────────────────────────────────────────────
@@ -106,6 +107,7 @@ export async function sendConfirmationToCustomer(
       subtotalBeforeDiscount:   data.subtotalBeforeDiscount,
       discountAmount:           data.discountAmount,
       promoName:                data.promoName,
+      orderCode:                data.orderCode,
     }),
   });
 }

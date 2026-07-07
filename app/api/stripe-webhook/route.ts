@@ -7,6 +7,7 @@ import {
   sendOverbookingAlert,
 } from "@/lib/email";
 import { isSlotAvailable, normalizeTime, normalizeDate } from "@/lib/availability";
+import { orderCodeFromSession } from "@/lib/order-code";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -94,14 +95,22 @@ export async function POST(req: NextRequest) {
     const subtotalBeforeDiscount = parseFloat(meta.subtotalBeforeDiscount ?? "0");
     const totalAfterDiscount = parseFloat(meta.totalAfterDiscount ?? "0");
 
+    // Las ampliaciones ("añadir a mi pedido") ya tienen cupo del pedido
+    // original → no se re-chequea disponibilidad.
+    const isAddon = meta.isAddon === "true";
+
     // Re-validate slot availability before saving
     let slotStillAvailable = false;
-    try {
-      slotStillAvailable = await isSlotAvailable(reservationDate, reservationTime);
-    } catch (err) {
-      console.error("[stripe-webhook] Error validando slot:", err);
-      // benefit of the doubt: save as NEEDS_REVIEW
-      slotStillAvailable = false;
+    if (isAddon) {
+      slotStillAvailable = true;
+    } else {
+      try {
+        slotStillAvailable = await isSlotAvailable(reservationDate, reservationTime);
+      } catch (err) {
+        console.error("[stripe-webhook] Error validando slot:", err);
+        // benefit of the doubt: save as NEEDS_REVIEW
+        slotStillAvailable = false;
+      }
     }
 
     const orderStatus = slotStillAvailable ? "PAID" : "NEEDS_REVIEW";
@@ -195,6 +204,9 @@ export async function POST(req: NextRequest) {
           customerName: meta.customerName,
           email: meta.email,
           phone: meta.phone,
+          orderCode: orderCodeFromSession(
+            isAddon && meta.parentSessionId ? meta.parentSessionId : session.id
+          ),
           items: emailItems,
           reservationDate,
           reservationTime,

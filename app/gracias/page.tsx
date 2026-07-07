@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { stripe } from "@/lib/stripe";
+import { orderCodeFromSession } from "@/lib/order-code";
 
 interface GraciasPageProps {
-  searchParams: { session_id?: string };
+  searchParams: { session_id?: string; added?: string };
 }
 
 interface ItemMeta {
@@ -15,6 +16,8 @@ interface ItemMeta {
 
 export default async function GraciasPage({ searchParams }: GraciasPageProps) {
   const sessionId = searchParams.session_id;
+  const isAdded = searchParams.added === "1";
+  const orderCode = sessionId ? orderCodeFromSession(sessionId) : "";
 
   let customerName = "";
   let deliveryDay = "";
@@ -57,13 +60,16 @@ export default async function GraciasPage({ searchParams }: GraciasPageProps) {
 
         <div className="mb-14">
           <p className="text-crema/30 text-[10px] font-medium tracking-[0.4em] uppercase mb-4">
-            Pedido confirmado
+            {isAdded ? "Añadido a tu pedido" : "Pedido confirmado"}
           </p>
           <h1 className="text-crema text-4xl sm:text-5xl font-bold tracking-tight leading-tight mb-6">
-            Pedido confirmado
+            {isAdded ? "¡Añadido a tu pedido!" : "Pedido confirmado"}
           </h1>
           <p className="text-crema/60 text-base leading-relaxed mb-3">
-            Gracias{customerName ? `, ${customerName}` : ""}. Te enviamos un correo con los detalles de tu pedido.
+            Gracias{customerName ? `, ${customerName}` : ""}.{" "}
+            {isAdded
+              ? "Hemos sumado lo nuevo a tu pedido. Te enviamos un correo con los detalles."
+              : "Te enviamos un correo con los detalles de tu pedido."}
           </p>
           <p className="text-crema/60 text-base leading-relaxed">
             Si necesitamos confirmar algo sobre la entrega, te escribiremos por WhatsApp.
@@ -118,6 +124,27 @@ export default async function GraciasPage({ searchParams }: GraciasPageProps) {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {orderCode && !isAdded && (
+          <div className="border-t border-crema/12 pt-8 mb-10">
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-crema/28 mb-2">
+              Tu nº de pedido
+            </p>
+            <p className="text-crema text-2xl font-bold tracking-[0.18em] mb-4">
+              {orderCode}
+            </p>
+            <p className="text-crema/55 text-sm leading-relaxed mb-5 max-w-sm">
+              ¿Se te olvidó algo? Puedes añadir más a este pedido (una bebida, otro
+              plato…) hasta el día antes. Solo pagas lo nuevo.
+            </p>
+            <a
+              href={`/anadir?codigo=${orderCode}`}
+              className="inline-block bg-oro text-verde-bosque text-[11px] font-bold tracking-[0.2em] uppercase px-7 py-4 hover:opacity-90 transition-opacity"
+            >
+              ➕ Añadir a mi pedido
+            </a>
           </div>
         )}
 

@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { orderCodeFromSession, normalizePhone } from "./order-code";
 
 function getPrivateKey(): string {
   const key = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
@@ -255,6 +256,86 @@ export async function findOrderByStripeSessionId(
 ): Promise<OrderSheetRow | null> {
   const orders = await getOrdersRows();
   return orders.find((o) => o.stripeSessionId === sessionId) ?? null;
+}
+
+// ─── Buscar pedido para AÑADIR (por código, teléfono+fecha o sesión) ───────────
+
+export interface AddOrderContext {
+  found: boolean;
+  sessionId: string;
+  orderCode: string;
+  customerName: string;
+  email: string;
+  phone: string;
+  reservationDate: string;
+  reservationTime: string;
+  deliveryMethod: string;
+}
+
+const EMPTY_ADD_CONTEXT: AddOrderContext = {
+  found: false,
+  sessionId: "",
+  orderCode: "",
+  customerName: "",
+  email: "",
+  phone: "",
+  reservationDate: "",
+  reservationTime: "",
+  deliveryMethod: "",
+};
+
+// Devuelve el contexto de un pedido para poder ampliarlo. Acepta:
+//  - sessionId exacto (uso interno del backend, fuente de verdad)
+//  - code (nº de pedido derivado)
+//  - phone + date (para clientes sin código / pedidos antiguos)
+// Se lee la línea de pedido más reciente que coincida.
+export async function findAddOrderContext(opts: {
+  sessionId?: string;
+  code?: string;
+  phone?: string;
+  date?: string;
+}): Promise<AddOrderContext> {
+  const rows = await getSheetValues("Orders!A2:T");
+  const withSession = rows.filter((r) => (r[2] ?? "").trim());
+
+  let match: string[] | undefined;
+
+  if (opts.sessionId) {
+    const sid = opts.sessionId.trim();
+    match = [...withSession].reverse().find((r) => (r[2] ?? "").trim() === sid);
+  } else if (opts.code) {
+    const code = opts.code.trim().toUpperCase();
+    match = [...withSession]
+      .reverse()
+      .find((r) => orderCodeFromSession((r[2] ?? "").trim()) === code);
+  } else if (opts.phone) {
+    const phone = normalizePhone(opts.phone);
+    const date = opts.date ? normalizeDate(opts.date) : "";
+    if (phone.length >= 6) {
+      match = [...withSession]
+        .reverse()
+        .find(
+          (r) =>
+            normalizePhone(r[5] ?? "") === phone &&
+            (!date || normalizeDate(r[9] ?? "") === date)
+        );
+    }
+  }
+
+  if (!match) return EMPTY_ADD_CONTEXT;
+
+  const sessionId = (match[2] ?? "").trim();
+  return {
+    found: true,
+    sessionId,
+    orderCode: orderCodeFromSession(sessionId),
+    customerName: (match[3] ?? "").trim(),
+    email: (match[4] ?? "").trim(),
+    phone: (match[5] ?? "").trim(),
+    reservationDate: normalizeDate(match[9] ?? ""),
+    reservationTime: normalizeTime(match[10] ?? ""),
+    deliveryMethod: (match[19] ?? "").trim() || "delivery",
+  };
 }
 
 // ─── Append Order ─────────────────────────────────────────────────────────────
