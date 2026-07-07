@@ -3,6 +3,11 @@
 import type { Product } from "@/lib/products";
 import clsx from "clsx";
 
+// Precio en formato español: entero "10", decimal "2,20".
+function fmtPrice(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
+}
+
 interface ProductCardProps {
   product: Product;
   quantity: number;
@@ -80,7 +85,7 @@ export default function ProductCard({
                 color: "var(--g1, #2d5a1b)",
               }}
             >
-              {product.depositAmount || product.finalPrice} €
+              {fmtPrice(product.depositAmount || product.finalPrice)} €
             </span>
             <span
               className="block mt-0.5"

@@ -102,6 +102,11 @@ const DAY_LABELS = ["L", "M", "X", "J", "V", "S", "D"];
 
 // ─── Category helpers ───────────────────────────────────────────────────────
 
+// Precio en formato español: entero "10", decimal "2,20".
+function fmtPrice(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
+}
+
 type NormalizedCategory = "Verde" | "Maduro" | "Otros" | "Bebidas";
 
 function normalizeCategory(raw: string): NormalizedCategory {
@@ -508,6 +513,10 @@ export default function ReservationForm({
   const selectedDay = availability.find((d) => d.date === fields.reservationDate);
 
   const cartProducts = products.filter((p) => (cart[p.id] ?? 0) > 0);
+  // Bebidas (para el empujón "¿Algo para beber?" antes de pagar)
+  const drinkProducts = products.filter(
+    (p) => !p.isPack && normalizeCategory(p.category ?? "") === "Bebidas"
+  );
   const totalItems = cartProducts.reduce((s, p) => s + (cart[p.id] ?? 0), 0);
   const totalDeposit = cartProducts.reduce(
     (s, p) => s + p.depositAmount * (cart[p.id] ?? 0),
@@ -1377,6 +1386,79 @@ export default function ReservationForm({
               onEdit={() => {}}
               showEditButton={false}
             >
+              {/* Empujón: ¿Algo para beber? (order bump antes de pagar) */}
+              {drinkProducts.length > 0 && (
+                <div
+                  className="mb-6 rounded-xl p-5 border"
+                  style={{
+                    background: "rgba(80,146,52,0.06)",
+                    borderColor: "rgba(80,146,52,0.25)",
+                  }}
+                >
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-verde-bosque mb-1">
+                    🥤 ¿Algo para beber?
+                  </p>
+                  <p className="text-xs text-negro/45 mb-4">
+                    Añádelo a tu pedido antes de pagar.
+                  </p>
+                  <div className="flex flex-wrap gap-2.5">
+                    {drinkProducts.map((d) => {
+                      const qty = cart[d.id] ?? 0;
+                      const price = d.depositAmount || d.finalPrice;
+                      return (
+                        <div
+                          key={d.id}
+                          className="flex items-center gap-2.5 rounded-full border bg-white pl-3.5 pr-1.5 py-1.5"
+                          style={{
+                            borderColor:
+                              qty > 0 ? "#509234" : "rgba(0,0,0,0.12)",
+                          }}
+                        >
+                          <span className="text-xs font-medium text-negro/75">
+                            {d.name}
+                          </span>
+                          <span className="text-xs font-semibold text-verde-bosque">
+                            {fmtPrice(price)} €
+                          </span>
+                          {qty > 0 ? (
+                            <span className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => decrement(d.id)}
+                                className="w-6 h-6 rounded-full bg-negro/10 text-negro/60 leading-none"
+                                aria-label={`Quitar ${d.name}`}
+                              >
+                                −
+                              </button>
+                              <span className="text-xs font-semibold w-4 text-center">
+                                {qty}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => increment(d.id)}
+                                className="w-6 h-6 rounded-full bg-verde-bosque text-crema leading-none"
+                                aria-label={`Añadir ${d.name}`}
+                              >
+                                +
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => addToCart(d.id)}
+                              className="w-7 h-7 rounded-full bg-verde-bosque text-crema leading-none text-sm font-bold hover:bg-verde-platano transition-colors"
+                              aria-label={`Añadir ${d.name}`}
+                            >
+                              +
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="bg-verde-bosque/5 rounded-xl p-6 mb-6">
               {/* Products */}
               <div className="space-y-2 mb-6">
@@ -1389,7 +1471,7 @@ export default function ReservationForm({
                       {p.name}{" "}
                       <span className="text-negro/38">×{cart[p.id]}</span>
                     </span>
-                    <span>{p.finalPrice * (cart[p.id] ?? 0)} €</span>
+                    <span>{fmtPrice(p.finalPrice * (cart[p.id] ?? 0))} €</span>
                   </div>
                 ))}
               </div>
