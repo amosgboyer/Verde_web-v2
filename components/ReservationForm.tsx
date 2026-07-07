@@ -102,16 +102,23 @@ const DAY_LABELS = ["L", "M", "X", "J", "V", "S", "D"];
 
 // ─── Category helpers ───────────────────────────────────────────────────────
 
-type NormalizedCategory = "Verde" | "Maduro" | "Otros";
+type NormalizedCategory = "Verde" | "Maduro" | "Otros" | "Bebidas";
 
 function normalizeCategory(raw: string): NormalizedCategory {
   const lower = (raw ?? "").trim().toLowerCase();
   if (lower === "verde") return "Verde";
   if (lower === "maduro") return "Maduro";
+  if (
+    lower === "bebida" ||
+    lower === "bebidas" ||
+    lower === "drink" ||
+    lower === "drinks"
+  )
+    return "Bebidas";
   return "Otros";
 }
 
-const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Otros"];
+const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Otros", "Bebidas"];
 
 const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: string }> = {
   Verde: {
@@ -125,6 +132,10 @@ const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: str
   Otros: {
     title: "OTROS PRODUCTOS",
     subtitle: "Más opciones disponibles por reserva.",
+  },
+  Bebidas: {
+    title: "BEBIDAS",
+    subtitle: "Para acompañar y refrescar. 🥤",
   },
 };
 
@@ -868,7 +879,7 @@ export default function ReservationForm({
               return (
                 <div className="space-y-8">
                   {activeGroups.map((cat) => (
-                    <div key={cat} id={cat === "Verde" ? "cat-verde" : cat === "Maduro" ? "cat-maduro" : "cat-otros"}>
+                    <div key={cat} id={`cat-${cat.toLowerCase()}`}>
                       {showHeadings && (
                         <div className="mb-4">
                           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-verde-bosque/70 mb-1">

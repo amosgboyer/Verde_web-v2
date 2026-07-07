@@ -1,12 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 const CATS = [
   { label: "Verde y Solo Verde", id: "cat-verde" },
   { label: "Para los amantes del Maduro", id: "cat-maduro" },
   { label: "Otros productos", id: "cat-otros" },
+  { label: "Bebidas", id: "cat-bebidas" },
 ];
 
 export default function CategoryBar() {
+  // Solo mostrar categorías que existen en la página (evita pestañas vacías).
+  const [cats, setCats] = useState(CATS);
+  useEffect(() => {
+    const present = CATS.filter((c) => document.getElementById(c.id));
+    if (present.length) setCats(present);
+  }, []);
+
   function goTo(id: string) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -26,7 +36,7 @@ export default function CategoryBar() {
         scrollbarWidth: "none",
       }}
     >
-      {CATS.map((cat) => (
+      {cats.map((cat) => (
         <button
           key={cat.id}
           onClick={() => goTo(cat.id)}
