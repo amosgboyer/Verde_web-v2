@@ -169,9 +169,6 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── CÓMO FUNCIONA ── */}
-      <HowItWorks />
-
       {/* ── BARRA DE CATEGORÍAS ── */}
       {reservationsOpen && <CategoryBar />}
 
@@ -199,6 +196,9 @@ export default async function HomePage() {
           <Packs readOnly />
         </>
       )}
+
+      {/* ── CÓMO FUNCIONA ── */}
+      <HowItWorks />
 
       {/* ── RESEÑAS ── */}
       <Reviews />
