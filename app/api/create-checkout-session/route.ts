@@ -157,6 +157,7 @@ export async function POST(req: NextRequest) {
           weekendOffer,
           validatedItems.map(({ product, quantity }) => ({
             productId: product.id,
+            productName: product.name,
             quantity,
             unitPrice: product.depositAmount,
           }))

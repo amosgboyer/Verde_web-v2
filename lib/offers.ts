@@ -8,8 +8,9 @@ export interface WeekendOffer {
   id: string;
   name: string; // se muestra al cliente y se guarda en el pedido
   tagline: string; // gancho corto
-  productId: string; // producto al que aplica
-  productName: string;
+  productId: string; // id de referencia (fallback estático)
+  productName: string; // nombre exacto mostrado al cliente
+  productNameMatch: string; // nombre normalizado para casar con el Sheet
   everyNth: number; // cada N unidades, 1 va con descuento (2 = "cada 2ª unidad")
   percentOff: number; // % de descuento sobre la unidad con oferta
   startDate: string; // "YYYY-MM-DD" inclusive (Madrid)
@@ -23,11 +24,36 @@ export const SWEET_WEEKEND: WeekendOffer = {
   tagline: "La 2ª Canoa de Maduro, al 50%",
   productId: "canoa-maduro",
   productName: "Canoa de Maduro",
+  productNameMatch: "canoa de maduro",
   everyNth: 2,
   percentOff: 50,
   startDate: "2026-07-17", // viernes
   endDate: "2026-07-19", // domingo (se apaga sola el lunes 20 a las 00:00)
 };
+
+// Normaliza un nombre para comparar (minúsculas, sin acentos, espacios colapsados).
+// El id del producto puede variar entre el Sheet y el fallback estático; casar
+// también por nombre hace que la oferta funcione sin depender del id.
+export function normalizeProductName(s: string): string {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+// ¿Este producto (por id o por nombre) es el objetivo de la oferta?
+export function productMatchesOffer(
+  offer: WeekendOffer,
+  product: { id: string; name?: string }
+): boolean {
+  if (product.id === offer.productId) return true;
+  if (product.name && normalizeProductName(product.name) === offer.productNameMatch) {
+    return true;
+  }
+  return false;
+}
 
 // "YYYY-MM-DD" de hoy en horario de Madrid.
 function todayMadrid(): string {
@@ -45,6 +71,7 @@ export function getActiveWeekendOffer(): WeekendOffer | null {
 
 export interface OfferItem {
   productId: string;
+  productName?: string; // para casar por nombre si el id del Sheet difiere
   quantity: number;
   unitPrice: number; // precio unitario realmente cobrado (depositAmount)
 }
@@ -61,7 +88,9 @@ export function computeOfferDiscount(
   offer: WeekendOffer,
   items: OfferItem[]
 ): OfferDiscount {
-  const line = items.find((i) => i.productId === offer.productId);
+  const line = items.find((i) =>
+    productMatchesOffer(offer, { id: i.productId, name: i.productName })
+  );
   if (!line || line.quantity <= 0 || offer.everyNth <= 0) {
     return { discountAmount: 0, discountedUnits: 0 };
   }

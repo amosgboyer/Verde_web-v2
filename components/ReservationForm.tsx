@@ -6,7 +6,7 @@ import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
 import type { WeekendOffer } from "@/lib/offers";
-import { computeOfferDiscount } from "@/lib/offers";
+import { computeOfferDiscount, productMatchesOffer } from "@/lib/offers";
 import { quoteDelivery } from "@/lib/delivery";
 import ProductCard from "./ProductCard";
 import ContactHelp from "./ContactHelp";
@@ -571,6 +571,7 @@ export default function ReservationForm({
           weekendOffer,
           cartProducts.map((p) => ({
             productId: p.id,
+            productName: p.name,
             quantity: cart[p.id] ?? 0,
             unitPrice: p.depositAmount,
           }))
@@ -983,8 +984,12 @@ export default function ReservationForm({
                             onIncrement={increment}
                             onDecrement={decrement}
                             offerBadge={
-                              weekendOffer && product.id === weekendOffer.productId
-                                ? `${weekendOffer.name} · 2ª −${weekendOffer.percentOff}%`
+                              weekendOffer &&
+                              productMatchesOffer(weekendOffer, {
+                                id: product.id,
+                                name: product.name,
+                              })
+                                ? `2ª −${weekendOffer.percentOff}%`
                                 : undefined
                             }
                           />
