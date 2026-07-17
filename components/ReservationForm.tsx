@@ -902,29 +902,24 @@ export default function ReservationForm({
 
           {weekendOffer && (
             <div
-              className="mt-4 flex items-center gap-3 rounded-xl px-4 py-3 max-w-md"
+              className="mt-4 rounded-xl px-4 py-3 max-w-md"
               style={{
                 background:
                   "linear-gradient(100deg, rgba(200,90,42,0.14), rgba(217,164,65,0.16))",
                 border: "1px solid rgba(200,90,42,0.28)",
               }}
             >
-              <span className="text-2xl leading-none shrink-0" aria-hidden="true">
-                🍮
-              </span>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-[13px] text-[#a8451f] tracking-tight">
-                    {weekendOffer.name}
-                  </span>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-white bg-[#c85a2a] rounded-full px-2 py-0.5 shrink-0">
-                    Solo este finde
-                  </span>
-                </div>
-                <p className="text-[12px] text-negro/60 leading-snug mt-0.5">
-                  {weekendOffer.tagline}. Añade 2 y la 2ª te sale a mitad de precio.
-                </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-[13px] text-[#a8451f] tracking-tight">
+                  {weekendOffer.name}
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-white bg-[#c85a2a] rounded-full px-2 py-0.5 shrink-0">
+                  Solo este finde
+                </span>
               </div>
+              <p className="text-[12px] text-negro/60 leading-snug mt-0.5">
+                {weekendOffer.tagline}. Añade 2 y la 2ª te sale a mitad de precio.
+              </p>
             </div>
           )}
           <ContactHelp variant="inline" />
