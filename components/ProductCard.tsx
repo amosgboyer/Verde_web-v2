@@ -15,33 +15,40 @@ interface ProductCardProps {
   onAdd: (productId: string) => void;
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
+  offerBadge?: string;
 }
 
-const BADGES: Record<string, { label: string; type: "hot" | "new" }> = {
-  "Tigrillo XL Mixto": { label: "Más pedido", type: "hot" },
-  "Canoa de Maduro":   { label: "Novedad",     type: "new" },
-};
-
 export default function ProductCard({
-  product, quantity, maxQuantity, onAdd, onIncrement, onDecrement,
+  product, quantity, maxQuantity, onAdd, onIncrement, onDecrement, offerBadge,
 }: ProductCardProps) {
   const inCart = quantity > 0;
-  const badge = BADGES[product.name];
 
   return (
     <div
       className={clsx(
-        "rounded-[14px] overflow-hidden transition-all duration-200 cursor-pointer",
+        "relative rounded-[14px] overflow-hidden transition-all duration-200 cursor-pointer",
         "hover:-translate-y-[3px] hover:shadow-verde",
         !product.available && "opacity-40"
       )}
       style={{
         background: "#e8ddc4",
-        border: inCart
+        border: offerBadge
+          ? "1.5px solid var(--terra, #c85a2a)"
+          : inCart
           ? "1.5px solid var(--g2, #4a7c2f)"
           : "1px solid var(--border, rgba(44,90,27,0.13))",
       }}
     >
+      {/* Cinta de oferta (Sweet Weekend) */}
+      {offerBadge && (
+        <div
+          className="absolute top-0 right-0 z-10 text-white text-[9px] font-bold uppercase tracking-[0.08em] px-2.5 py-1 rounded-bl-[10px]"
+          style={{ background: "var(--terra, #c85a2a)" }}
+        >
+          {offerBadge}
+        </div>
+      )}
+
       {/* Body */}
       <div className="p-[0.95rem_1.05rem_1.05rem]" style={{ padding: "0.95rem 1.05rem 1.05rem" }}>
         <h3

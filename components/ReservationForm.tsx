@@ -5,10 +5,13 @@ import type { Product } from "@/lib/products";
 import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
+import type { WeekendOffer } from "@/lib/offers";
+import { computeOfferDiscount } from "@/lib/offers";
 import { quoteDelivery } from "@/lib/delivery";
 import ProductCard from "./ProductCard";
 import ContactHelp from "./ContactHelp";
 import AccessGate from "./AccessGate";
+import DrinkUpsellModal from "./DrinkUpsellModal";
 import clsx from "clsx";
 
 interface DeliveryInfo {
@@ -34,6 +37,7 @@ interface ReservationFormProps {
   products: Product[];
   config: StoreConfig;
   promotion?: ActivePromotion | null;
+  weekendOffer?: WeekendOffer | null;
   requireAccessCode?: boolean;
   accessCodeValue?: string;
 }
@@ -233,12 +237,16 @@ export default function ReservationForm({
   products,
   config,
   promotion,
+  weekendOffer = null,
   requireAccessCode = false,
   accessCodeValue = "",
 }: ReservationFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStep, setMaxStep] = useState(1);
   const [cart, setCart] = useState<Record<string, number>>({});
+  // Popup de bebidas al terminar de elegir la comida (una vez por sesión).
+  const [showDrinkModal, setShowDrinkModal] = useState(false);
+  const [drinkModalSeen, setDrinkModalSeen] = useState(false);
   useEffect(() => {
     function onAddPack(e: Event) {
       const { items } = (e as CustomEvent<{items:{id:string,qty:number}[]}>).detail;
@@ -517,6 +525,25 @@ export default function ReservationForm({
   const drinkProducts = products.filter(
     (p) => !p.isPack && normalizeCategory(p.category ?? "") === "Bebidas"
   );
+  const hasDrinkInCart = drinkProducts.some((d) => (cart[d.id] ?? 0) > 0);
+
+  // Al terminar de elegir la comida: si hay bebidas disponibles y aún no ha
+  // añadido ninguna, se la ofrecemos en un popup (solo la primera vez). Si ya
+  // lleva bebida, no hay bebidas, o ya lo vio, seguimos directos a la fecha.
+  function continueFromMenu() {
+    if (drinkProducts.length > 0 && !hasDrinkInCart && !drinkModalSeen) {
+      setShowDrinkModal(true);
+      return;
+    }
+    goToStep(2);
+  }
+
+  function dismissDrinkModal() {
+    setDrinkModalSeen(true);
+    setShowDrinkModal(false);
+    goToStep(2);
+  }
+
   const totalItems = cartProducts.reduce((s, p) => s + (cart[p.id] ?? 0), 0);
   const totalDeposit = cartProducts.reduce(
     (s, p) => s + p.depositAmount * (cart[p.id] ?? 0),
@@ -535,7 +562,25 @@ export default function ReservationForm({
       ? Math.round(subtotalCents * livePromotion.promoValue / 100)
       : 0;
   const discountAmount = discountCents / 100;
-  const totalAfterDiscount = (subtotalCents - discountCents) / 100;
+
+  // Oferta de fin de semana (Sweet Weekend) — estimación visual; el servidor
+  // recalcula el importe real en el checkout.
+  const offerResult =
+    weekendOffer
+      ? computeOfferDiscount(
+          weekendOffer,
+          cartProducts.map((p) => ({
+            productId: p.id,
+            quantity: cart[p.id] ?? 0,
+            unitPrice: p.depositAmount,
+          }))
+        )
+      : { discountAmount: 0, discountedUnits: 0 };
+  const offerDiscount = offerResult.discountAmount;
+
+  // Descuento combinado (promo global + oferta finde), nunca mayor que el subtotal.
+  const combinedDiscount = Math.min(totalDeposit, discountAmount + offerDiscount);
+  const totalAfterDiscount = totalDeposit - combinedDiscount;
 
   // Envío — solo aplica con método "delivery" y zona cubierta
   const effectiveDeliveryFee =
@@ -853,6 +898,34 @@ export default function ReservationForm({
               </p>
             </div>
           )}
+
+          {weekendOffer && (
+            <div
+              className="mt-4 flex items-center gap-3 rounded-xl px-4 py-3 max-w-md"
+              style={{
+                background:
+                  "linear-gradient(100deg, rgba(200,90,42,0.14), rgba(217,164,65,0.16))",
+                border: "1px solid rgba(200,90,42,0.28)",
+              }}
+            >
+              <span className="text-2xl leading-none shrink-0" aria-hidden="true">
+                🍮
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-[13px] text-[#a8451f] tracking-tight">
+                    {weekendOffer.name}
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-white bg-[#c85a2a] rounded-full px-2 py-0.5 shrink-0">
+                    Solo este finde
+                  </span>
+                </div>
+                <p className="text-[12px] text-negro/60 leading-snug mt-0.5">
+                  {weekendOffer.tagline}. Añade 2 y la 2ª te sale a mitad de precio.
+                </p>
+              </div>
+            </div>
+          )}
           <ContactHelp variant="inline" />
         </div>
 
@@ -909,6 +982,11 @@ export default function ReservationForm({
                             onAdd={addToCart}
                             onIncrement={increment}
                             onDecrement={decrement}
+                            offerBadge={
+                              weekendOffer && product.id === weekendOffer.productId
+                                ? `${weekendOffer.name} · 2ª −${weekendOffer.percentOff}%`
+                                : undefined
+                            }
                           />
                         ))}
                       </div>
@@ -960,7 +1038,7 @@ export default function ReservationForm({
 
                 <button
                   type="button"
-                  onClick={() => goToStep(2)}
+                  onClick={continueFromMenu}
                   className="mt-5 w-full bg-[#c85a2a] text-crema text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 hover:bg-[#d96535] transition-all duration-300"
                 >
                   Continuar con la fecha
@@ -1531,6 +1609,14 @@ export default function ReservationForm({
                     <span>−{discountAmount.toFixed(2).replace(".", ",")} €</span>
                   </div>
                 )}
+                {weekendOffer && offerDiscount > 0 && (
+                  <div className="flex justify-between text-[#c85a2a]">
+                    <span>
+                      {weekendOffer.name} · {offerResult.discountedUnits}× 2ª −{weekendOffer.percentOff}%
+                    </span>
+                    <span>−{offerDiscount.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                )}
                 {effectiveDeliveryFee > 0 && (
                   <div className="flex justify-between text-negro/50">
                     <span>Envío{delivery?.zone ? ` · Zona ${delivery.zone}` : ""}</span>
@@ -1622,6 +1708,17 @@ export default function ReservationForm({
         </form>
         )}
       </div>
+
+      {showDrinkModal && (
+        <DrinkUpsellModal
+          drinks={drinkProducts}
+          cart={cart}
+          onAdd={addToCart}
+          onIncrement={increment}
+          onDecrement={decrement}
+          onContinue={dismissDrinkModal}
+        />
+      )}
     </section>
   );
 }

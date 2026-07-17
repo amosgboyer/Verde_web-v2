@@ -5,6 +5,7 @@ import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { isSlotAvailable } from "@/lib/availability";
 import { reservationSchema } from "@/lib/validators";
 import { getActivePromotion, calculateDiscount } from "@/lib/promotions";
+import { getActiveWeekendOffer, computeOfferDiscount } from "@/lib/offers";
 import { feeForZone } from "@/lib/delivery";
 import { SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, isAccessCodeValid } from "@/lib/launch";
@@ -147,6 +148,30 @@ export async function POST(req: NextRequest) {
     const promo = getActivePromotion(settings);
     const discount = calculateDiscount(productsSubtotal, promo);
 
+    // ── Oferta de fin de semana (nivel ítem) ─────────────────────────────────
+    // Se recalcula en servidor desde los ítems validados (fuente de verdad); no
+    // se confía en ningún dato de descuento enviado por el cliente.
+    const weekendOffer = getActiveWeekendOffer();
+    const offer = weekendOffer
+      ? computeOfferDiscount(
+          weekendOffer,
+          validatedItems.map(({ product, quantity }) => ({
+            productId: product.id,
+            quantity,
+            unitPrice: product.depositAmount,
+          }))
+        )
+      : { discountAmount: 0, discountedUnits: 0 };
+
+    // Descuento combinado (promo global + oferta finde), nunca mayor que el
+    // subtotal de productos.
+    const combinedDiscount = Math.min(
+      productsSubtotal,
+      discount.discountAmount + offer.discountAmount
+    );
+    const subtotalAfterDiscount = Math.round((productsSubtotal - combinedDiscount) * 100) / 100;
+    const anyDiscount = combinedDiscount > 0;
+
     // Si es recogida, se ignoran por completo los campos de entrega (aunque el
     // cliente haya escrito una dirección antes de cambiar a "Recogida").
     const isPickup = parsed.deliveryMethod === "pickup";
@@ -156,14 +181,17 @@ export async function POST(req: NextRequest) {
     const deliveryFee = isPickup
       ? 0
       : feeForZone(parsed.deliveryZoneLevel ?? null);
-    const chargeTotal = discount.totalAfterDiscount + deliveryFee;
+    const chargeTotal = subtotalAfterDiscount + deliveryFee;
 
     console.log(
-      `[checkout] subtotal=${discount.subtotalBeforeDiscount} ` +
-      `discount=${discount.discountAmount} ` +
+      `[checkout] subtotal=${productsSubtotal} ` +
+      `promoDiscount=${discount.discountAmount} ` +
+      `offerDiscount=${offer.discountAmount} (${offer.discountedUnits}u) ` +
+      `combinedDiscount=${combinedDiscount} ` +
       `delivery=${deliveryFee} ` +
       `charge=${chargeTotal} ` +
-      `promoActive=${discount.isActive} promoName="${discount.promoName}"`
+      `promoActive=${discount.isActive} promoName="${discount.promoName}" ` +
+      `offerActive=${offer.discountAmount > 0} offerName="${weekendOffer?.name ?? ""}"`
     );
 
     const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -174,10 +202,18 @@ export async function POST(req: NextRequest) {
       .map(({ product, quantity }) => `${product.name} ×${quantity}`)
       .join(", ");
 
+    const discountNotes: string[] = [];
+    if (discount.isActive) {
+      discountNotes.push(`${discount.promoName} −${discount.promoValue}%`);
+    }
+    if (offer.discountAmount > 0 && weekendOffer) {
+      discountNotes.push(
+        `${weekendOffer.name}: ${offer.discountedUnits}× 2ª −${weekendOffer.percentOff}%`
+      );
+    }
     const lineItemDescription =
-      (discount.isActive
-        ? `${productSummary} — ${discount.promoName} −${discount.promoValue}%`
-        : productSummary) +
+      productSummary +
+      (discountNotes.length > 0 ? ` — ${discountNotes.join(" · ")}` : "") +
       (deliveryFee > 0 ? ` · Envío ${deliveryFee.toFixed(2)} €` : "");
 
     // Stripe Checkout mostrará métodos de pago disponibles según la configuración del Dashboard,
@@ -232,14 +268,24 @@ export async function POST(req: NextRequest) {
         privacyAccepted: String(parsed.privacyAccepted),
         termsAccepted: String(parsed.termsAccepted),
         acceptedAt,
-        // Promoción
-        promoApplied: String(discount.isActive),
-        promoName: discount.promoName,
+        // Descuento total registrado (promo global + oferta finde combinadas)
+        promoApplied: String(anyDiscount),
+        promoName:
+          discount.isActive && offer.discountAmount > 0 && weekendOffer
+            ? `${discount.promoName} + ${weekendOffer.name}`
+            : offer.discountAmount > 0 && weekendOffer
+            ? weekendOffer.name
+            : discount.promoName,
         promoType: discount.promoType,
         promoValue: String(discount.promoValue),
-        discountAmount: String(discount.discountAmount),
-        subtotalBeforeDiscount: String(discount.subtotalBeforeDiscount),
-        totalAfterDiscount: String(discount.totalAfterDiscount),
+        discountAmount: String(combinedDiscount),
+        subtotalBeforeDiscount: String(productsSubtotal),
+        totalAfterDiscount: String(subtotalAfterDiscount),
+        // Oferta de fin de semana (nivel ítem) — desglose propio
+        offerApplied: String(offer.discountAmount > 0),
+        offerName: weekendOffer?.name ?? "",
+        offerDiscount: String(offer.discountAmount),
+        offerUnits: String(offer.discountedUnits),
       },
       customer_email: parsed.email,
       success_url: `${appUrl}/gracias?session_id={CHECKOUT_SESSION_ID}`,

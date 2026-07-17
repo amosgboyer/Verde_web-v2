@@ -5,6 +5,7 @@ import { getLaunchPhase, EARLY_ACCESS_CODE, PUBLIC_OPEN_AT } from "@/lib/launch"
 import Countdown from "@/components/Countdown";
 import { getActivePromotion } from "@/lib/promotions";
 import type { ActivePromotion } from "@/lib/promotions";
+import { getActiveWeekendOffer } from "@/lib/offers";
 import HowItWorks from "@/components/HowItWorks";
 import ReservationForm from "@/components/ReservationForm";
 import ClosedState from "@/components/ClosedState";
@@ -55,6 +56,7 @@ export default async function HomePage() {
   if (SOLD_OUT) reservationsOpen = false;
 
   const launchPhase = getLaunchPhase();
+  const weekendOffer = getActiveWeekendOffer();
   const config = { ...storeConfig, reservationsOpen };
 
   return (
@@ -183,6 +185,7 @@ export default async function HomePage() {
             ]}
             config={config}
             promotion={activePromotion}
+            weekendOffer={weekendOffer}
             requireAccessCode={launchPhase === "early_access"}
             accessCodeValue={
               launchPhase === "early_access" ? EARLY_ACCESS_CODE : ""
