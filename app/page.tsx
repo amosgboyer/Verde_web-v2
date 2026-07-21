@@ -6,7 +6,6 @@ import Countdown from "@/components/Countdown";
 import { getActivePromotion } from "@/lib/promotions";
 import type { ActivePromotion } from "@/lib/promotions";
 import { getActiveWeekendOffer } from "@/lib/offers";
-import HowItWorks from "@/components/HowItWorks";
 import ReservationForm from "@/components/ReservationForm";
 import ClosedState from "@/components/ClosedState";
 import MenuShowcase from "@/components/MenuShowcase";
@@ -196,9 +195,6 @@ export default async function HomePage() {
           <Packs readOnly />
         </>
       )}
-
-      {/* ── CÓMO FUNCIONA ── */}
-      <HowItWorks />
 
       {/* ── RESEÑAS ── */}
       <Reviews />
