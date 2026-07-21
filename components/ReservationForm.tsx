@@ -526,11 +526,17 @@ export default function ReservationForm({
   );
   const hasDrinkInCart = drinkProducts.some((d) => (cart[d.id] ?? 0) > 0);
 
-  // Al terminar de elegir la comida: si hay bebidas disponibles y aún no ha
-  // añadido ninguna, se la ofrecemos en un popup (solo la primera vez). Si ya
-  // lleva bebida, no hay bebidas, o ya lo vio, seguimos directos a la fecha.
+  // Ofrecemos bebida en un popup (una sola vez) cuando el cliente va hacia el
+  // pago con productos en el carrito pero aún sin bebida. Se dispara en dos
+  // momentos: al pulsar "Continuar con la fecha" o al abrir el banner del carrito.
+  const canOfferDrinks =
+    cartProducts.length > 0 &&
+    drinkProducts.length > 0 &&
+    !hasDrinkInCart &&
+    !drinkModalSeen;
+
   function continueFromMenu() {
-    if (drinkProducts.length > 0 && !hasDrinkInCart && !drinkModalSeen) {
+    if (canOfferDrinks) {
       setShowDrinkModal(true);
       return;
     }
@@ -540,7 +546,12 @@ export default function ReservationForm({
   function dismissDrinkModal() {
     setDrinkModalSeen(true);
     setShowDrinkModal(false);
-    goToStep(2);
+    // Tras cerrar, avanzar al primer paso pendiente (nunca hacia atrás).
+    if (!step2Done) goToStep(2);
+    else if (!step3Done) goToStep(3);
+    else if (!step4Done) goToStep(4);
+    else if (!step5Done) goToStep(5);
+    else goToStep(6);
   }
 
   const totalItems = cartProducts.reduce((s, p) => s + (cart[p.id] ?? 0), 0);
@@ -616,9 +627,14 @@ export default function ReservationForm({
     fields.deliveryMethod === "pickup" ||
     !!(fields.deliveryAddress.trim().length >= 5 && fields.postalCode.trim());
 
-  // Carrito flotante → avanzar al primer paso pendiente (hacia el pago)
+  // Carrito flotante → primero ofrecer bebida (una vez); si no procede, avanzar
+  // al primer paso pendiente hacia el pago.
   useEffect(() => {
     function onCartOpen() {
+      if (canOfferDrinks) {
+        setShowDrinkModal(true);
+        return;
+      }
       if (!step1Done) goToStep(1);
       else if (!step2Done) goToStep(2);
       else if (!step3Done) goToStep(3);
@@ -629,7 +645,7 @@ export default function ReservationForm({
     window.addEventListener("verde:cart:open", onCartOpen);
     return () => window.removeEventListener("verde:cart:open", onCartOpen);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step1Done, step2Done, step3Done, step4Done, step5Done]);
+  }, [step1Done, step2Done, step3Done, step4Done, step5Done, canOfferDrinks]);
 
   // Recalcular animaciones GSAP cuando cambia el alto (al colapsar/expandir pasos)
   useEffect(() => {
