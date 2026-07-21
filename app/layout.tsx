@@ -45,6 +45,33 @@ export const metadata: Metadata = {
   },
 };
 
+// Datos estructurados (schema.org) — dirección/teléfono autoritativos para
+// Google y buscadores con IA. NAP (nombre, dirección, teléfono) consistente con
+// PICKUP_ADDRESS en lib/store-config.ts.
+const businessJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  "@id": "https://www.verdemadrid.com/#restaurant",
+  name: "Verde Madrid",
+  description:
+    "Cocina ecuatoriana bajo pedido en Madrid: bolones, tigrillos y corviches. Entrega a domicilio y recogida.",
+  url: "https://www.verdemadrid.com",
+  telephone: "+34605442809",
+  servesCuisine: "Ecuatoriana",
+  priceRange: "€€",
+  image: "https://www.verdemadrid.com/iconVerde.png",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Calle de la Araucaria 19",
+    addressLocality: "Madrid",
+    addressRegion: "Madrid",
+    postalCode: "28039",
+    addressCountry: "ES",
+  },
+  areaServed: "Madrid",
+  sameAs: ["https://instagram.com/verde_madrid"],
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -53,6 +80,12 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${lilitaOne.variable} ${caveat.variable} ${spaceMono.variable} ${dmSans.variable} font-sans bg-cream text-ink antialiased`}>
+
+        {/* Datos estructurados del negocio (dirección/teléfono para Google e IA) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd) }}
+        />
 
         {/* Empezar siempre arriba: evita que un #hash de sección o la
             restauración de scroll del navegador salte al formulario al cargar. */}
@@ -123,8 +156,8 @@ export default function RootLayout({
                     className="text-g3 hover:text-g4 transition-colors">
                     WhatsApp · +34 605 442 809
                   </a><br />
-                  Guindalera, Madrid<br />
-                  28028
+                  Calle de la Araucaria 19<br />
+                  Tetuán, 28039 Madrid
                 </p>
               </div>
               <div>
