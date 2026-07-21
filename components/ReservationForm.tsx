@@ -9,7 +9,6 @@ import type { WeekendOffer } from "@/lib/offers";
 import { computeOfferDiscount, productMatchesOffer } from "@/lib/offers";
 import { quoteDelivery } from "@/lib/delivery";
 import ProductCard from "./ProductCard";
-import ContactHelp from "./ContactHelp";
 import AccessGate from "./AccessGate";
 import DrinkUpsellModal from "./DrinkUpsellModal";
 import clsx from "clsx";
@@ -922,7 +921,6 @@ export default function ReservationForm({
               </p>
             </div>
           )}
-          <ContactHelp variant="inline" />
         </div>
 
         {requireAccessCode && !unlocked && (
