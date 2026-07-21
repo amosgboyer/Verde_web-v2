@@ -8,7 +8,7 @@ import type { ActivePromotion } from "@/lib/promotions";
 import type { WeekendOffer } from "@/lib/offers";
 import { computeOfferDiscount, productMatchesOffer } from "@/lib/offers";
 import { quoteDelivery } from "@/lib/delivery";
-import ProductCard from "./ProductCard";
+import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
 import DrinkUpsellModal from "./DrinkUpsellModal";
 import clsx from "clsx";
@@ -146,6 +146,20 @@ const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: str
     subtitle: "Para acompañar y refrescar. 🥤",
   },
 };
+
+// ─── Variantes de tamaño ─────────────────────────────────────────────────────
+// Un producto "base" con opciones de tamaño que en realidad son otros productos
+// de la carta (mismo id/precio del Sheet). La variante NO se muestra como card
+// propia: aparece como selector dentro de la card del base (p.ej. media ración).
+const SIZE_VARIANT_GROUPS: { baseId: string; options: { label: string; id: string }[] }[] = [
+  {
+    baseId: "tigrillo-mixto",
+    options: [
+      { label: "Entera", id: "tigrillo-mixto" },
+      { label: "Media", id: "tigrillo-media-racion" },
+    ],
+  },
+];
 
 // ─── StepSection ───────────────────────────────────────────────────────────
 // Renders a step row: collapsed summary when not active, full content when active.
@@ -959,9 +973,27 @@ export default function ReservationForm({
             editProminent
           >
             {(() => {
+              // Variantes de tamaño: resolver opciones reales y ocultar las que
+              // se muestran como selector (p.ej. la media ración) para que no
+              // ocupen una card propia en la carta.
+              const byId = new Map(products.map((p) => [p.id, p]));
+              const sizeOptionsByBase: Record<string, SizeOption[]> = {};
+              const hiddenVariantIds = new Set<string>();
+              for (const g of SIZE_VARIANT_GROUPS) {
+                if (!byId.has(g.baseId)) continue; // sin base → no agrupar
+                const opts = g.options
+                  .map((o) => ({ label: o.label, product: byId.get(o.id) }))
+                  .filter((o): o is SizeOption => !!o.product);
+                if (opts.length < 2) continue; // menos de 2 tamaños → sin selector
+                sizeOptionsByBase[g.baseId] = opts;
+                for (const o of opts)
+                  if (o.product.id !== g.baseId) hiddenVariantIds.add(o.product.id);
+              }
+
               const grouped: Partial<Record<NormalizedCategory, typeof products>> = {};
               for (const p of products) {
                 if (p.isPack) continue; // los packs no se muestran en la carta
+                if (hiddenVariantIds.has(p.id)) continue; // variante → va como selector
                 const cat = normalizeCategory(p.category ?? "");
                 (grouped[cat] ??= []).push(p);
               }
@@ -992,6 +1024,8 @@ export default function ReservationForm({
                             onAdd={addToCart}
                             onIncrement={increment}
                             onDecrement={decrement}
+                            sizeOptions={sizeOptionsByBase[product.id]}
+                            quantityOf={(id) => cart[id] ?? 0}
                             offerBadge={
                               weekendOffer &&
                               productMatchesOffer(weekendOffer, {

@@ -1,11 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import type { Product } from "@/lib/products";
 import clsx from "clsx";
 
 // Precio en formato español: entero "10", decimal "2,20".
 function fmtPrice(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
+}
+
+export interface SizeOption {
+  label: string;
+  product: Product;
 }
 
 interface ProductCardProps {
@@ -16,19 +22,31 @@ interface ProductCardProps {
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
   offerBadge?: string;
+  // Selector de tamaño: si se pasa, la card muestra un toggle (p.ej. Entera/Media)
+  // y los controles operan sobre el producto del tamaño elegido. Cada tamaño es un
+  // producto real de la carta (mismo id/precio del Sheet).
+  sizeOptions?: SizeOption[];
+  quantityOf?: (productId: string) => number;
 }
 
 export default function ProductCard({
   product, quantity, maxQuantity, onAdd, onIncrement, onDecrement, offerBadge,
+  sizeOptions, quantityOf,
 }: ProductCardProps) {
-  const inCart = quantity > 0;
+  const hasSizes = !!sizeOptions && sizeOptions.length > 1;
+  const [sizeIdx, setSizeIdx] = useState(0);
+
+  // Producto "activo" = el del tamaño seleccionado (o el propio si no hay tamaños).
+  const active = hasSizes ? sizeOptions![sizeIdx].product : product;
+  const qty = hasSizes ? (quantityOf?.(active.id) ?? 0) : quantity;
+  const inCart = qty > 0;
 
   return (
     <div
       className={clsx(
         "relative rounded-[14px] overflow-hidden transition-all duration-200 cursor-pointer",
         "hover:-translate-y-[3px] hover:shadow-verde",
-        !product.available && "opacity-40"
+        !active.available && "opacity-40"
       )}
       style={{
         background: "#e8ddc4",
@@ -82,6 +100,36 @@ export default function ProductCard({
           </p>
         )}
 
+        {/* Selector de tamaño (Entera / Media) */}
+        {hasSizes && (
+          <div
+            className="flex gap-1 mb-3 p-0.5 rounded-lg"
+            style={{ background: "rgba(44,90,27,0.06)" }}
+            role="group"
+            aria-label="Elige el tamaño"
+          >
+            {sizeOptions!.map((opt, i) => {
+              const selected = i === sizeIdx;
+              return (
+                <button
+                  key={opt.product.id}
+                  type="button"
+                  onClick={() => setSizeIdx(i)}
+                  aria-pressed={selected}
+                  className="flex-1 rounded-md py-1 text-[0.7rem] font-semibold transition-colors duration-150"
+                  style={
+                    selected
+                      ? { background: "var(--g1, #2d5a1b)", color: "#fff" }
+                      : { background: "transparent", color: "var(--gray, #6e6e5a)" }
+                  }
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Footer precio + controles */}
         <div className="flex items-center justify-between mt-auto pt-1">
           <div>
@@ -92,7 +140,7 @@ export default function ProductCard({
                 color: "var(--g1, #2d5a1b)",
               }}
             >
-              {fmtPrice(product.depositAmount || product.finalPrice)} €
+              {fmtPrice(active.depositAmount || active.finalPrice)} €
             </span>
             <span
               className="block mt-0.5"
@@ -102,7 +150,7 @@ export default function ProductCard({
             </span>
           </div>
 
-          {product.available ? (
+          {active.available ? (
             inCart ? (
               <div
                 className="flex items-center gap-1.5 rounded-lg px-2.5 py-1"
@@ -110,7 +158,7 @@ export default function ProductCard({
               >
                 <button
                   type="button"
-                  onClick={() => onDecrement(product.id)}
+                  onClick={() => onDecrement(active.id)}
                   className="w-[18px] text-center font-medium border-none bg-transparent cursor-pointer transition-colors"
                   style={{
                     fontSize: "1.05rem",
@@ -129,12 +177,12 @@ export default function ProductCard({
                     minWidth: "16px",
                   }}
                 >
-                  {quantity}
+                  {qty}
                 </span>
                 <button
                   type="button"
-                  onClick={() => onIncrement(product.id)}
-                  disabled={quantity >= maxQuantity}
+                  onClick={() => onIncrement(active.id)}
+                  disabled={qty >= maxQuantity}
                   className="w-[18px] text-center font-medium border-none bg-transparent cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   style={{
                     fontSize: "1.05rem",
@@ -149,7 +197,7 @@ export default function ProductCard({
             ) : (
               <button
                 type="button"
-                onClick={() => onAdd(product.id)}
+                onClick={() => onAdd(active.id)}
                 className="flex items-center justify-center rounded-lg text-white border-none cursor-pointer transition-all duration-150 hover:scale-[1.08]"
                 style={{
                   width: "36px",
