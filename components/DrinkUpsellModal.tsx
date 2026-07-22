@@ -39,11 +39,10 @@ export default function DrinkUpsellModal({
   onDecrement,
   onContinue,
 }: DrinkUpsellModalProps) {
-  // Fases activas según lo que haya para ofrecer.
-  const steps: ("bebidas" | "salsas" | "cubiertos")[] = [];
+  // Fases activas: primero salsas + cubiertos, luego bebidas (si hay).
+  const steps: ("bebidas" | "extras")[] = [];
+  steps.push("extras");
   if (drinks.length > 0) steps.push("bebidas");
-  if (salsas.length > 0) steps.push("salsas");
-  steps.push("cubiertos");
 
   const [stepIdx, setStepIdx] = useState(0);
   const step = steps[Math.min(stepIdx, steps.length - 1)];
@@ -134,9 +133,8 @@ export default function DrinkUpsellModal({
   }
 
   const HEAD: Record<string, { title: string; sub: string }> = {
+    extras: { title: "Salsas y cubiertos", sub: "Salsas de la casa a 1,50 € y elige si quieres cubiertos." },
     bebidas: { title: "¿Algo para beber?", sub: "Añade una bebida bien fría." },
-    salsas: { title: "¿Salsas extra?", sub: "Ají o verde de la casa · 1,50 € cada una." },
-    cubiertos: { title: "¿Necesitas cubiertos?", sub: "Gratis. Si no, evitamos plástico." },
   };
 
   const modal = (
@@ -195,32 +193,37 @@ export default function DrinkUpsellModal({
         {/* ── Contenido de la fase ── */}
         <div className="px-4 py-4 space-y-2 max-h-[42vh] overflow-y-auto">
           {step === "bebidas" && drinks.map((d) => ItemRow(d))}
-          {step === "salsas" && salsas.map((s) => ItemRow(s))}
-          {step === "cubiertos" && (
-            <div className="flex gap-2">
-              {[
-                { label: "No, gracias", value: false },
-                { label: "Sí, ponme", value: true },
-              ].map((opt) => {
-                const selected = cutlery === opt.value;
-                return (
-                  <button
-                    key={opt.label}
-                    type="button"
-                    onClick={() => onCutleryChange(opt.value)}
-                    aria-pressed={selected}
-                    className="flex-1 rounded-2xl border py-4 text-sm font-semibold transition-colors"
-                    style={
-                      selected
-                        ? { background: "#2E4F20", color: "#F5EDD8", borderColor: "#2E4F20" }
-                        : { background: "#fff", color: "rgba(26,26,14,0.7)", borderColor: "rgba(0,0,0,0.1)" }
-                    }
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
+          {step === "extras" && (
+            <>
+              {salsas.map((s) => ItemRow(s))}
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-negro/40 px-1 pt-3">
+                ¿Necesitas cubiertos?
+              </p>
+              <div className="flex gap-2">
+                {[
+                  { label: "No, gracias", value: false },
+                  { label: "Sí, ponme", value: true },
+                ].map((opt) => {
+                  const selected = cutlery === opt.value;
+                  return (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onClick={() => onCutleryChange(opt.value)}
+                      aria-pressed={selected}
+                      className="flex-1 rounded-2xl border py-3.5 text-sm font-semibold transition-colors"
+                      style={
+                        selected
+                          ? { background: "#2E4F20", color: "#F5EDD8", borderColor: "#2E4F20" }
+                          : { background: "#fff", color: "rgba(26,26,14,0.7)", borderColor: "rgba(0,0,0,0.1)" }
+                      }
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
 
