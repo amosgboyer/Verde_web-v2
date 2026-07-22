@@ -1026,11 +1026,11 @@ export default function ReservationForm({
               const showHeadings = activeGroups.length > 1 || activeGroups[0] !== "Otros";
 
               return (
-                <div className="space-y-5 sm:space-y-8">
+                <div className="space-y-4 sm:space-y-8">
                   {activeGroups.map((cat) => (
                     <div key={cat} id={`cat-${cat.toLowerCase()}`}>
                       {showHeadings && (
-                        <div className="mb-3 sm:mb-4">
+                        <div className="mb-2 sm:mb-4">
                           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-verde-bosque/70 mb-1">
                             {CATEGORY_CONFIG[cat].title}
                           </p>
