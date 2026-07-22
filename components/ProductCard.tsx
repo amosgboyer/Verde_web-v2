@@ -27,11 +27,14 @@ interface ProductCardProps {
   // producto real de la carta (mismo id/precio del Sheet).
   sizeOptions?: SizeOption[];
   quantityOf?: (productId: string) => number;
+  // Extras del plato: productos que se añaden como pulsable dentro de esta card
+  // (p.ej. reahogado para el corviche). Cada extra es un producto real del Sheet.
+  addons?: { label: string; product: Product }[];
 }
 
 export default function ProductCard({
   product, quantity, maxQuantity, onAdd, onIncrement, onDecrement, offerBadge,
-  sizeOptions, quantityOf,
+  sizeOptions, quantityOf, addons,
 }: ProductCardProps) {
   const hasSizes = !!sizeOptions && sizeOptions.length > 1;
   const [sizeIdx, setSizeIdx] = useState(0);
@@ -220,6 +223,79 @@ export default function ProductCard({
             </span>
           )}
         </div>
+
+        {/* Extras del plato (p.ej. reahogado para el corviche) */}
+        {addons && addons.length > 0 && (
+          <div
+            className="mt-3 pt-3 border-t space-y-1.5"
+            style={{ borderColor: "rgba(44,90,27,0.1)" }}
+          >
+            {addons.map((a) => {
+              const aq = quantityOf?.(a.product.id) ?? 0;
+              const price = a.product.depositAmount || a.product.finalPrice;
+              if (!a.product.available) return null;
+              return aq > 0 ? (
+                <div
+                  key={a.product.id}
+                  className="flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5"
+                  style={{ background: "rgba(44,90,27,0.06)" }}
+                >
+                  <span
+                    className="text-[0.72rem] font-medium"
+                    style={{ color: "var(--g1, #2d5a1b)" }}
+                  >
+                    ✓ {a.label}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onDecrement(a.product.id)}
+                      className="w-4 text-center leading-none"
+                      style={{ fontSize: "1rem", color: "var(--g1, #2d5a1b)" }}
+                      aria-label={`Quitar ${a.label}`}
+                    >
+                      −
+                    </button>
+                    <span className="text-[0.75rem] font-semibold tabular-nums w-3 text-center">
+                      {aq}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onIncrement(a.product.id)}
+                      disabled={aq >= maxQuantity}
+                      className="w-4 text-center leading-none disabled:opacity-30"
+                      style={{ fontSize: "1rem", color: "var(--g1, #2d5a1b)" }}
+                      aria-label={`Añadir ${a.label}`}
+                    >
+                      +
+                    </button>
+                  </span>
+                </div>
+              ) : (
+                <button
+                  key={a.product.id}
+                  type="button"
+                  onClick={() => onAdd(a.product.id)}
+                  className="w-full flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 transition-colors"
+                  style={{ background: "rgba(44,90,27,0.06)" }}
+                >
+                  <span
+                    className="text-[0.72rem] font-medium"
+                    style={{ color: "var(--gray, #6e6e5a)" }}
+                  >
+                    + {a.label}
+                  </span>
+                  <span
+                    className="text-[0.72rem] font-bold"
+                    style={{ color: "var(--g1, #2d5a1b)" }}
+                  >
+                    {fmtPrice(price)} €
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

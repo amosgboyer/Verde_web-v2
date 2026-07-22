@@ -161,6 +161,17 @@ const SIZE_VARIANT_GROUPS: { baseId: string; options: { label: string; id: strin
   },
 ];
 
+// ─── Extras de plato ─────────────────────────────────────────────────────────
+// Productos que se ofrecen como "extra" dentro de la card de otro plato (no como
+// card propia en la carta). Cada extra es un producto real del Sheet (mismo
+// id/precio). P.ej. el reahogado solo pega con el corviche.
+const PRODUCT_ADDONS: { baseId: string; addons: { label: string; id: string }[] }[] = [
+  {
+    baseId: "corviche-de-pescado",
+    addons: [{ label: "Reahogado de pescado", id: "Reahogado-de-pescado" }],
+  },
+];
+
 // ─── StepSection ───────────────────────────────────────────────────────────
 // Renders a step row: collapsed summary when not active, full content when active.
 
@@ -990,6 +1001,19 @@ export default function ReservationForm({
                   if (o.product.id !== g.baseId) hiddenVariantIds.add(o.product.id);
               }
 
+              // Extras de plato: se muestran dentro de la card del base y se
+              // ocultan como card propia (p.ej. reahogado dentro del corviche).
+              const addonsByBase: Record<string, { label: string; product: Product }[]> = {};
+              for (const g of PRODUCT_ADDONS) {
+                if (!byId.has(g.baseId)) continue;
+                const addons = g.addons
+                  .map((a) => ({ label: a.label, product: byId.get(a.id) }))
+                  .filter((a): a is { label: string; product: Product } => !!a.product);
+                if (!addons.length) continue;
+                addonsByBase[g.baseId] = addons;
+                for (const a of addons) hiddenVariantIds.add(a.product.id);
+              }
+
               const grouped: Partial<Record<NormalizedCategory, typeof products>> = {};
               for (const p of products) {
                 if (p.isPack) continue; // los packs no se muestran en la carta
@@ -1025,6 +1049,7 @@ export default function ReservationForm({
                             onIncrement={increment}
                             onDecrement={decrement}
                             sizeOptions={sizeOptionsByBase[product.id]}
+                            addons={addonsByBase[product.id]}
                             quantityOf={(id) => cart[id] ?? 0}
                             offerBadge={
                               weekendOffer &&
