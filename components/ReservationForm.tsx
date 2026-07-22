@@ -321,6 +321,8 @@ export default function ReservationForm({
   const [accessCode, setAccessCode] = useState("");
   const [unlocked, setUnlocked] = useState(!requireAccessCode);
   const addressRef = useRef<HTMLInputElement>(null);
+  const addressAutocompleteRef = useRef<HTMLDivElement>(null);
+  const [autocompleteReady, setAutocompleteReady] = useState(false);
 
   // Recordar desbloqueo entre recargas + escuchar el gate de arriba (banner)
   useEffect(() => {
@@ -504,7 +506,7 @@ export default function ReservationForm({
   // Autocompletado de Google: al elegir una dirección, rellena dirección + CP y
   // calcula la zona/coste con las MISMAS reglas (a partir de las coordenadas).
   useAddressAutocomplete(
-    addressRef,
+    addressAutocompleteRef,
     currentStep === 5 && fields.deliveryMethod === "delivery",
     (sel) => {
       setFields((prev) => ({
@@ -520,7 +522,8 @@ export default function ReservationForm({
         setDelivery({ deliverable: false, zone: null, fee: 0 });
         setDeliveryError("Aún no llegamos a tu zona. Te contactaremos por WhatsApp.");
       }
-    }
+    },
+    setAutocompleteReady
   );
 
   // ── Fields ──
@@ -1447,18 +1450,30 @@ export default function ReservationForm({
                       <label htmlFor="deliveryAddress" className={labelClass}>
                         Dirección de entrega
                       </label>
-                      <input
-                        ref={addressRef}
-                        id="deliveryAddress"
-                        name="deliveryAddress"
-                        type="text"
-                        required
-                        autoComplete="off"
-                        placeholder="Empieza a escribir tu calle y elígela"
-                        value={fields.deliveryAddress}
-                        onChange={handleFieldChange}
-                        className={inputClass}
+                      {/* Autocompletado de Google (Places New): rellena
+                          dirección + CP + envío al elegir una sugerencia. */}
+                      <div
+                        ref={addressAutocompleteRef}
+                        className={`verde-gmaps-autocomplete ${
+                          autocompleteReady ? "" : "hidden"
+                        }`}
                       />
+                      {/* Campo manual: fallback si el autocompletado no carga
+                          (sin key, error, o navegador sin soporte). */}
+                      {!autocompleteReady && (
+                        <input
+                          ref={addressRef}
+                          id="deliveryAddress"
+                          name="deliveryAddress"
+                          type="text"
+                          required
+                          autoComplete="off"
+                          placeholder="Empieza a escribir tu calle y número"
+                          value={fields.deliveryAddress}
+                          onChange={handleFieldChange}
+                          className={inputClass}
+                        />
+                      )}
                     </div>
                     <div>
                       <label htmlFor="postalCode" className={labelClass}>

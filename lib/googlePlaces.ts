@@ -1,36 +1,43 @@
-// Carga la API de Google Maps (librería Places) una sola vez en el navegador.
-// Sin `loading=async`: al ser onload, garantizamos que google.maps.places ya
-// está disponible (más fiable para el widget Autocomplete clásico).
+// Carga la API de Google Maps (librería Places, versión NUEVA) una sola vez en
+// el navegador y devuelve la librería Places (con PlaceAutocompleteElement).
+//
+// Usa el patrón oficial recomendado: loading=async + callback + importLibrary.
+// El widget clásico google.maps.places.Autocomplete quedó retirado para clientes
+// nuevos (1-mar-2025) → usamos PlaceAutocompleteElement (Places API New).
+//
 // Si no hay API key configurada, no hace nada (el formulario sigue funcionando
 // a mano + botón "Calcular envío").
 
-let loaderPromise: Promise<void> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let loaderPromise: Promise<any> | null = null;
 
-export function loadGooglePlaces(apiKey: string): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function loadGooglePlaces(apiKey: string): Promise<any> {
+  if (typeof window === "undefined") return Promise.resolve(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((window as any).google?.maps?.places?.Autocomplete) return Promise.resolve();
+  const g = (window as any).google;
+  // Ya cargado: pide directamente la librería Places.
+  if (g?.maps?.importLibrary) return g.maps.importLibrary("places");
   if (loaderPromise) return loaderPromise;
 
-  loaderPromise = new Promise<void>((resolve, reject) => {
-    const existing = document.getElementById("google-maps-js");
-    if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("Maps error")));
-      return;
-    }
+  loaderPromise = new Promise((resolve, reject) => {
+    // Callback global que Google invoca cuando el bootstrap está listo.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__verdeGmapsInit = async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const lib = await (window as any).google.maps.importLibrary("places");
+        resolve(lib);
+      } catch (e) {
+        loaderPromise = null;
+        reject(e);
+      }
+    };
     const script = document.createElement("script");
-    script.id = "google-maps-js";
     script.src =
       `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}` +
-      `&libraries=places&language=es&region=ES`;
+      `&loading=async&language=es&region=ES&callback=__verdeGmapsInit`;
     script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((window as any).google?.maps?.places?.Autocomplete) resolve();
-      else reject(new Error("Places no disponible tras cargar Maps"));
-    };
     script.onerror = () => {
       loaderPromise = null;
       reject(new Error("No se pudo cargar Google Maps"));

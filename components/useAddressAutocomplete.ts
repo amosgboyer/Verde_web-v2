@@ -9,70 +9,95 @@ export interface SelectedAddress {
 }
 
 /**
- * Engancha el autocompletado de Google Places a un <input>. Al elegir una
- * dirección, llama a onSelect con la dirección formateada, el código postal y
- * las coordenadas (para calcular la zona de envío con las reglas de siempre).
+ * Monta el nuevo PlaceAutocompleteElement de Google Places dentro de un
+ * contenedor. Al elegir una dirección llama a onSelect con la dirección
+ * formateada, el código postal y las coordenadas (para calcular la zona de
+ * envío con las reglas de siempre). onReady(true) avisa cuando el elemento está
+ * montado (para poder ocultar el campo manual).
  *
- * Si no hay NEXT_PUBLIC_GOOGLE_MAPS_API_KEY, no hace nada (el input funciona
- * normal + botón "Calcular envío").
+ * Migrado del widget clásico google.maps.places.Autocomplete (retirado para
+ * clientes nuevos el 1-mar-2025) a PlaceAutocompleteElement (Places API New).
+ *
+ * Si no hay NEXT_PUBLIC_GOOGLE_MAPS_API_KEY o falla la carga, no hace nada y
+ * onReady(false): el campo manual + botón "Calcular envío" siguen operativos.
  */
 export function useAddressAutocomplete(
-  inputRef: React.RefObject<HTMLInputElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
   enabled: boolean,
-  onSelect: (s: SelectedAddress) => void
+  onSelect: (s: SelectedAddress) => void,
+  onReady?: (ready: boolean) => void
 ) {
   const cbRef = useRef(onSelect);
   cbRef.current = onSelect;
+  const readyRef = useRef(onReady);
+  readyRef.current = onReady;
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!enabled || !key || !inputRef.current) return;
+    if (!enabled || !key || !containerRef.current) return;
 
     let cancelled = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let listener: any = null;
+    let el: any = null;
+    const container = containerRef.current;
 
     loadGooglePlaces(key)
-      .then(() => {
-        if (cancelled || !inputRef.current) return;
+      .then((placesLib) => {
+        if (cancelled || !container) return;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const g = (window as any).google;
-        if (!g?.maps?.places?.Autocomplete) return;
+        const lib = placesLib || (window as any).google?.maps?.places;
+        const PlaceAutocompleteElement = lib?.PlaceAutocompleteElement;
+        if (!PlaceAutocompleteElement) return;
 
-        const autocomplete = new g.maps.places.Autocomplete(inputRef.current, {
-          componentRestrictions: { country: "es" },
-          fields: ["formatted_address", "address_components", "geometry"],
-          types: ["address"],
+        el = new PlaceAutocompleteElement({
+          includedRegionCodes: ["es"],
+        });
+        el.style.width = "100%";
+
+        container.replaceChildren(el);
+
+        // El evento de selección: gmp-select (GA) trae event.placePrediction.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        el.addEventListener("gmp-select", async (event: any) => {
+          try {
+            const prediction = event?.placePrediction;
+            const place =
+              prediction && typeof prediction.toPlace === "function"
+                ? prediction.toPlace()
+                : event?.place;
+            if (!place) return;
+            await place.fetchFields({
+              fields: ["formattedAddress", "location", "addressComponents"],
+            });
+            const loc = place.location;
+            const lat = typeof loc?.lat === "function" ? loc.lat() : loc?.lat;
+            const lng = typeof loc?.lng === "function" ? loc.lng() : loc?.lng;
+            if (typeof lat !== "number" || typeof lng !== "number") return;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const comps: any[] = place.addressComponents || [];
+            const postal =
+              comps.find((c) => c.types?.includes("postal_code"))?.longText || "";
+            cbRef.current({
+              address: place.formattedAddress || "",
+              postalCode: postal,
+              lat,
+              lng,
+            });
+          } catch {
+            // Silencioso: se puede rellenar a mano y usar "Calcular envío".
+          }
         });
 
-        listener = autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          if (!place?.geometry?.location) return;
-          const lat = place.geometry.location.lat();
-          const lng = place.geometry.location.lng();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const comps: any[] = place.address_components || [];
-          const postal =
-            comps.find((c) => c.types?.includes("postal_code"))?.long_name || "";
-          cbRef.current({
-            address: place.formatted_address || inputRef.current?.value || "",
-            postalCode: postal,
-            lat,
-            lng,
-          });
-        });
+        readyRef.current?.(true);
       })
       .catch(() => {
-        // Silencioso: se puede rellenar a mano y usar "Calcular envío".
+        readyRef.current?.(false);
       });
 
     return () => {
       cancelled = true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (listener && (window as any).google?.maps?.event) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).google.maps.event.removeListener(listener);
-      }
+      readyRef.current?.(false);
+      if (el && container?.contains(el)) container.removeChild(el);
     };
-  }, [inputRef, enabled]);
+  }, [containerRef, enabled]);
 }
