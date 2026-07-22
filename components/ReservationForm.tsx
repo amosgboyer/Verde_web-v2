@@ -144,7 +144,7 @@ const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: str
   },
   Bebidas: {
     title: "BEBIDAS",
-    subtitle: "Para acompañar y refrescar. 🥤",
+    subtitle: "Para acompañar y refrescar.",
   },
 };
 
@@ -1554,7 +1554,7 @@ export default function ReservationForm({
                   }}
                 >
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-verde-bosque mb-1">
-                    🥤 ¿Algo para beber?
+                    ¿Algo para beber?
                   </p>
                   <p className="text-xs text-negro/45 mb-4">
                     Añádelo a tu pedido antes de pagar.

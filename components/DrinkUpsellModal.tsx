@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Product } from "@/lib/products";
+import { imageForProduct } from "@/lib/products";
 
 // Precio en formato español: entero "10", decimal "2,20".
 function fmtPrice(n: number): string {
@@ -73,9 +74,6 @@ export default function DrinkUpsellModal({
           >
             ×
           </button>
-          <div className="mx-auto mb-3 w-14 h-14 rounded-full bg-crema/15 flex items-center justify-center text-3xl">
-            🧊
-          </div>
           <h3
             id="drink-upsell-title"
             className="font-display text-crema text-2xl sm:text-[26px] leading-tight"
@@ -93,23 +91,22 @@ export default function DrinkUpsellModal({
             const qty = cart[d.id] ?? 0;
             const price = d.depositAmount || d.finalPrice;
             const active = qty > 0;
+            const img = imageForProduct(d);
             return (
               <div
                 key={d.id}
                 className="flex items-center gap-3 rounded-2xl border bg-white p-2.5 pr-3 transition-colors"
                 style={{ borderColor: active ? "#509234" : "rgba(0,0,0,0.10)" }}
               >
-                {d.image ? (
+                {img ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={d.image}
+                    src={img}
                     alt=""
                     className="w-12 h-12 rounded-xl object-cover shrink-0"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-xl bg-verde-bosque/8 flex items-center justify-center text-xl shrink-0">
-                    🥤
-                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-verde-bosque/8 shrink-0" />
                 )}
 
                 <div className="min-w-0 flex-1">
