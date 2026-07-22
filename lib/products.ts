@@ -184,12 +184,40 @@ export function imageForProduct(p: { id: string; image?: string }): string | und
   return p.image || PRODUCT_IMAGES[p.id];
 }
 
+// ─── SALSAS EXTRA (de pago) ────────────────────────────────────────────────
+// Se ofrecen en el popup de extras (no como card en la carta). Se validan y
+// cobran como productos normales (categoría "Salsas").
+export const EXTRA_SALSAS: Product[] = [
+  {
+    id: "salsa-aji-extra",
+    name: "Salsa de ají extra",
+    description: "Ají de la casa para darle chispa.",
+    finalPrice: 1.5,
+    depositAmount: 1.5,
+    available: true,
+    category: "Salsas",
+  },
+  {
+    id: "salsa-verde-extra",
+    name: "Salsa verde extra",
+    description: "Salsa verde de queso de la casa.",
+    finalPrice: 1.5,
+    depositAmount: 1.5,
+    available: true,
+    category: "Salsas",
+  },
+];
+
+export function getSalsas(): Product[] {
+  return EXTRA_SALSAS.filter((s) => s.available);
+}
+
 export function getPacks(): Product[] {
   return PACKS.filter((p) => p.available);
 }
 
 export function getProductById(id: string): Product | undefined {
-  return [...PRODUCTS, ...PACKS].find((p) => p.id === id);
+  return [...PRODUCTS, ...PACKS, ...EXTRA_SALSAS].find((p) => p.id === id);
 }
 
 export function getAvailableProducts(): Product[] {

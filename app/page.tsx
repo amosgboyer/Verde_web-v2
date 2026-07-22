@@ -1,4 +1,4 @@
-import { getAvailableProducts, getPacks } from "@/lib/products";
+import { getAvailableProducts, getPacks, getSalsas } from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { storeConfig, SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, EARLY_ACCESS_CODE, PUBLIC_OPEN_AT } from "@/lib/launch";
@@ -178,6 +178,7 @@ export default async function HomePage() {
             products={[
               ...products,
               ...getPacks().filter((pk) => !products.some((p) => p.id === pk.id)),
+              ...getSalsas().filter((s) => !products.some((p) => p.id === s.id)),
             ]}
             config={config}
             promotion={activePromotion}

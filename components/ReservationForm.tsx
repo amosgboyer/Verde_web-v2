@@ -269,9 +269,10 @@ export default function ReservationForm({
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStep, setMaxStep] = useState(1);
   const [cart, setCart] = useState<Record<string, number>>({});
-  // Popup de bebidas al terminar de elegir la comida (una vez por sesión).
+  // Popup "Completa tu pedido" (bebidas + salsas + cubiertos), una vez por sesión.
   const [showDrinkModal, setShowDrinkModal] = useState(false);
   const [drinkModalSeen, setDrinkModalSeen] = useState(false);
+  const [cutlery, setCutlery] = useState(false);
   useEffect(() => {
     function onAddPack(e: Event) {
       const { items } = (e as CustomEvent<{items:{id:string,qty:number}[]}>).detail;
@@ -550,16 +551,17 @@ export default function ReservationForm({
   const drinkProducts = products.filter(
     (p) => !p.isPack && normalizeCategory(p.category ?? "") === "Bebidas"
   );
-  const hasDrinkInCart = drinkProducts.some((d) => (cart[d.id] ?? 0) > 0);
+  const salsaProducts = products.filter(
+    (p) => !p.isPack && (p.category ?? "").trim().toLowerCase() === "salsas"
+  );
 
-  // Ofrecemos bebida en un popup (una sola vez) cuando el cliente va hacia el
-  // pago con productos en el carrito pero aún sin bebida. Se dispara en dos
-  // momentos: al pulsar "Continuar con la fecha" o al abrir el banner del carrito.
+  // Popup "Completa tu pedido" (bebidas + salsas + cubiertos): se ofrece una vez
+  // al ir a pagar si hay productos en el carrito y hay algún extra que ofrecer.
+  // Se dispara al pulsar "Continuar con la fecha" o al abrir el banner del carrito.
   const canOfferDrinks =
     cartProducts.length > 0 &&
-    drinkProducts.length > 0 &&
-    !hasDrinkInCart &&
-    !drinkModalSeen;
+    !drinkModalSeen &&
+    (drinkProducts.length > 0 || salsaProducts.length > 0);
 
   function continueFromMenu() {
     if (canOfferDrinks) {
@@ -773,7 +775,9 @@ export default function ReservationForm({
           customerName: fields.customerName,
           email: fields.email,
           phone: fields.phone,
-          notes: fields.notes,
+          notes: [`Cubiertos: ${cutlery ? "sí" : "no"}`, fields.notes.trim()]
+            .filter(Boolean)
+            .join(" · "),
           deliveryMethod: fields.deliveryMethod,
           deliveryAddress: fields.deliveryAddress,
           deliveryDetails: fields.deliveryDetails,
@@ -1019,6 +1023,7 @@ export default function ReservationForm({
               for (const p of products) {
                 if (p.isPack) continue; // los packs no se muestran en la carta
                 if (hiddenVariantIds.has(p.id)) continue; // variante → va como selector
+                if ((p.category ?? "").trim().toLowerCase() === "salsas") continue; // salsas → popup
                 const cat = normalizeCategory(p.category ?? "");
                 (grouped[cat] ??= []).push(p);
               }
@@ -1792,7 +1797,10 @@ export default function ReservationForm({
       {showDrinkModal && (
         <DrinkUpsellModal
           drinks={drinkProducts}
+          salsas={salsaProducts}
           cart={cart}
+          cutlery={cutlery}
+          onCutleryChange={setCutlery}
           onAdd={addToCart}
           onIncrement={increment}
           onDecrement={decrement}
