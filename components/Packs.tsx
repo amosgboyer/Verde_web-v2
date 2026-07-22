@@ -34,12 +34,12 @@ const PACKS = [
 export default function Packs({ readOnly = false }: { readOnly?: boolean }) {
   return (
     <section
-      className="px-8 py-[4.5rem]"
+      className="px-5 py-10 sm:px-8 sm:py-[4.5rem]"
       style={{ background: "var(--g0, #1c3a10)" }}
     >
       <div className="max-w-[1060px] mx-auto">
         {/* Header */}
-        <div className="text-center max-w-[480px] mx-auto mb-10">
+        <div className="text-center max-w-[480px] mx-auto mb-6 sm:mb-10">
           <p className="font-mono text-[0.68rem] tracking-[0.2em] uppercase mb-2"
             style={{ color: "var(--g3, #7ab356)" }}>
             Combinaciones
@@ -61,11 +61,11 @@ export default function Packs({ readOnly = false }: { readOnly?: boolean }) {
         </div>
 
         {/* Grid */}
-        <div className="gsap-stagger grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+        <div className="gsap-stagger grid gap-3 sm:gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
           {PACKS.map((pack) => (
             <div
               key={pack.id}
-              className="relative rounded-[14px] p-[1.6rem] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 flex flex-col items-center text-center"
+              className="relative rounded-[14px] p-4 sm:p-[1.6rem] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 flex flex-col items-center text-center"
               style={
                 pack.featured
                   ? {
@@ -94,12 +94,12 @@ export default function Packs({ readOnly = false }: { readOnly?: boolean }) {
               )}
 
               <h3
-                className="font-sans font-bold text-[1.15rem] mb-[0.5rem] text-white"
+                className="font-sans font-bold text-[1rem] sm:text-[1.15rem] mb-1 text-white"
               >
                 {pack.name}
               </h3>
               <p
-                className="text-[0.78rem] leading-relaxed mb-5 max-w-[280px]"
+                className="text-[0.76rem] sm:text-[0.78rem] leading-relaxed mb-3 sm:mb-5 max-w-[280px]"
                 style={{
                   color: pack.featured
                     ? "rgba(255,255,255,0.8)"
@@ -109,10 +109,10 @@ export default function Packs({ readOnly = false }: { readOnly?: boolean }) {
                 {pack.desc}
               </p>
 
-              <div className="flex flex-col items-center gap-3 mt-auto">
+              <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
                 <div className="flex items-center justify-center gap-2">
                   <span
-                    className="font-mono font-bold text-[1.5rem]"
+                    className="font-mono font-bold text-[1.3rem] sm:text-[1.5rem]"
                     style={{
                       color: pack.featured
                         ? "white"
