@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Product } from "@/lib/products";
 import { imageForProduct } from "@/lib/products";
@@ -24,9 +24,9 @@ interface DrinkUpsellModalProps {
 }
 
 /**
- * Popup "Completa tu pedido" al ir a pagar: bebidas + salsas extra + cubiertos.
- * Aparece una sola vez por sesión. Se renderiza en un portal para no verse
- * afectado por los transform de GSAP.
+ * Popup "Completa tu pedido" al ir a pagar, POR FASES: bebidas → salsas →
+ * cubiertos. Cada fase en su propia pantalla (sin scroll largo). Una sola vez
+ * por sesión. Portal para no verse afectado por los transform de GSAP.
  */
 export default function DrinkUpsellModal({
   drinks,
@@ -39,6 +39,16 @@ export default function DrinkUpsellModal({
   onDecrement,
   onContinue,
 }: DrinkUpsellModalProps) {
+  // Fases activas según lo que haya para ofrecer.
+  const steps: ("bebidas" | "salsas" | "cubiertos")[] = [];
+  if (drinks.length > 0) steps.push("bebidas");
+  if (salsas.length > 0) steps.push("salsas");
+  steps.push("cubiertos");
+
+  const [stepIdx, setStepIdx] = useState(0);
+  const step = steps[Math.min(stepIdx, steps.length - 1)];
+  const isLast = stepIdx >= steps.length - 1;
+
   // Cerrar con Escape + bloquear el scroll del fondo mientras está abierto.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -53,8 +63,10 @@ export default function DrinkUpsellModal({
     };
   }, [onContinue]);
 
-  const extrasInCart =
-    [...drinks, ...salsas].reduce((s, p) => s + (cart[p.id] ?? 0), 0);
+  function next() {
+    if (isLast) onContinue();
+    else setStepIdx((i) => i + 1);
+  }
 
   function ItemRow(item: Product) {
     const qty = cart[item.id] ?? 0;
@@ -67,19 +79,17 @@ export default function DrinkUpsellModal({
         className="flex items-center gap-3 rounded-2xl border bg-white p-2.5 pr-3 transition-colors"
         style={{ borderColor: active ? "#509234" : "rgba(0,0,0,0.10)" }}
       >
-        {img ? (
+        {img && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={img}
             alt=""
             className="w-12 h-12 rounded-xl object-cover shrink-0"
           />
-        ) : (
-          <div className="w-12 h-12 rounded-xl bg-verde-bosque/8 shrink-0" />
         )}
 
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-negro/80 leading-snug truncate">
+        <div className="min-w-0 flex-1 text-left">
+          <p className="text-sm font-semibold text-negro/80 leading-snug">
             {item.name}
           </p>
           <p className="text-sm font-semibold text-verde-bosque">
@@ -123,18 +133,18 @@ export default function DrinkUpsellModal({
     );
   }
 
-  const sectionLabel = (t: string) => (
-    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-negro/40 px-1 pt-1">
-      {t}
-    </p>
-  );
+  const HEAD: Record<string, { title: string; sub: string }> = {
+    bebidas: { title: "¿Algo para beber?", sub: "Añade una bebida bien fría." },
+    salsas: { title: "¿Salsas extra?", sub: "Ají o verde de la casa · 1,50 € cada una." },
+    cubiertos: { title: "¿Necesitas cubiertos?", sub: "Gratis. Si no, evitamos plástico." },
+  };
 
   const modal = (
     <div
       className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center bg-negro/55 backdrop-blur-sm px-4 py-6 animate-fade-in"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="drink-upsell-title"
+      aria-labelledby="extras-title"
       onClick={onContinue}
     >
       <div
@@ -155,51 +165,42 @@ export default function DrinkUpsellModal({
             ×
           </button>
           <h3
-            id="drink-upsell-title"
+            id="extras-title"
             className="font-display text-crema text-2xl sm:text-[26px] leading-tight"
           >
-            ¿Completas tu pedido?
+            {HEAD[step].title}
           </h3>
           <p className="text-crema/75 text-sm mt-2 leading-relaxed">
-            Bebidas, salsas y cubiertos. Se añaden en un toque.
+            {HEAD[step].sub}
           </p>
-        </div>
 
-        {/* ── Extras (scroll) ── */}
-        <div className="px-4 py-3 space-y-2 max-h-[42vh] overflow-y-auto">
-          {drinks.length > 0 && (
-            <>
-              {sectionLabel("Bebidas")}
-              {drinks.map((d) => ItemRow(d))}
-            </>
-          )}
-          {salsas.length > 0 && (
-            <>
-              {sectionLabel("Salsas")}
-              {salsas.map((s) => ItemRow(s))}
-            </>
-          )}
-        </div>
-
-        {/* ── Cubiertos ── */}
-        <div className="px-4 pb-1">
-          <div
-            className="flex items-center justify-between gap-3 rounded-2xl border bg-white p-3"
-            style={{ borderColor: "rgba(0,0,0,0.10)" }}
-          >
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-negro/80">
-                ¿Necesitas cubiertos?
-              </p>
-              <p className="text-xs text-negro/45">Gratis. Si no, evitamos plástico.</p>
+          {/* Progreso por fases */}
+          {steps.length > 1 && (
+            <div className="flex justify-center gap-1.5 mt-4">
+              {steps.map((s, i) => (
+                <span
+                  key={s}
+                  className="h-1.5 rounded-full transition-all duration-200"
+                  style={{
+                    width: i === stepIdx ? 18 : 6,
+                    background:
+                      i === stepIdx ? "#F5EDD8" : "rgba(245,240,232,0.4)",
+                  }}
+                />
+              ))}
             </div>
-            <div
-              className="flex gap-1 p-0.5 rounded-full shrink-0"
-              style={{ background: "rgba(0,0,0,0.06)" }}
-            >
+          )}
+        </div>
+
+        {/* ── Contenido de la fase ── */}
+        <div className="px-4 py-4 space-y-2 max-h-[42vh] overflow-y-auto">
+          {step === "bebidas" && drinks.map((d) => ItemRow(d))}
+          {step === "salsas" && salsas.map((s) => ItemRow(s))}
+          {step === "cubiertos" && (
+            <div className="flex gap-2">
               {[
-                { label: "No", value: false },
-                { label: "Sí", value: true },
+                { label: "No, gracias", value: false },
+                { label: "Sí, ponme", value: true },
               ].map((opt) => {
                 const selected = cutlery === opt.value;
                 return (
@@ -208,11 +209,11 @@ export default function DrinkUpsellModal({
                     type="button"
                     onClick={() => onCutleryChange(opt.value)}
                     aria-pressed={selected}
-                    className="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
+                    className="flex-1 rounded-2xl border py-4 text-sm font-semibold transition-colors"
                     style={
                       selected
-                        ? { background: "#2E4F20", color: "#F5EDD8" }
-                        : { background: "transparent", color: "rgba(26,26,14,0.5)" }
+                        ? { background: "#2E4F20", color: "#F5EDD8", borderColor: "#2E4F20" }
+                        : { background: "#fff", color: "rgba(26,26,14,0.7)", borderColor: "rgba(0,0,0,0.1)" }
                     }
                   >
                     {opt.label}
@@ -220,18 +221,27 @@ export default function DrinkUpsellModal({
                 );
               })}
             </div>
-          </div>
+          )}
         </div>
 
         {/* ── Acción ── */}
-        <div className="px-4 pb-5 pt-2">
+        <div className="px-4 pb-5 pt-1 space-y-2">
           <button
             type="button"
-            onClick={onContinue}
+            onClick={next}
             className="w-full bg-[#c85a2a] text-crema text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 rounded-full hover:bg-[#d96535] transition-colors"
           >
-            {extrasInCart > 0 ? "Perfecto, continuar" : "Continuar con la fecha"}
+            {isLast ? "Continuar con la fecha" : "Siguiente"}
           </button>
+          {!isLast && (
+            <button
+              type="button"
+              onClick={onContinue}
+              className="w-full text-center text-xs text-negro/45 hover:text-negro/70 transition-colors py-1.5"
+            >
+              Saltar y continuar
+            </button>
+          )}
         </div>
       </div>
     </div>
