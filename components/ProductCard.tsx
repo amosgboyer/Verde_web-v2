@@ -47,7 +47,7 @@ export default function ProductCard({
   return (
     <article
       className={clsx(
-        "pc w-full aspect-[4/5] rounded-[15px] cursor-pointer select-none",
+        "pc w-full aspect-square sm:aspect-[4/5] rounded-[15px] cursor-pointer select-none",
         open && "is-open",
         !active.available && "opacity-60"
       )}
