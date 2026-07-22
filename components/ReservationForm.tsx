@@ -8,8 +8,7 @@ import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
 import type { WeekendOffer } from "@/lib/offers";
 import { computeOfferDiscount, productMatchesOffer } from "@/lib/offers";
-import { quoteDelivery, quoteFromCoords } from "@/lib/delivery";
-import { useAddressAutocomplete } from "./useAddressAutocomplete";
+import { quoteDelivery } from "@/lib/delivery";
 import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
 import DrinkUpsellModal from "./DrinkUpsellModal";
@@ -320,9 +319,6 @@ export default function ReservationForm({
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [accessCode, setAccessCode] = useState("");
   const [unlocked, setUnlocked] = useState(!requireAccessCode);
-  const addressRef = useRef<HTMLInputElement>(null);
-  const addressAutocompleteRef = useRef<HTMLDivElement>(null);
-  const [autocompleteReady, setAutocompleteReady] = useState(false);
 
   // Recordar desbloqueo entre recargas + escuchar el gate de arriba (banner)
   useEffect(() => {
@@ -502,29 +498,6 @@ export default function ReservationForm({
     // Si no es entregable o no se pudo geolocalizar, calcDelivery ya muestra el
     // aviso y NO avanzamos (debe ajustar la dirección o elegir recogida).
   }
-
-  // Autocompletado de Google: al elegir una dirección, rellena dirección + CP y
-  // calcula la zona/coste con las MISMAS reglas (a partir de las coordenadas).
-  useAddressAutocomplete(
-    addressAutocompleteRef,
-    currentStep === 5 && fields.deliveryMethod === "delivery",
-    (sel) => {
-      setFields((prev) => ({
-        ...prev,
-        deliveryAddress: sel.address,
-        postalCode: sel.postalCode || prev.postalCode,
-      }));
-      const q = quoteFromCoords(sel.lat, sel.lng);
-      if (q.deliverable) {
-        setDelivery({ deliverable: true, zone: q.zone, fee: q.fee });
-        setDeliveryError(null);
-      } else {
-        setDelivery({ deliverable: false, zone: null, fee: 0 });
-        setDeliveryError("Aún no llegamos a tu zona. Te contactaremos por WhatsApp.");
-      }
-    },
-    setAutocompleteReady
-  );
 
   // ── Fields ──
 
@@ -1450,30 +1423,16 @@ export default function ReservationForm({
                       <label htmlFor="deliveryAddress" className={labelClass}>
                         Dirección de entrega
                       </label>
-                      {/* Autocompletado de Google (Places New): rellena
-                          dirección + CP + envío al elegir una sugerencia. */}
-                      <div
-                        ref={addressAutocompleteRef}
-                        className={`verde-gmaps-autocomplete ${
-                          autocompleteReady ? "" : "hidden"
-                        }`}
+                      <input
+                        id="deliveryAddress"
+                        name="deliveryAddress"
+                        type="text"
+                        required
+                        placeholder="Calle, número, piso…"
+                        value={fields.deliveryAddress}
+                        onChange={handleFieldChange}
+                        className={inputClass}
                       />
-                      {/* Campo manual: fallback si el autocompletado no carga
-                          (sin key, error, o navegador sin soporte). */}
-                      {!autocompleteReady && (
-                        <input
-                          ref={addressRef}
-                          id="deliveryAddress"
-                          name="deliveryAddress"
-                          type="text"
-                          required
-                          autoComplete="off"
-                          placeholder="Empieza a escribir tu calle y número"
-                          value={fields.deliveryAddress}
-                          onChange={handleFieldChange}
-                          className={inputClass}
-                        />
-                      )}
                     </div>
                     <div>
                       <label htmlFor="postalCode" className={labelClass}>

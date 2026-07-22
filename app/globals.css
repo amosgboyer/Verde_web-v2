@@ -61,7 +61,3 @@ body {
   .pc:hover .pc-namestrip { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .pc-reveal { transition: none; } }
-
-/* ── Autocompletado de dirección (Google PlaceAutocompleteElement, Places New) ── */
-.verde-gmaps-autocomplete { width: 100%; }
-.verde-gmaps-autocomplete gmp-place-autocomplete { width: 100%; display: block; }

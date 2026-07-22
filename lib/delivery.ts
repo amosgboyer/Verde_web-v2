@@ -38,28 +38,6 @@ function haversineKm(a: [number, number], b: [number, number]): number {
   return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
-// Calcula zona/precio de reparto a partir de coordenadas ya conocidas (p.ej. las
-// que devuelve Google Places al seleccionar una dirección). MISMAS reglas de
-// distancia/zona/coste que quoteDelivery — así el autocompletado no cambia nada.
-export function quoteFromCoords(lat: number, lng: number): DeliveryQuote {
-  const km = haversineKm(ORIGIN, [lat, lng]);
-  const mins = Math.round(10 + km * 3.5);
-  let zone: number | null = null;
-  for (let i = 0; i < ZONE_LIMITS.length; i++) {
-    if (km <= ZONE_LIMITS[i]) {
-      zone = i + 1;
-      break;
-    }
-  }
-  const deliverable = !(mins > MAX_MINS || !zone);
-  return {
-    deliverable,
-    zone: deliverable ? zone : null,
-    fee: deliverable ? feeForZone(zone) : 0,
-    km,
-  };
-}
-
 // Geocodifica una dirección de Madrid y devuelve la zona/precio de reparto.
 // Devuelve null si no se encuentra la dirección.
 export async function quoteDelivery(query: string): Promise<DeliveryQuote | null> {
