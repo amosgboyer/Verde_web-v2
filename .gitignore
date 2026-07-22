@@ -39,3 +39,8 @@ next-env.d.ts
 /gate-*.png
 /calendario-*.png
 /waitlist*.csv
+
+# Fotos crudas de productos (WeTransfer) — solo se versionan las optimizadas .jpg
+public/productos/wetransfer_*
+public/productos/*.zip
+public/productos/.DS_Store

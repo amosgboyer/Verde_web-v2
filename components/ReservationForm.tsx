@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Product } from "@/lib/products";
+import { imageForProduct } from "@/lib/products";
 import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
@@ -1038,29 +1039,35 @@ export default function ReservationForm({
                           </p>
                         </div>
                       )}
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Móvil: fila deslizable · Escritorio: rejilla */}
+                      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-3 sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:gap-4 sm:overflow-visible sm:pb-0">
                         {grouped[cat]!.map((product) => (
-                          <ProductCard
+                          <div
                             key={product.id}
-                            product={product}
-                            quantity={cart[product.id] ?? 0}
-                            maxQuantity={config.maxQuantityPerOrder}
-                            onAdd={addToCart}
-                            onIncrement={increment}
-                            onDecrement={decrement}
-                            sizeOptions={sizeOptionsByBase[product.id]}
-                            addons={addonsByBase[product.id]}
-                            quantityOf={(id) => cart[id] ?? 0}
-                            offerBadge={
-                              weekendOffer &&
-                              productMatchesOffer(weekendOffer, {
-                                id: product.id,
-                                name: product.name,
-                              })
-                                ? `2ª −${weekendOffer.percentOff}%`
-                                : undefined
-                            }
-                          />
+                            className="shrink-0 w-[46%] snap-start sm:w-full"
+                          >
+                            <ProductCard
+                              product={product}
+                              quantity={cart[product.id] ?? 0}
+                              maxQuantity={config.maxQuantityPerOrder}
+                              onAdd={addToCart}
+                              onIncrement={increment}
+                              onDecrement={decrement}
+                              sizeOptions={sizeOptionsByBase[product.id]}
+                              addons={addonsByBase[product.id]}
+                              quantityOf={(id) => cart[id] ?? 0}
+                              image={imageForProduct(product)}
+                              offerBadge={
+                                weekendOffer &&
+                                productMatchesOffer(weekendOffer, {
+                                  id: product.id,
+                                  name: product.name,
+                                })
+                                  ? `2ª −${weekendOffer.percentOff}%`
+                                  : undefined
+                              }
+                            />
+                          </div>
                         ))}
                       </div>
                     </div>

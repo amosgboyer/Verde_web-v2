@@ -160,6 +160,30 @@ export const PACKS: Product[] = [
   },
 ];
 
+// Fotos de los platos (en /public/productos). Se usan si el producto no trae
+// imageUrl propio desde el Sheet. Clave = productId del Sheet.
+export const PRODUCT_IMAGES: Record<string, string> = {
+  "bolon-mixto": "/productos/bolon-mixto.jpg",
+  "tigrillo-mixto": "/productos/tigrillo.jpg",
+  "tigrillo-media-racion": "/productos/tigrillo.jpg",
+  "corviche-de-pescado": "/productos/corviche.jpg",
+  "patacón-con-rabo-de-toto": "/productos/patacon-rabo.jpg",
+  "tortilla-de-verde": "/productos/tortilla-verde.jpg",
+  "bollo-de-verde": "/productos/bollo-verde.jpg",
+  "bolon-mixto-con-maduro": "/productos/bolon-maduro.jpg",
+  "canoa-de-maduro": "/productos/canoa-maduro.jpg",
+  "Ahora -comen": "/productos/ahora-comen.jpg",
+  "ración-patacon": "/productos/racion-patacon.jpg",
+  "agua": "/productos/agua.jpg",
+  "coca-cola": "/productos/coca-cola.jpg",
+  "coca-cola-zero": "/productos/coca-cola-zero.jpg",
+  "fuze-tea-limon": "/productos/fuze-tea.jpg",
+};
+
+export function imageForProduct(p: { id: string; image?: string }): string | undefined {
+  return p.image || PRODUCT_IMAGES[p.id];
+}
+
 export function getPacks(): Product[] {
   return PACKS.filter((p) => p.available);
 }

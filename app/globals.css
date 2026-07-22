@@ -49,3 +49,15 @@ body {
 .animation-delay-300 { animation-delay: 0.3s; }
 
 .gsap-stagger > * { opacity: 1 }
+
+/* ── Tarjeta de producto: foto + panel desplegable (hover en escritorio, toque en móvil) ── */
+.pc { position: relative; overflow: hidden; }
+.pc-namestrip { transition: opacity .25s ease; }
+.pc-reveal { transform: translateY(-100%); transition: transform .34s cubic-bezier(.16, 1, .3, 1); }
+.pc.is-open .pc-reveal { transform: translateY(0); }
+.pc.is-open .pc-namestrip { opacity: 0; }
+@media (hover: hover) {
+  .pc:hover .pc-reveal { transform: translateY(0); }
+  .pc:hover .pc-namestrip { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .pc-reveal { transition: none; } }
