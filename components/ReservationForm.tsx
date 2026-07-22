@@ -8,7 +8,8 @@ import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
 import type { WeekendOffer } from "@/lib/offers";
 import { computeOfferDiscount, productMatchesOffer } from "@/lib/offers";
-import { quoteDelivery } from "@/lib/delivery";
+import { quoteDelivery, quoteFromCoords } from "@/lib/delivery";
+import { useAddressAutocomplete } from "./useAddressAutocomplete";
 import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
 import DrinkUpsellModal from "./DrinkUpsellModal";
@@ -319,6 +320,7 @@ export default function ReservationForm({
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [accessCode, setAccessCode] = useState("");
   const [unlocked, setUnlocked] = useState(!requireAccessCode);
+  const addressRef = useRef<HTMLInputElement>(null);
 
   // Recordar desbloqueo entre recargas + escuchar el gate de arriba (banner)
   useEffect(() => {
@@ -498,6 +500,28 @@ export default function ReservationForm({
     // Si no es entregable o no se pudo geolocalizar, calcDelivery ya muestra el
     // aviso y NO avanzamos (debe ajustar la dirección o elegir recogida).
   }
+
+  // Autocompletado de Google: al elegir una dirección, rellena dirección + CP y
+  // calcula la zona/coste con las MISMAS reglas (a partir de las coordenadas).
+  useAddressAutocomplete(
+    addressRef,
+    currentStep === 5 && fields.deliveryMethod === "delivery",
+    (sel) => {
+      setFields((prev) => ({
+        ...prev,
+        deliveryAddress: sel.address,
+        postalCode: sel.postalCode || prev.postalCode,
+      }));
+      const q = quoteFromCoords(sel.lat, sel.lng);
+      if (q.deliverable) {
+        setDelivery({ deliverable: true, zone: q.zone, fee: q.fee });
+        setDeliveryError(null);
+      } else {
+        setDelivery({ deliverable: false, zone: null, fee: 0 });
+        setDeliveryError("Aún no llegamos a tu zona. Te contactaremos por WhatsApp.");
+      }
+    }
+  );
 
   // ── Fields ──
 
@@ -1424,11 +1448,13 @@ export default function ReservationForm({
                         Dirección de entrega
                       </label>
                       <input
+                        ref={addressRef}
                         id="deliveryAddress"
                         name="deliveryAddress"
                         type="text"
                         required
-                        placeholder="Calle, número, piso, puerta"
+                        autoComplete="off"
+                        placeholder="Empieza a escribir tu calle y elígela"
                         value={fields.deliveryAddress}
                         onChange={handleFieldChange}
                         className={inputClass}
