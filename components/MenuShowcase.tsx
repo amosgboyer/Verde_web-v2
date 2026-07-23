@@ -40,6 +40,27 @@ export default function MenuShowcase({ products }: { products: Product[] }) {
           </p>
         </div>
 
+        {/* Aviso de alérgenos + contaminación cruzada (arriba, antes de la carta) */}
+        <div
+          className="mx-auto max-w-2xl mb-10 flex items-start gap-3 rounded-xl border px-5 py-4"
+          style={{
+            background: "rgba(200,90,42,0.08)",
+            borderColor: "rgba(200,90,42,0.3)",
+          }}
+        >
+          <span style={{ fontSize: "1.15rem", lineHeight: 1 }} aria-hidden>
+            ⚠️
+          </span>
+          <div style={{ fontSize: "0.82rem", color: "rgba(46,46,30,0.72)", lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 700, color: "#c85a2a" }}>
+              Todos nuestros platos pueden contener trazas de cacahuete y frutos
+              secos.
+            </span>{" "}
+            Información orientativa. Ante una alergia grave, escríbenos antes de
+            pedir y lo confirmamos contigo.
+          </div>
+        </div>
+
         <div className="space-y-10">
           {CATS.map((cat) => {
             const list = items.filter((p) => normCat(p.category) === cat.key);
@@ -93,21 +114,6 @@ export default function MenuShowcase({ products }: { products: Product[] }) {
               </div>
             );
           })}
-        </div>
-
-        {/* Aviso de alérgenos + contaminación cruzada */}
-        <div
-          className="mt-12 mx-auto max-w-2xl text-center leading-relaxed"
-          style={{ fontSize: "0.72rem", color: "rgba(46,46,30,0.5)" }}
-        >
-          <p className="font-semibold" style={{ color: "#8a5a2a" }}>
-            ⚠️ Todos nuestros platos pueden contener trazas de cacahuete y
-            frutos secos.
-          </p>
-          <p className="mt-1">
-            Información orientativa. Si tienes una alergia grave, escríbenos antes
-            de pedir y lo confirmamos contigo.
-          </p>
         </div>
       </div>
     </section>

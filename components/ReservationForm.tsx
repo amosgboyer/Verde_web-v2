@@ -570,6 +570,18 @@ export default function ReservationForm({
   const selectedDay = availability.find((d) => d.date === fields.reservationDate);
 
   const cartProducts = products.filter((p) => (cart[p.id] ?? 0) > 0);
+
+  // Choque entre las alergias marcadas por el cliente y los platos del carrito.
+  // (Los toggles del checkout y la columna G del Sheet usan el mismo vocabulario.)
+  const allergenConflicts = allergens
+    .map((a) => ({
+      allergen: a,
+      dishes: cartProducts
+        .filter((p) => (p.allergens ?? []).includes(a))
+        .map((p) => p.name),
+    }))
+    .filter((c) => c.dishes.length > 0);
+
   // Bebidas (para decidir si se ofrece el popup "Completa tu pedido")
   const drinkProducts = products.filter(
     (p) => !p.isPack && normalizeCategory(p.category ?? "") === "Bebidas"
@@ -1016,6 +1028,26 @@ export default function ReservationForm({
             editLabel="+ Añadir más"
             editProminent
           >
+            {/* Aviso de alérgenos + contaminación cruzada (arriba, antes de la carta) */}
+            <div
+              className="mb-6 flex items-start gap-3 rounded-xl border px-4 py-3"
+              style={{
+                background: "rgba(200,90,42,0.08)",
+                borderColor: "rgba(200,90,42,0.3)",
+              }}
+            >
+              <span className="text-lg leading-none" aria-hidden>
+                ⚠️
+              </span>
+              <p className="text-[13px] leading-snug text-negro/70">
+                <span className="font-bold text-tierra">
+                  Puede contener trazas de cacahuete y frutos secos.
+                </span>{" "}
+                Toca cada plato para ver sus alérgenos. Información orientativa;
+                ante una alergia grave, escríbenos antes de pedir.
+              </p>
+            </div>
+
             {(() => {
               // Variantes de tamaño: resolver opciones reales y ocultar las que
               // se muestran como selector (p.ej. la media ración) para que no
@@ -1108,15 +1140,6 @@ export default function ReservationForm({
                 </div>
               );
             })()}
-
-            {/* Aviso de alérgenos + contaminación cruzada */}
-            <p className="mt-4 text-[11px] leading-snug text-negro/45">
-              <span className="font-semibold text-tierra">
-                ⚠️ Puede contener trazas de cacahuete y frutos secos.
-              </span>{" "}
-              Toca un plato para ver sus alérgenos. Info orientativa; ante una
-              alergia grave, escríbenos antes de pedir.
-            </p>
 
             {cartProducts.some((p) => p.isPack) && (
               <div className="mt-5 space-y-2">
@@ -1368,6 +1391,40 @@ export default function ReservationForm({
                     Marca lo que debamos evitar. Se lo pasamos a cocina destacado
                     en tu pedido.
                   </p>
+
+                  {/* Alerta: alergia marcada que está en algún plato del carrito */}
+                  {allergenConflicts.length > 0 && (
+                    <div
+                      className="mt-3 rounded-xl border px-3.5 py-3"
+                      style={{
+                        background: "rgba(200,42,42,0.07)",
+                        borderColor: "rgba(200,42,42,0.35)",
+                      }}
+                    >
+                      <p
+                        className="text-[11px] font-bold uppercase tracking-[0.12em] mb-1.5"
+                        style={{ color: "#b3261e" }}
+                      >
+                        ⚠️ Atención con tu pedido
+                      </p>
+                      {allergenConflicts.map((c) => (
+                        <p
+                          key={c.allergen}
+                          className="text-[12.5px] leading-snug text-negro/75"
+                        >
+                          Has marcado{" "}
+                          <span className="font-bold" style={{ color: "#b3261e" }}>
+                            {c.allergen}
+                          </span>{" "}
+                          y tu pedido incluye: {c.dishes.join(", ")}.
+                        </p>
+                      ))}
+                      <p className="text-[11px] text-negro/50 mt-1.5">
+                        Revísalo antes de pagar. Si es una alergia grave, no lo
+                        pidas y escríbenos.
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="notes" className={labelClass}>
@@ -1614,6 +1671,39 @@ export default function ReservationForm({
               onEdit={() => {}}
               showEditButton={false}
             >
+
+              {/* Alerta final: alergia marcada presente en el pedido */}
+              {allergenConflicts.length > 0 && (
+                <div
+                  className="mb-6 rounded-xl border px-4 py-3.5"
+                  style={{
+                    background: "rgba(200,42,42,0.07)",
+                    borderColor: "rgba(200,42,42,0.35)",
+                  }}
+                >
+                  <p
+                    className="text-[11px] font-bold uppercase tracking-[0.12em] mb-1.5"
+                    style={{ color: "#b3261e" }}
+                  >
+                    ⚠️ Atención con tu pedido
+                  </p>
+                  {allergenConflicts.map((c) => (
+                    <p
+                      key={c.allergen}
+                      className="text-[12.5px] leading-snug text-negro/75"
+                    >
+                      Has marcado{" "}
+                      <span className="font-bold" style={{ color: "#b3261e" }}>
+                        {c.allergen}
+                      </span>{" "}
+                      y tu pedido incluye: {c.dishes.join(", ")}.
+                    </p>
+                  ))}
+                  <p className="text-[11px] text-negro/50 mt-1.5">
+                    Si es una alergia grave, no completes el pago y escríbenos.
+                  </p>
+                </div>
+              )}
 
               <div className="bg-verde-bosque/5 rounded-xl p-6 mb-6">
               {/* Products */}
