@@ -94,6 +94,20 @@ export default function MenuShowcase({ products }: { products: Product[] }) {
             );
           })}
         </div>
+
+        {/* Aviso de alérgenos + contaminación cruzada */}
+        <div
+          className="mt-12 mx-auto max-w-2xl text-center leading-relaxed"
+          style={{ fontSize: "0.72rem", color: "rgba(46,46,30,0.5)" }}
+        >
+          <p className="font-semibold" style={{ color: "#8a5a2a" }}>
+            ⚠️ Todos nuestros platos pueden contener trazas de cacahuete.
+          </p>
+          <p className="mt-1">
+            Información orientativa. Si tienes una alergia grave, escríbenos antes
+            de pedir y lo confirmamos contigo.
+          </p>
+        </div>
       </div>
     </section>
   );

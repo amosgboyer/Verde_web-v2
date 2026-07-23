@@ -141,6 +141,22 @@ export default function ProductCard({
           {product.description}
         </div>
 
+        {/* Alérgenos (solo si el plato los tiene cargados en el Sheet) */}
+        {(active.allergens ?? product.allergens ?? []).length > 0 && (
+          <div
+            className="leading-snug"
+            style={{ fontSize: "0.6rem", color: "rgba(245,240,232,0.6)" }}
+          >
+            <span
+              className="uppercase font-semibold tracking-wide"
+              style={{ color: "rgba(245,240,232,0.8)" }}
+            >
+              Alérgenos:{" "}
+            </span>
+            {(active.allergens ?? product.allergens ?? []).join(" · ")}
+          </div>
+        )}
+
         {/* Selector de tamaño */}
         {hasSizes && (
           <div

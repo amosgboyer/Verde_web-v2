@@ -1109,6 +1109,15 @@ export default function ReservationForm({
               );
             })()}
 
+            {/* Aviso de alérgenos + contaminación cruzada */}
+            <p className="mt-4 text-[11px] leading-snug text-negro/45">
+              <span className="font-semibold text-tierra">
+                ⚠️ Puede contener trazas de cacahuete.
+              </span>{" "}
+              Toca un plato para ver sus alérgenos. Info orientativa; ante una
+              alergia grave, escríbenos antes de pedir.
+            </p>
+
             {cartProducts.some((p) => p.isPack) && (
               <div className="mt-5 space-y-2">
                 {cartProducts
