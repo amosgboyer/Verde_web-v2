@@ -101,7 +101,8 @@ export default function MenuShowcase({ products }: { products: Product[] }) {
           style={{ fontSize: "0.72rem", color: "rgba(46,46,30,0.5)" }}
         >
           <p className="font-semibold" style={{ color: "#8a5a2a" }}>
-            ⚠️ Todos nuestros platos pueden contener trazas de cacahuete.
+            ⚠️ Todos nuestros platos pueden contener trazas de cacahuete y
+            frutos secos.
           </p>
           <p className="mt-1">
             Información orientativa. Si tienes una alergia grave, escríbenos antes

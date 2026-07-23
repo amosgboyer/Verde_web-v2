@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { appendOrderToSheet, findOrderByStripeSessionId } from "@/lib/google-sheets";
+import { appendOrderToSheet, findOrderByStripeSessionId, getProductsRows } from "@/lib/google-sheets";
 import {
   sendConfirmationToCustomer,
   sendInternalOrderNotification,
@@ -185,10 +185,23 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      // Alérgenos por plato desde el Sheet, para mostrarlos en el email de
+      // confirmación. Con try/catch: si falla, el pedido/email sale igual.
+      let allergensById = new Map<string, string[]>();
+      try {
+        const productRows = await getProductsRows();
+        allergensById = new Map(
+          productRows.map((p) => [p.productId, p.allergens])
+        );
+      } catch (err) {
+        console.error("[stripe-webhook] No se pudieron cargar alérgenos:", err);
+      }
+
       const emailItems = items.map((item) => ({
         productName: item.name,
         quantity: item.qty,
         finalPrice: item.price,
+        allergens: allergensById.get(item.id) ?? [],
       }));
 
       if (slotStillAvailable) {

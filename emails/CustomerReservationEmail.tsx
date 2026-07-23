@@ -14,6 +14,7 @@ interface OrderItem {
   productName: string;
   quantity: number;
   finalPrice: number;
+  allergens?: string[];
 }
 
 export interface CustomerReservationEmailProps {
@@ -251,6 +252,17 @@ export function CustomerReservationEmail({
                           >
                             {item.productName}{" "}
                             <span style={{ color: V.gris }}>×{item.quantity}</span>
+                            {item.allergens && item.allergens.length > 0 && (
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  color: V.gris,
+                                  marginTop: "2px",
+                                }}
+                              >
+                                Alérgenos: {item.allergens.join(", ")}
+                              </div>
+                            )}
                           </td>
                           <td
                             style={{
@@ -266,6 +278,19 @@ export function CustomerReservationEmail({
                       ))}
                     </tbody>
                   </table>
+
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      color: V.gris,
+                      lineHeight: 1.5,
+                      margin: "8px 0 0",
+                    }}
+                  >
+                    ⚠️ Puede contener trazas de cacahuete y frutos secos.
+                    Información orientativa; ante una alergia grave, contáctanos
+                    antes de tu próximo pedido.
+                  </p>
 
                 </td>
               </tr>

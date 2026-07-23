@@ -56,6 +56,7 @@ export interface OrderItem {
   productName: string;
   quantity: number;
   finalPrice: number;
+  allergens?: string[];
 }
 
 export interface ConfirmationEmailData {
