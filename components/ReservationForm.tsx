@@ -70,6 +70,24 @@ const INITIAL_FIELDS: FormFields = {
   deliveryZone: "",
 };
 
+// Los 14 alérgenos de declaración obligatoria (Reglamento UE 1169/2011).
+const ALLERGENS = [
+  "Gluten",
+  "Crustáceos",
+  "Huevos",
+  "Pescado",
+  "Cacahuetes",
+  "Soja",
+  "Lácteos",
+  "Frutos de cáscara",
+  "Apio",
+  "Mostaza",
+  "Sésamo",
+  "Sulfitos",
+  "Altramuces",
+  "Moluscos",
+] as const;
+
 const STORAGE_KEY = "verde_customer_data";
 
 const inputClass =
@@ -273,6 +291,11 @@ export default function ReservationForm({
   const [showDrinkModal, setShowDrinkModal] = useState(false);
   const [drinkModalSeen, setDrinkModalSeen] = useState(false);
   const [cutlery, setCutlery] = useState(false);
+  const [allergens, setAllergens] = useState<string[]>([]);
+  const toggleAllergen = (a: string) =>
+    setAllergens((prev) =>
+      prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]
+    );
   useEffect(() => {
     function onAddPack(e: Event) {
       const { items } = (e as CustomEvent<{items:{id:string,qty:number}[]}>).detail;
@@ -775,9 +798,14 @@ export default function ReservationForm({
           customerName: fields.customerName,
           email: fields.email,
           phone: fields.phone,
-          notes: [`Cubiertos: ${cutlery ? "sí" : "no"}`, fields.notes.trim()]
+          notes: [
+            allergens.length ? `⚠️ ALÉRGENOS: ${allergens.join(", ")}` : "",
+            `Cubiertos: ${cutlery ? "sí" : "no"}`,
+            fields.notes.trim(),
+          ]
             .filter(Boolean)
-            .join(" · "),
+            .join(" · ")
+            .slice(0, 500),
           deliveryMethod: fields.deliveryMethod,
           deliveryAddress: fields.deliveryAddress,
           deliveryDetails: fields.deliveryDetails,
@@ -1305,6 +1333,34 @@ export default function ReservationForm({
                   />
                 </div>
                 <div className="sm:col-span-2">
+                  <span className={labelClass}>¿Alguna alergia? (opcional)</span>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {ALLERGENS.map((a) => {
+                      const on = allergens.includes(a);
+                      return (
+                        <button
+                          key={a}
+                          type="button"
+                          onClick={() => toggleAllergen(a)}
+                          aria-pressed={on}
+                          className={clsx(
+                            "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                            on
+                              ? "border-verde-bosque bg-verde-bosque/10 text-verde-bosque"
+                              : "border-negro/15 text-negro/55 hover:border-negro/30"
+                          )}
+                        >
+                          {a}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-negro/40 mt-2">
+                    Marca lo que debamos evitar. Se lo pasamos a cocina destacado
+                    en tu pedido.
+                  </p>
+                </div>
+                <div className="sm:col-span-2">
                   <label htmlFor="notes" className={labelClass}>
                     Notas (opcional)
                   </label>
@@ -1312,7 +1368,7 @@ export default function ReservationForm({
                     id="notes"
                     name="notes"
                     rows={2}
-                    placeholder="Alergias, instrucciones especiales..."
+                    placeholder="Instrucciones especiales, indicaciones para el repartidor..."
                     value={fields.notes}
                     onChange={handleFieldChange}
                     className={clsx(inputClass, "resize-none")}
