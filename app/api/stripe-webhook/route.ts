@@ -98,10 +98,13 @@ export async function POST(req: NextRequest) {
     // Las ampliaciones ("añadir a mi pedido") ya tienen cupo del pedido
     // original → no se re-chequea disponibilidad.
     const isAddon = meta.isAddon === "true";
+    // Pedido "en directo" (para hoy, ~40 min): no hay slot en Availability, así
+    // que se salta la re-validación y se marca PAID (si no, el terminal no lo vería).
+    const isDirecto = meta.directo === "true";
 
     // Re-validate slot availability before saving
     let slotStillAvailable = false;
-    if (isAddon) {
+    if (isAddon || isDirecto) {
       slotStillAvailable = true;
     } else {
       try {

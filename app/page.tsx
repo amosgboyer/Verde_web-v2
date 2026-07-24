@@ -7,6 +7,7 @@ import { getActivePromotion } from "@/lib/promotions";
 import type { ActivePromotion } from "@/lib/promotions";
 import { getActiveWeekendOffer } from "@/lib/offers";
 import ReservationForm from "@/components/ReservationForm";
+import { getDirectoStatus } from "@/lib/directo";
 import ClosedState from "@/components/ClosedState";
 import MenuShowcase from "@/components/MenuShowcase";
 import Packs from "@/components/Packs";
@@ -20,7 +21,15 @@ import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  // Piloto "en directo": ?directo=preview lo fuerza abierto para probarlo en la
+  // preview antes del miércoles. En la ventana real (mié-vie) se abre solo.
+  const sp = await searchParams;
+  const directoStatus = getDirectoStatus(sp.directo === "preview");
   let products: Product[] = getAvailableProducts();
   let reservationsOpen = storeConfig.reservationsOpen;
   let activePromotion: ActivePromotion | null = null;
@@ -183,6 +192,7 @@ export default async function HomePage() {
             config={config}
             promotion={activePromotion}
             weekendOffer={weekendOffer}
+            directo={directoStatus.isOpen}
             requireAccessCode={launchPhase === "early_access"}
             accessCodeValue={
               launchPhase === "early_access" ? EARLY_ACCESS_CODE : ""

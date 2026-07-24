@@ -9,6 +9,7 @@ import type { ActivePromotion } from "@/lib/promotions";
 import type { WeekendOffer } from "@/lib/offers";
 import { computeOfferDiscount, productMatchesOffer } from "@/lib/offers";
 import { quoteDelivery } from "@/lib/delivery";
+import { todayMadrid, etaFromNow } from "@/lib/directo";
 import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
 import DrinkUpsellModal from "./DrinkUpsellModal";
@@ -40,6 +41,7 @@ interface ReservationFormProps {
   weekendOffer?: WeekendOffer | null;
   requireAccessCode?: boolean;
   accessCodeValue?: string;
+  directo?: boolean;
 }
 
 interface FormFields {
@@ -283,6 +285,7 @@ export default function ReservationForm({
   weekendOffer = null,
   requireAccessCode = false,
   accessCodeValue = "",
+  directo = false,
 }: ReservationFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStep, setMaxStep] = useState(1);
@@ -296,6 +299,17 @@ export default function ReservationForm({
     setAllergens((prev) =>
       prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]
     );
+
+  // Modo directo: pedido para HOY con entrega ~40 min. Pre-fija fecha y hora
+  // (así el flujo se salta los pasos de día/hora); la hora se recalcula al pagar.
+  useEffect(() => {
+    if (!directo) return;
+    setFields((prev) => ({
+      ...prev,
+      reservationDate: todayMadrid(),
+      reservationTime: etaFromNow(),
+    }));
+  }, [directo]);
   useEffect(() => {
     function onAddPack(e: Event) {
       const { items } = (e as CustomEvent<{items:{id:string,qty:number}[]}>).detail;
@@ -603,7 +617,8 @@ export default function ReservationForm({
       setShowDrinkModal(true);
       return;
     }
-    goToStep(2);
+    // En directo no hay pasos de día/hora → directo a "Tus datos".
+    goToStep(directo ? 4 : 2);
   }
 
   function dismissDrinkModal() {
@@ -805,13 +820,16 @@ export default function ReservationForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: cartProducts.map((p) => ({ productId: p.id, quantity: cart[p.id] })),
-          reservationDate: fields.reservationDate,
-          reservationTime: fields.reservationTime,
+          reservationDate: directo ? todayMadrid() : fields.reservationDate,
+          reservationTime: directo ? etaFromNow() : fields.reservationTime,
+          directo,
           customerName: fields.customerName,
           email: fields.email,
           phone: fields.phone,
           notes: [
-            allergens.length ? `⚠️ ALÉRGENOS: ${allergens.join(", ")}` : "",
+            allergens.length
+              ? `Alergias: ${allergens.join(", ")}`
+              : "Alergias: ninguna",
             `Cubiertos: ${cutlery ? "sí" : "no"}`,
             fields.notes.trim(),
           ]
@@ -1028,6 +1046,26 @@ export default function ReservationForm({
             editLabel="+ Añadir más"
             editProminent
           >
+            {/* Banner "en directo": pedido para hoy, entrega ~40 min */}
+            {directo && (
+              <div
+                className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
+                style={{ background: "var(--g1, #2E4F20)", color: "#fff" }}
+              >
+                <span className="text-xl leading-none" aria-hidden>
+                  🛵
+                </span>
+                <div className="leading-tight">
+                  <div className="font-bold text-[14px]">
+                    Pedido en directo · llega en ~40 min
+                  </div>
+                  <div className="text-[12px] opacity-90">
+                    Para hoy, sin elegir día ni hora — hacia las {etaFromNow()}.
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Aviso de alérgenos + contaminación cruzada (arriba, antes de la carta) */}
             <div
               className="mb-6 flex items-start gap-3 rounded-xl border px-4 py-3"
@@ -1192,8 +1230,8 @@ export default function ReservationForm({
             )}
           </StepSection>
 
-          {/* ── PASO 2: FECHA ── */}
-          {maxStep >= 2 && (
+          {/* ── PASO 2: FECHA ── (oculto en modo directo: es para HOY) */}
+          {maxStep >= 2 && !directo && (
             <StepSection
               stepRef={ref2}
               number={2}
@@ -1221,8 +1259,8 @@ export default function ReservationForm({
             </StepSection>
           )}
 
-          {/* ── PASO 3: HORA ── */}
-          {maxStep >= 3 && (
+          {/* ── PASO 3: HORA ── (oculto en modo directo: entrega ~40 min) */}
+          {maxStep >= 3 && !directo && (
             <StepSection
               stepRef={ref3}
               number={3}

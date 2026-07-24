@@ -256,6 +256,7 @@ export async function POST(req: NextRequest) {
         phone: parsed.phone,
         notes: parsed.notes ?? "",
         deliveryMethod: parsed.deliveryMethod ?? "delivery",
+        directo: String(parsed.directo ?? false), // pedido "en directo" (hoy)
         deliveryAddress: isPickup ? "" : parsed.deliveryAddress ?? "",
         deliveryDetails: isPickup ? "" : parsed.deliveryDetails ?? "",
         postalCode: isPickup ? "" : parsed.postalCode ?? "",
