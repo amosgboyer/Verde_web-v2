@@ -41,7 +41,7 @@ interface ReservationFormProps {
   weekendOffer?: WeekendOffer | null;
   requireAccessCode?: boolean;
   accessCodeValue?: string;
-  directo?: boolean;
+  directoAvailable?: boolean; // el piloto "pedir hoy en directo" está abierto ahora
 }
 
 interface FormFields {
@@ -285,7 +285,7 @@ export default function ReservationForm({
   weekendOffer = null,
   requireAccessCode = false,
   accessCodeValue = "",
-  directo = false,
+  directoAvailable = false,
 }: ReservationFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStep, setMaxStep] = useState(1);
@@ -300,16 +300,25 @@ export default function ReservationForm({
       prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]
     );
 
-  // Modo directo: pedido para HOY con entrega ~40 min. Pre-fija fecha y hora
-  // (así el flujo se salta los pasos de día/hora); la hora se recalcula al pagar.
+  // El cliente elige: "hoy" (en directo, ~40 min) u "otro" día (reserva normal).
+  // Solo hay elección si el directo está abierto ahora; si no, siempre reserva.
+  const [orderMode, setOrderMode] = useState<"hoy" | "otro">("hoy");
+  const isDirecto = directoAvailable && orderMode === "hoy";
+
+  // En directo (para hoy): pre-fija hoy + ahora+40 (así se saltan los pasos de
+  // día/hora); la hora se recalcula al pagar. Al cambiar a "otro día", limpia
+  // esa fecha/hora auto para que el cliente elija en el calendario.
   useEffect(() => {
-    if (!directo) return;
-    setFields((prev) => ({
-      ...prev,
-      reservationDate: todayMadrid(),
-      reservationTime: etaFromNow(),
-    }));
-  }, [directo]);
+    if (isDirecto) {
+      setFields((prev) => ({
+        ...prev,
+        reservationDate: todayMadrid(),
+        reservationTime: etaFromNow(),
+      }));
+    } else if (directoAvailable) {
+      setFields((prev) => ({ ...prev, reservationDate: "", reservationTime: "" }));
+    }
+  }, [isDirecto, directoAvailable]);
   useEffect(() => {
     function onAddPack(e: Event) {
       const { items } = (e as CustomEvent<{items:{id:string,qty:number}[]}>).detail;
@@ -618,7 +627,7 @@ export default function ReservationForm({
       return;
     }
     // En directo no hay pasos de día/hora → directo a "Tus datos".
-    goToStep(directo ? 4 : 2);
+    goToStep(isDirecto ? 4 : 2);
   }
 
   function dismissDrinkModal() {
@@ -820,9 +829,9 @@ export default function ReservationForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: cartProducts.map((p) => ({ productId: p.id, quantity: cart[p.id] })),
-          reservationDate: directo ? todayMadrid() : fields.reservationDate,
-          reservationTime: directo ? etaFromNow() : fields.reservationTime,
-          directo,
+          reservationDate: isDirecto ? todayMadrid() : fields.reservationDate,
+          reservationTime: isDirecto ? etaFromNow() : fields.reservationTime,
+          directo: isDirecto,
           customerName: fields.customerName,
           email: fields.email,
           phone: fields.phone,
@@ -1046,8 +1055,52 @@ export default function ReservationForm({
             editLabel="+ Añadir más"
             editProminent
           >
+            {/* Selector de modo: para hoy (en directo) u otro día. Solo cuando
+                el directo está abierto; si no, siempre reserva a días vista. */}
+            {directoAvailable && (
+              <div className="mb-5">
+                <span className={labelClass}>¿Para cuándo lo quieres?</span>
+                <div className="mt-2 grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setOrderMode("hoy")}
+                    aria-pressed={orderMode === "hoy"}
+                    className={clsx(
+                      "flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                      orderMode === "hoy"
+                        ? "border-verde-bosque bg-verde-bosque text-crema"
+                        : "border-negro/15 bg-white text-negro/70 hover:border-negro/30"
+                    )}
+                  >
+                    <span className="text-xl leading-none" aria-hidden>🛵</span>
+                    <span className="leading-tight">
+                      <span className="block font-bold text-[13.5px]">Para hoy</span>
+                      <span className="block text-[11px] opacity-80">En directo · ~40 min</span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrderMode("otro")}
+                    aria-pressed={orderMode === "otro"}
+                    className={clsx(
+                      "flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                      orderMode === "otro"
+                        ? "border-verde-bosque bg-verde-bosque text-crema"
+                        : "border-negro/15 bg-white text-negro/70 hover:border-negro/30"
+                    )}
+                  >
+                    <span className="text-xl leading-none" aria-hidden>📅</span>
+                    <span className="leading-tight">
+                      <span className="block font-bold text-[13.5px]">Otro día</span>
+                      <span className="block text-[11px] opacity-80">Reserva con fecha</span>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Banner "en directo": pedido para hoy, entrega ~40 min */}
-            {directo && (
+            {isDirecto && (
               <div
                 className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
                 style={{ background: "var(--g1, #2E4F20)", color: "#fff" }}
@@ -1231,7 +1284,7 @@ export default function ReservationForm({
           </StepSection>
 
           {/* ── PASO 2: FECHA ── (oculto en modo directo: es para HOY) */}
-          {maxStep >= 2 && !directo && (
+          {maxStep >= 2 && !isDirecto && (
             <StepSection
               stepRef={ref2}
               number={2}
@@ -1260,7 +1313,7 @@ export default function ReservationForm({
           )}
 
           {/* ── PASO 3: HORA ── (oculto en modo directo: entrega ~40 min) */}
-          {maxStep >= 3 && !directo && (
+          {maxStep >= 3 && !isDirecto && (
             <StepSection
               stepRef={ref3}
               number={3}

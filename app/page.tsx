@@ -192,7 +192,7 @@ export default async function HomePage({
             config={config}
             promotion={activePromotion}
             weekendOffer={weekendOffer}
-            directo={directoStatus.isOpen}
+            directoAvailable={directoStatus.isOpen}
             requireAccessCode={launchPhase === "early_access"}
             accessCodeValue={
               launchPhase === "early_access" ? EARLY_ACCESS_CODE : ""
