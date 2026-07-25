@@ -1,0 +1,7 @@
+# Archivos que NO deben subirse al deploy (Vercel no respeta .gitignore).
+# Assets fuente pesados dejados en public/ por error (zips de WeTransfer, vídeos).
+public/productos/*.zip
+*.zip
+
+# Restos de herramientas locales
+.playwright-mcp/
