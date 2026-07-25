@@ -81,6 +81,13 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${lilitaOne.variable} ${caveat.variable} ${spaceMono.variable} ${dmSans.variable} font-sans bg-cream text-ink antialiased`}>
 
+        {/* Ahrefs Web Analytics (verificación + analítica de visitas) */}
+        <script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="dlYpcw9m33IzUueIqBGHmQ"
+          async
+        />
+
         {/* Datos estructurados del negocio (dirección/teléfono para Google e IA) */}
         <script
           type="application/ld+json"
