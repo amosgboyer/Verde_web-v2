@@ -207,6 +207,10 @@ export async function POST(req: NextRequest) {
         allergens: allergensById.get(item.id) ?? [],
       }));
 
+      // Los emails son best-effort: el pedido YA está guardado en el Sheet.
+      // Cada envío va en su propio try/catch para (1) que un fallo no tumbe al
+      // otro ni devuelva 500 (que dispararía reintentos de Stripe), y (2) dejar
+      // el error real de Resend en los logs para diagnóstico.
       if (slotStillAvailable) {
         const deliveryEmailFields = {
           deliveryMethod,
@@ -216,56 +220,77 @@ export async function POST(req: NextRequest) {
           deliveryZone,
         };
 
-        await sendConfirmationToCustomer({
-          customerName: meta.customerName,
-          email: meta.email,
-          phone: meta.phone,
-          orderCode: orderCodeFromSession(
-            isAddon && meta.parentSessionId ? meta.parentSessionId : session.id
-          ),
-          items: emailItems,
-          reservationDate,
-          reservationTime,
-          depositPaid: totalDeposit,
-          pendingAmount: totalPending,
-          subtotalBeforeDiscount: promoApplied ? subtotalBeforeDiscount : undefined,
-          discountAmount: promoApplied ? discountAmount : undefined,
-          promoName: promoApplied ? promoName : undefined,
-          notes: meta.notes,
-          ...deliveryEmailFields,
-        });
+        try {
+          await sendConfirmationToCustomer({
+            customerName: meta.customerName,
+            email: meta.email,
+            phone: meta.phone,
+            orderCode: orderCodeFromSession(
+              isAddon && meta.parentSessionId ? meta.parentSessionId : session.id
+            ),
+            items: emailItems,
+            reservationDate,
+            reservationTime,
+            depositPaid: totalDeposit,
+            pendingAmount: totalPending,
+            subtotalBeforeDiscount: promoApplied ? subtotalBeforeDiscount : undefined,
+            discountAmount: promoApplied ? discountAmount : undefined,
+            promoName: promoApplied ? promoName : undefined,
+            notes: meta.notes,
+            ...deliveryEmailFields,
+          });
+        } catch (err) {
+          console.error(
+            `[stripe-webhook] FALLO email CLIENTE (to=${meta.email}) session=${session.id}:`,
+            err
+          );
+        }
 
-        await sendInternalOrderNotification({
-          customerName: meta.customerName,
-          email: meta.email,
-          phone: meta.phone,
-          items: emailItems,
-          reservationDate,
-          reservationTime,
-          depositPaid: totalDeposit,
-          pendingAmount: totalPending,
-          subtotalBeforeDiscount: promoApplied ? subtotalBeforeDiscount : undefined,
-          discountAmount: promoApplied ? discountAmount : undefined,
-          promoName: promoApplied ? promoName : undefined,
-          notes: meta.notes,
-          stripeSessionId: session.id,
-          privacyAccepted,
-          termsAccepted,
-          acceptedAt,
-          ...deliveryEmailFields,
-        });
+        try {
+          await sendInternalOrderNotification({
+            customerName: meta.customerName,
+            email: meta.email,
+            phone: meta.phone,
+            items: emailItems,
+            reservationDate,
+            reservationTime,
+            depositPaid: totalDeposit,
+            pendingAmount: totalPending,
+            subtotalBeforeDiscount: promoApplied ? subtotalBeforeDiscount : undefined,
+            discountAmount: promoApplied ? discountAmount : undefined,
+            promoName: promoApplied ? promoName : undefined,
+            notes: meta.notes,
+            stripeSessionId: session.id,
+            privacyAccepted,
+            termsAccepted,
+            acceptedAt,
+            ...deliveryEmailFields,
+          });
+        } catch (err) {
+          console.error(
+            `[stripe-webhook] FALLO email INTERNO (to=equipo) session=${session.id}:`,
+            err
+          );
+        }
       } else {
-        await sendOverbookingAlert({
-          customerName: meta.customerName,
-          email: meta.email,
-          phone: meta.phone,
-          items: emailItems,
-          reservationDate,
-          reservationTime,
-          stripeSessionId: session.id,
-          depositPaid: totalDeposit,
-          pendingAmount: totalPending,
-        });
+        try {
+          await sendOverbookingAlert({
+            customerName: meta.customerName,
+            email: meta.email,
+            phone: meta.phone,
+            items: emailItems,
+            reservationDate,
+            reservationTime,
+            stripeSessionId: session.id,
+            depositPaid: totalDeposit,
+            pendingAmount: totalPending,
+          });
+        } catch (err) {
+          console.error(
+            `[stripe-webhook] FALLO email OVERBOOKING session=${session.id}:`,
+            err
+          );
+        }
       }
     } catch (err) {
       console.error("[stripe-webhook] Error procesando pedido:", session.id, err);

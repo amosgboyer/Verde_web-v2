@@ -13,6 +13,23 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.VERDE_FROM_EMAIL ?? "verde@ejemplo.com";
 const TEAM_EMAIL = process.env.VERDE_INTERNAL_EMAIL ?? "equipo@ejemplo.com";
 
+// Resend NO lanza excepción cuando la API rechaza el envío (dominio no
+// verificado, remitente inválido, etc.): devuelve { data, error }. Este wrapper
+// comprueba ese error y lanza, para que el fallo no se trague en silencio y
+// quede registrado por quien llama (p. ej. el webhook de Stripe).
+type SendPayload = Parameters<typeof resend.emails.send>[0];
+
+async function sendOrThrow(payload: SendPayload): Promise<void> {
+  const { error } = await resend.emails.send(payload);
+  if (error) {
+    const detail =
+      (error as { name?: string }).name ??
+      (error as { statusCode?: number }).statusCode ??
+      "error";
+    throw new Error(`Resend rechazó el envío (${detail}): ${error.message}`);
+  }
+}
+
 // ─── Email de lanzamiento a la lista de espera ────────────────────────────────
 const LAUNCH_REPLY_TO = "verdeysoloverdemadrid@gmail.com";
 const ACCESS_CODE_SPACED = "01110110 01100101 01110010 01100100 01100101";
@@ -43,7 +60,7 @@ export async function sendLaunchAnnouncement(
     </div>
   </div>`;
 
-  await resend.emails.send({
+  await sendOrThrow({
     from: FROM,
     to,
     reply_to: LAUNCH_REPLY_TO,
@@ -88,7 +105,7 @@ export interface ConfirmationEmailData {
 export async function sendConfirmationToCustomer(
   data: ConfirmationEmailData
 ): Promise<void> {
-  await resend.emails.send({
+  await sendOrThrow({
     from: FROM,
     to: data.email,
     subject: "Tu reserva en Verde está confirmada",
@@ -118,7 +135,7 @@ export async function sendConfirmationToCustomer(
 export async function sendInternalOrderNotification(
   data: ConfirmationEmailData & { stripeSessionId?: string }
 ): Promise<void> {
-  await resend.emails.send({
+  await sendOrThrow({
     from: FROM,
     to: TEAM_EMAIL,
     subject: `Nueva reserva pagada — Verde | ${data.customerName}`,
@@ -165,7 +182,7 @@ export interface OverbookingAlertData {
 export async function sendOverbookingAlert(
   data: OverbookingAlertData
 ): Promise<void> {
-  await resend.emails.send({
+  await sendOrThrow({
     from: FROM,
     to: TEAM_EMAIL,
     subject: "URGENTE — Posible sobrecupo en reserva Verde",
@@ -191,7 +208,7 @@ export async function sendWaitlistNotification(data: {
   phone: string;
   message?: string;
 }): Promise<void> {
-  await resend.emails.send({
+  await sendOrThrow({
     from: FROM,
     to: TEAM_EMAIL,
     subject: `Lista de espera — Verde | ${data.name}`,
