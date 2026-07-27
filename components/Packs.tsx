@@ -4,7 +4,7 @@ const PACKS = [
   {
     id: "tigrillos",
     name: "Los Dos Tigrillos",
-    desc: "2× Tigrillo XL Mixto. Hecho en demiglass de carne, chicharrón, mix de quesos y sal prieta.",
+    desc: "2× Tigrillo Mixto. Hecho en demiglass de carne, chicharrón, mix de quesos y sal prieta.",
     price: "27€",
     saving: "ahorras 3€",
     featured: true,

@@ -36,11 +36,13 @@ export default function ProductCard({
   const hasSizes = !!sizeOptions && sizeOptions.length > 1;
   const [sizeIdx, setSizeIdx] = useState(0);
   const [open, setOpen] = useState(false);
+  const [allergOpen, setAllergOpen] = useState(false);
 
   const active = hasSizes ? sizeOptions![sizeIdx].product : product;
   const qty = hasSizes ? (quantityOf?.(active.id) ?? 0) : quantity;
   const inCart = qty > 0;
   const price = active.depositAmount || active.finalPrice;
+  const allergens = active.allergens ?? product.allergens ?? [];
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -141,19 +143,40 @@ export default function ProductCard({
           {product.description}
         </div>
 
-        {/* Alérgenos (solo si el plato los tiene cargados en el Sheet) */}
-        {(active.allergens ?? product.allergens ?? []).length > 0 && (
-          <div
-            className="leading-snug"
-            style={{ fontSize: "0.6rem", color: "rgba(245,240,232,0.6)" }}
-          >
-            <span
-              className="uppercase font-semibold tracking-wide"
-              style={{ color: "rgba(245,240,232,0.8)" }}
+        {/* Alérgenos: desplegable que se pulsa (más limpio, sobre todo en móvil) */}
+        {allergens.length > 0 && (
+          <div className="leading-snug" onClick={stop}>
+            <button
+              type="button"
+              onClick={(e) => { stop(e); setAllergOpen((o) => !o); }}
+              aria-expanded={allergOpen}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 uppercase font-semibold tracking-wide"
+              style={{
+                fontSize: "0.58rem",
+                color: "rgba(245,240,232,0.85)",
+                background: "rgba(255,255,255,0.09)",
+              }}
             >
-              Alérgenos:{" "}
-            </span>
-            {(active.allergens ?? product.allergens ?? []).join(" · ")}
+              Alérgenos
+              <span
+                aria-hidden="true"
+                style={{
+                  display: "inline-block",
+                  transform: allergOpen ? "rotate(180deg)" : "none",
+                  transition: "transform 0.2s ease",
+                }}
+              >
+                ▾
+              </span>
+            </button>
+            {allergOpen && (
+              <div
+                className="mt-1.5 px-0.5"
+                style={{ fontSize: "0.62rem", color: "rgba(245,240,232,0.72)" }}
+              >
+                {allergens.join(" · ")}
+              </div>
+            )}
           </div>
         )}
 

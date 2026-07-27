@@ -26,7 +26,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "tigrillo-xl-mixto",
-    name: "Tigrillo XL Mixto",
+    name: "Tigrillo Mixto",
     description:
       "Hecho en demiglass de carne, chicharrón, mix de quesos, salsa de maní de la casa y sal prieta.",
     finalPrice: 15,
@@ -126,7 +126,7 @@ export const PACKS: Product[] = [
     id: "pack-dos-tigrillos",
     name: "Pack · Los Dos Tigrillos",
     description:
-      "2× Tigrillo XL Mixto. Hecho en demiglass de carne, chicharrón, mix de quesos y sal prieta.",
+      "2× Tigrillo Mixto. Hecho en demiglass de carne, chicharrón, mix de quesos y sal prieta.",
     finalPrice: 27,
     depositAmount: 27,
     available: true,
