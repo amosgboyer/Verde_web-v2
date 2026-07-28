@@ -1,11 +1,11 @@
 // ─── Piloto "en directo" (pedidos para HOY, tipo Glovo) ─────────────────────
-// Ventana del piloto: mié 29, jue 30 y vie 31 de julio de 2026, todo el día,
+// Ventana del piloto: jue 30 y vie 31 de julio de 2026, todo el día,
 // último pedido 19:15, cocina cierra 20:00. Entrega estimada ~40 min.
 // Fuera de esta ventana, la web sigue como siempre (sin "pedir ahora").
 //
 // Para CAMBIAR el piloto: edita estas constantes (y redepliega).
 
-export const DIRECTO_DATES = ["2026-07-29", "2026-07-30", "2026-07-31"];
+export const DIRECTO_DATES = ["2026-07-30", "2026-07-31"];
 export const DIRECTO_OPEN = "12:00"; // apertura del directo (ajústalo si abrís antes)
 export const DIRECTO_LAST_CALL = "19:15"; // último pedido aceptado
 export const DIRECTO_CLOSE = "20:00"; // cierre de cocina (informativo)
