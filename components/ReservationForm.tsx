@@ -1244,29 +1244,81 @@ export default function ReservationForm({
               );
             })()}
 
-            {cartProducts.some((p) => p.isPack) && (
-              <div className="mt-5 space-y-2">
-                {cartProducts
-                  .filter((p) => p.isPack)
-                  .map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between bg-verde-bosque/5 border border-verde-bosque/15 rounded-lg px-3 py-2"
-                    >
-                      <span className="text-sm text-verde-bosque">
-                        {p.name}{" "}
-                        <span className="text-negro/40">×{cart[p.id]}</span> ·{" "}
-                        {(p.depositAmount * (cart[p.id] ?? 0)).toFixed(2).replace(".", ",")} €
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeItem(p.id)}
-                        className="ml-3 shrink-0 text-[10px] font-semibold uppercase tracking-[0.15em] text-tierra/70 hover:text-tierra"
+            {/* ── Tu selección ──────────────────────────────────────────────
+                Única lista donde está TODO lo del carrito. Hace falta porque
+                hay cosas que no tienen card propia en la carta y, sin esto, no
+                habría forma de tocarlas: packs y ofertas (se añaden desde el
+                bloque de ofertas) y salsas (se añaden en el popup de extras,
+                que solo aparece una vez). */}
+            {cartProducts.length > 0 && (
+              <div className="mt-6">
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-verde-bosque/60 mb-3">
+                  Tu selección
+                </p>
+                <div className="space-y-2">
+                  {cartProducts.map((p) => {
+                    const qty = cart[p.id] ?? 0;
+                    const enTope = qty >= config.maxQuantityPerOrder;
+                    return (
+                      <div
+                        key={p.id}
+                        className="flex items-center gap-2 rounded-lg border border-verde-bosque/15 bg-verde-bosque/[0.04] px-3 py-2"
                       >
-                        Quitar
-                      </button>
-                    </div>
-                  ))}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-negro/80 leading-snug">
+                            {p.name}
+                            {p.isPack && (
+                              <span className="ml-2 align-middle text-[9px] font-bold uppercase tracking-[0.12em] text-white bg-[#c85a2a] rounded-full px-1.5 py-0.5">
+                                Oferta
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs font-semibold text-verde-bosque mt-0.5">
+                            {fmtPrice(p.depositAmount * qty)} €
+                            {qty > 1 && (
+                              <span className="font-normal text-negro/40">
+                                {" "}· {fmtPrice(p.depositAmount)} € c/u
+                              </span>
+                            )}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => decrement(p.id)}
+                            className="w-8 h-8 rounded-full bg-negro/10 text-negro/60 leading-none text-lg hover:bg-negro/15 transition-colors"
+                            aria-label={`Quitar una unidad de ${p.name}`}
+                          >
+                            −
+                          </button>
+                          <span className="text-sm font-bold w-5 text-center tabular-nums">
+                            {qty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => increment(p.id)}
+                            disabled={enTope}
+                            className="w-8 h-8 rounded-full bg-verde-bosque text-crema leading-none text-lg hover:bg-verde-platano transition-colors disabled:opacity-30"
+                            aria-label={`Añadir otra unidad de ${p.name}`}
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeItem(p.id)}
+                          className="shrink-0 w-8 h-8 rounded-full text-negro/35 hover:text-tierra hover:bg-tierra/10 transition-colors leading-none text-lg"
+                          aria-label={`Quitar ${p.name} del pedido`}
+                          title="Quitar del pedido"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
