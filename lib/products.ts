@@ -183,7 +183,9 @@ export const PRODUCT_IMAGES: Record<string, string> = {
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
-  return p.image || PRODUCT_IMAGES[p.id];
+  // Los ids del Sheet se escriben a mano y a veces llevan mayúsculas
+  // ("Inca-kola"), así que se reintenta en minúsculas antes de rendirse.
+  return p.image || PRODUCT_IMAGES[p.id] || PRODUCT_IMAGES[p.id.toLowerCase()];
 }
 
 // ─── SALSAS EXTRA (de pago) ────────────────────────────────────────────────
@@ -258,6 +260,12 @@ function isBebida(category?: string): boolean {
 // que sin esto acabarían las últimas al migrarlas allí.
 const BEBIDAS_PRIMERO: string[] = ["tropical", "inca-kola"];
 
+// Los ids del Sheet se teclean a mano: "Inca-kola" y "inca-kola" son el mismo
+// producto. Comparar en crudo duplicaría la card (una del Sheet y otra del
+// código), así que todas las comparaciones de id van normalizadas.
+const mismoId = (a: string, b: string) =>
+  a.trim().toLowerCase() === b.trim().toLowerCase();
+
 /**
  * Deja la carta con las bebidas destacadas al frente del bloque de bebidas:
  *
@@ -271,7 +279,7 @@ const BEBIDAS_PRIMERO: string[] = ["tropical", "inca-kola"];
  */
 export function withExtraBebidas(products: Product[]): Product[] {
   const nuevas = getBebidas().filter(
-    (b) => !products.some((p) => p.id === b.id)
+    (b) => !products.some((p) => mismoId(p.id, b.id))
   );
 
   const posiciones = products
@@ -281,7 +289,7 @@ export function withExtraBebidas(products: Product[]): Product[] {
   if (posiciones.length === 0) return [...products, ...nuevas];
 
   const rango = (p: Product) => {
-    const k = BEBIDAS_PRIMERO.indexOf(p.id);
+    const k = BEBIDAS_PRIMERO.findIndex((id) => mismoId(id, p.id));
     return k === -1 ? BEBIDAS_PRIMERO.length : k;
   };
   const bebidas = [...posiciones.map((i) => products[i]), ...nuevas]
