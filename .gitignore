@@ -44,3 +44,7 @@ next-env.d.ts
 public/productos/wetransfer_*
 public/productos/*.zip
 public/productos/.DS_Store
+
+# Documentación interna: nombres de socios y avisos societarios. El repo es
+# público, así que este contexto vive solo en local / en el vault.
+/CONTEXTO_*.md
