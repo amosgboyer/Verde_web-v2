@@ -7,7 +7,13 @@ import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
 import type { WeekendOffer } from "@/lib/offers";
-import { computeOfferDiscount, productMatchesOffer } from "@/lib/offers";
+import {
+  computeOfferDiscount,
+  productMatchesOffer,
+  offerBadgeLabel,
+  offerRuleText,
+  offerReservationText,
+} from "@/lib/offers";
 import { quoteDelivery } from "@/lib/delivery";
 import { todayMadrid, etaFromNow } from "@/lib/directo";
 import ProductCard, { type SizeOption } from "./ProductCard";
@@ -671,7 +677,8 @@ export default function ReservationForm({
             productName: p.name,
             quantity: cart[p.id] ?? 0,
             unitPrice: p.depositAmount,
-          }))
+          })),
+          isDirecto ? todayMadrid() : fields.reservationDate
         )
       : { discountAmount: 0, discountedUnits: 0 };
   const offerDiscount = offerResult.discountAmount;
@@ -1026,12 +1033,17 @@ export default function ReservationForm({
                   {weekendOffer.name}
                 </span>
                 <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-white bg-[#c85a2a] rounded-full px-2 py-0.5 shrink-0">
-                  Solo este finde
+                  {weekendOffer.badge}
                 </span>
               </div>
               <p className="text-[12px] text-negro/60 leading-snug mt-0.5">
-                {weekendOffer.tagline}. Añade 2 y la 2ª te sale a mitad de precio.
+                {weekendOffer.tagline}. {offerRuleText(weekendOffer)}
               </p>
+              {offerReservationText(weekendOffer) && (
+                <p className="text-[11px] font-semibold text-[#a8451f] leading-snug mt-1.5">
+                  {offerReservationText(weekendOffer)}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -1219,7 +1231,7 @@ export default function ReservationForm({
                                   id: product.id,
                                   name: product.name,
                                 })
-                                  ? `2ª −${weekendOffer.percentOff}%`
+                                  ? offerBadgeLabel(weekendOffer)
                                   : undefined
                               }
                             />
@@ -1871,7 +1883,7 @@ export default function ReservationForm({
                 {weekendOffer && offerDiscount > 0 && (
                   <div className="flex justify-between text-[#c85a2a]">
                     <span>
-                      {weekendOffer.name} · {offerResult.discountedUnits}× 2ª −{weekendOffer.percentOff}%
+                      {weekendOffer.name} · {offerResult.discountedUnits}× {offerBadgeLabel(weekendOffer)}
                     </span>
                     <span>−{offerDiscount.toFixed(2).replace(".", ",")} €</span>
                   </div>

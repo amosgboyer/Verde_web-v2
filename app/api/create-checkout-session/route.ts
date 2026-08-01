@@ -5,7 +5,7 @@ import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { isSlotAvailable } from "@/lib/availability";
 import { reservationSchema } from "@/lib/validators";
 import { getActivePromotion, calculateDiscount } from "@/lib/promotions";
-import { getActiveWeekendOffer, computeOfferDiscount } from "@/lib/offers";
+import { getActiveWeekendOffer, computeOfferDiscount, offerBadgeLabel } from "@/lib/offers";
 import { feeForZone } from "@/lib/delivery";
 import { SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, isAccessCodeValid } from "@/lib/launch";
@@ -150,7 +150,8 @@ export async function POST(req: NextRequest) {
 
     // ── Oferta de fin de semana (nivel ítem) ─────────────────────────────────
     // Se recalcula en servidor desde los ítems validados (fuente de verdad); no
-    // se confía en ningún dato de descuento enviado por el cliente.
+    // se confía en ningún dato de descuento enviado por el cliente. La fecha de
+    // entrega también sale de aquí: hay ofertas que solo valen para ciertos días.
     const weekendOffer = getActiveWeekendOffer();
     const offer = weekendOffer
       ? computeOfferDiscount(
@@ -160,7 +161,8 @@ export async function POST(req: NextRequest) {
             productName: product.name,
             quantity,
             unitPrice: product.depositAmount,
-          }))
+          })),
+          parsed.reservationDate
         )
       : { discountAmount: 0, discountedUnits: 0 };
 
@@ -209,7 +211,7 @@ export async function POST(req: NextRequest) {
     }
     if (offer.discountAmount > 0 && weekendOffer) {
       discountNotes.push(
-        `${weekendOffer.name}: ${offer.discountedUnits}× 2ª −${weekendOffer.percentOff}%`
+        `${weekendOffer.name}: ${offer.discountedUnits}× ${offerBadgeLabel(weekendOffer)}`
       );
     }
     const lineItemDescription =
