@@ -4,11 +4,19 @@ import { CustomerReservationEmail } from "../emails/CustomerReservationEmail";
 import { InternalOrderEmail } from "../emails/InternalOrderEmail";
 import { OverbookingAlertEmail } from "../emails/OverbookingAlertEmail";
 
-if (!process.env.RESEND_API_KEY) {
-  throw new Error("Falta la variable de entorno RESEND_API_KEY");
-}
+// El cliente se crea en el primer envío, NO al importar el módulo. Si se crea
+// arriba, `next build` falla al recolectar cualquier ruta que importe este
+// fichero en entornos sin RESEND_API_KEY (p. ej. los deploys de Preview). La
+// comprobación sigue existiendo: salta al enviar, con el mismo mensaje.
+let resendClient: Resend | null = null;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend(): Resend {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("Falta la variable de entorno RESEND_API_KEY");
+  }
+  resendClient ??= new Resend(process.env.RESEND_API_KEY);
+  return resendClient;
+}
 
 const FROM = process.env.VERDE_FROM_EMAIL ?? "verde@ejemplo.com";
 const TEAM_EMAIL = process.env.VERDE_INTERNAL_EMAIL ?? "equipo@ejemplo.com";
@@ -17,10 +25,10 @@ const TEAM_EMAIL = process.env.VERDE_INTERNAL_EMAIL ?? "equipo@ejemplo.com";
 // verificado, remitente inválido, etc.): devuelve { data, error }. Este wrapper
 // comprueba ese error y lanza, para que el fallo no se trague en silencio y
 // quede registrado por quien llama (p. ej. el webhook de Stripe).
-type SendPayload = Parameters<typeof resend.emails.send>[0];
+type SendPayload = Parameters<Resend["emails"]["send"]>[0];
 
 async function sendOrThrow(payload: SendPayload): Promise<void> {
-  const { error } = await resend.emails.send(payload);
+  const { error } = await getResend().emails.send(payload);
   if (error) {
     const detail =
       (error as { name?: string }).name ??
