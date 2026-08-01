@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { findAddOrderContext, getProductsRows } from "@/lib/google-sheets";
-import { getAvailableProducts } from "@/lib/products";
+import { getAvailableProducts, withExtraBebidas } from "@/lib/products";
 import type { Product } from "@/lib/products";
 import OrderLookup from "@/components/OrderLookup";
 import AddToOrder from "@/components/AddToOrder";
@@ -40,7 +40,9 @@ export default async function AnadirPage({ searchParams }: Props) {
   } catch {
     // respaldo estático
   }
-  products = products.filter((p) => !p.isPack && p.available !== false);
+  products = withExtraBebidas(products).filter(
+    (p) => !p.isPack && p.available !== false
+  );
 
   const today = new Date().toISOString().slice(0, 10);
 

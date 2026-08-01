@@ -178,6 +178,8 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   "coca-cola": "/productos/coca-cola.jpg",
   "coca-cola-zero": "/productos/coca-cola-zero.jpg",
   "fuze-tea-limon": "/productos/fuze-tea.jpg",
+  "tropical": "/productos/tropical.jpg",
+  "inca-kola": "/productos/inca-kola.jpg",
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
@@ -212,12 +214,94 @@ export function getSalsas(): Product[] {
   return EXTRA_SALSAS.filter((s) => s.available);
 }
 
+// ─── BEBIDAS DE LA CARTA (definidas en código) ─────────────────────────────
+// No viven en el Sheet: se inyectan en la carta delante de las bebidas que sí
+// vienen del Sheet. El checkout y el webhook las resuelven por `getProductById`
+// (igual que las salsas), así que se cobran y se guardan como cualquier otra.
+export const EXTRA_BEBIDAS: Product[] = [
+  {
+    id: "tropical",
+    name: "Tropical",
+    description:
+      "Gaseosa ecuatoriana sabor a frutas. Botella de 500 ml, bien fría.",
+    finalPrice: 2.5,
+    depositAmount: 2.5,
+    available: true,
+    category: "Bebidas",
+    image: "/productos/tropical.jpg",
+  },
+  {
+    id: "inca-kola",
+    name: "Inca Kola",
+    description:
+      "La gaseosa dorada, sabor original. Botella de vidrio de 300 ml.",
+    finalPrice: 2.5,
+    depositAmount: 2.5,
+    available: true,
+    category: "Bebidas",
+    image: "/productos/inca-kola.jpg",
+  },
+];
+
+export function getBebidas(): Product[] {
+  return EXTRA_BEBIDAS.filter((b) => b.available);
+}
+
+// Mismo vocabulario de categoría que usa la carta (ReservationForm/MenuShowcase).
+function isBebida(category?: string): boolean {
+  const c = (category ?? "").trim().toLowerCase();
+  return c === "bebida" || c === "bebidas" || c === "drink" || c === "drinks";
+}
+
+// Bebidas que van SIEMPRE las primeras dentro de "Bebidas", en este orden y
+// vengan de donde vengan (código o Sheet). El Sheet añade filas al final, así
+// que sin esto acabarían las últimas al migrarlas allí.
+const BEBIDAS_PRIMERO: string[] = ["tropical", "inca-kola"];
+
+/**
+ * Deja la carta con las bebidas destacadas al frente del bloque de bebidas:
+ *
+ *  1. Añade las de `EXTRA_BEBIDAS` que no estén ya en la lista. Si el mismo id
+ *     ya viene del Sheet, manda el Sheet y no se duplica.
+ *  2. Reordena el bloque de bebidas para que las de `BEBIDAS_PRIMERO` salgan
+ *     primero; el resto conserva su orden original.
+ *
+ * El bloque de bebidas se reinserta donde estaba la primera bebida, así que el
+ * orden del resto de la carta no se toca.
+ */
+export function withExtraBebidas(products: Product[]): Product[] {
+  const nuevas = getBebidas().filter(
+    (b) => !products.some((p) => p.id === b.id)
+  );
+
+  const posiciones = products
+    .map((p, i) => (!p.isPack && isBebida(p.category) ? i : -1))
+    .filter((i) => i >= 0);
+
+  if (posiciones.length === 0) return [...products, ...nuevas];
+
+  const rango = (p: Product) => {
+    const k = BEBIDAS_PRIMERO.indexOf(p.id);
+    return k === -1 ? BEBIDAS_PRIMERO.length : k;
+  };
+  const bebidas = [...posiciones.map((i) => products[i]), ...nuevas]
+    .map((p, orden) => ({ p, orden }))
+    .sort((a, b) => rango(a.p) - rango(b.p) || a.orden - b.orden)
+    .map(({ p }) => p);
+
+  const primera = posiciones[0];
+  const resto = products.filter((_, i) => !posiciones.includes(i));
+  return [...resto.slice(0, primera), ...bebidas, ...resto.slice(primera)];
+}
+
 export function getPacks(): Product[] {
   return PACKS.filter((p) => p.available);
 }
 
 export function getProductById(id: string): Product | undefined {
-  return [...PRODUCTS, ...PACKS, ...EXTRA_SALSAS].find((p) => p.id === id);
+  return [...PRODUCTS, ...PACKS, ...EXTRA_SALSAS, ...EXTRA_BEBIDAS].find(
+    (p) => p.id === id
+  );
 }
 
 export function getAvailableProducts(): Product[] {
