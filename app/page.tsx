@@ -1,4 +1,4 @@
-import { getAvailableProducts, getPacks, getSalsas, withExtraBebidas } from "@/lib/products";
+import { getAvailableProducts, getPacks, getSalsas, withExtraProducts } from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { storeConfig, SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, EARLY_ACCESS_CODE, PUBLIC_OPEN_AT } from "@/lib/launch";
@@ -60,9 +60,10 @@ export default async function HomePage({
     // fallback to static config/products
   }
 
-  // Bebidas de la carta definidas en código (Tropical, Inca Kola): van delante
-  // de las bebidas del Sheet, sin alterar el orden del resto de la carta.
-  products = withExtraBebidas(products);
+  // Productos de la carta definidos en código (bebidas + platos): se inyectan
+  // en su bloque sin alterar el orden del resto. Si el Sheet trae el mismo id,
+  // manda el Sheet.
+  products = withExtraProducts(products);
 
   // SOLD OUT general (cierre del mes) — anula cualquier valor del Sheet.
   if (SOLD_OUT) reservationsOpen = false;

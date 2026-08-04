@@ -180,6 +180,7 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   "fuze-tea-limon": "/productos/fuze-tea.jpg",
   "tropical": "/productos/tropical.jpg",
   "inca-kola": "/productos/inca-kola.jpg",
+  "ceviche-jipijapa": "/productos/ceviche-jipijapa.jpg",
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
@@ -249,10 +250,51 @@ export function getBebidas(): Product[] {
   return EXTRA_BEBIDAS.filter((b) => b.available);
 }
 
-// Mismo vocabulario de categoría que usa la carta (ReservationForm/MenuShowcase).
+// ─── PLATOS DE LA CARTA (definidos en código) ──────────────────────────────
+// Mismo mecanismo que las bebidas: la carta real vive en el Sheet, pero desde
+// aquí se puede añadir producto sin tocarlo. Si el Sheet acaba trayendo el
+// mismo id, manda el Sheet y este deja de usarse (no se duplica).
+export const EXTRA_PLATOS: Product[] = [
+  {
+    id: "ceviche-jipijapa",
+    name: "Ceviche Jipijapa",
+    description:
+      "Corvina fresca, leche de tigre, maní, aguacate, tostado, chifle, mix de encurtidos y aceite de cilantro.",
+    finalPrice: 18,
+    depositAmount: 18,
+    available: true,
+    allergens: ["Pescado", "Maní"],
+    category: "otros",
+    image: "/productos/ceviche-jipijapa.jpg",
+  },
+];
+
+export function getPlatosExtra(): Product[] {
+  return EXTRA_PLATOS.filter((p) => p.available);
+}
+
+// ─── Categorías ────────────────────────────────────────────────────────────
+// Fuente única del vocabulario de categorías. La carta (ReservationForm) y la
+// vitrina (MenuShowcase) agrupan con esto mismo, así que un producto añadido
+// desde código cae exactamente en el bloque que se ve en pantalla.
+export type NormalizedCategory = "Verde" | "Maduro" | "Otros" | "Bebidas";
+
+export function normalizeCategory(raw: string): NormalizedCategory {
+  const lower = (raw ?? "").trim().toLowerCase();
+  if (lower === "verde") return "Verde";
+  if (lower === "maduro") return "Maduro";
+  if (
+    lower === "bebida" ||
+    lower === "bebidas" ||
+    lower === "drink" ||
+    lower === "drinks"
+  )
+    return "Bebidas";
+  return "Otros";
+}
+
 function isBebida(category?: string): boolean {
-  const c = (category ?? "").trim().toLowerCase();
-  return c === "bebida" || c === "bebidas" || c === "drink" || c === "drinks";
+  return normalizeCategory(category ?? "") === "Bebidas";
 }
 
 // Bebidas que van SIEMPRE las primeras dentro de "Bebidas", en este orden y
@@ -302,14 +344,50 @@ export function withExtraBebidas(products: Product[]): Product[] {
   return [...resto.slice(0, primera), ...bebidas, ...resto.slice(primera)];
 }
 
+/**
+ * Inyecta los platos de `EXTRA_PLATOS` al PRINCIPIO de su bloque de categoría
+ * (para que un plato nuevo se vea, no quede sepultado al final). Si su
+ * categoría todavía no existe en la carta, va al final de la lista. Dedupe por
+ * id normalizado: si el Sheet ya lo trae, manda el Sheet.
+ */
+export function withExtraPlatos(products: Product[]): Product[] {
+  let salida = [...products];
+
+  for (const plato of getPlatosExtra()) {
+    if (salida.some((p) => mismoId(p.id, plato.id))) continue;
+
+    const cat = normalizeCategory(plato.category ?? "");
+    const idx = salida.findIndex(
+      (p) => !p.isPack && normalizeCategory(p.category ?? "") === cat
+    );
+    salida =
+      idx === -1
+        ? [...salida, plato]
+        : [...salida.slice(0, idx), plato, ...salida.slice(idx)];
+  }
+
+  return salida;
+}
+
+// Todo lo que se añade desde código, en una sola llamada. Es lo que usan las
+// páginas: así, al añadir un producto nuevo aquí, no hay que acordarse de
+// tocar cada página por separado.
+export function withExtraProducts(products: Product[]): Product[] {
+  return withExtraPlatos(withExtraBebidas(products));
+}
+
 export function getPacks(): Product[] {
   return PACKS.filter((p) => p.available);
 }
 
 export function getProductById(id: string): Product | undefined {
-  return [...PRODUCTS, ...PACKS, ...EXTRA_SALSAS, ...EXTRA_BEBIDAS].find(
-    (p) => p.id === id
-  );
+  return [
+    ...PRODUCTS,
+    ...PACKS,
+    ...EXTRA_SALSAS,
+    ...EXTRA_BEBIDAS,
+    ...EXTRA_PLATOS,
+  ].find((p) => p.id === id);
 }
 
 export function getAvailableProducts(): Product[] {
