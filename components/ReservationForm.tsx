@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { Product } from "@/lib/products";
-import { imageForProduct } from "@/lib/products";
+import type { Product, NormalizedCategory } from "@/lib/products";
+import { imageForProduct, normalizeCategory } from "@/lib/products";
 import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
@@ -137,22 +137,9 @@ function fmtPrice(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
 }
 
-type NormalizedCategory = "Verde" | "Maduro" | "Otros" | "Bebidas";
-
-function normalizeCategory(raw: string): NormalizedCategory {
-  const lower = (raw ?? "").trim().toLowerCase();
-  if (lower === "verde") return "Verde";
-  if (lower === "maduro") return "Maduro";
-  if (
-    lower === "bebida" ||
-    lower === "bebidas" ||
-    lower === "drink" ||
-    lower === "drinks"
-  )
-    return "Bebidas";
-  return "Otros";
-}
-
+// El vocabulario de categorías vive en lib/products.ts: es el mismo que usa la
+// inyección de productos desde código, así que un plato añadido allí cae en el
+// bloque que toca. Tenerlo duplicado aquí era invitar a que se desincronizara.
 const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Otros", "Bebidas"];
 
 const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: string }> = {
@@ -404,6 +391,8 @@ export default function ReservationForm({
   const ref4 = useRef<HTMLDivElement>(null);
   const ref5 = useRef<HTMLDivElement>(null);
   const ref6 = useRef<HTMLDivElement>(null);
+  // Panel "Tu selección" — destino del carrito flotante.
+  const seleccionRef = useRef<HTMLDivElement>(null);
   const stepRefs = [ref1, ref2, ref3, ref4, ref5, ref6];
 
   useEffect(() => {
@@ -721,25 +710,23 @@ export default function ReservationForm({
     fields.deliveryMethod === "pickup" ||
     !!(fields.deliveryAddress.trim().length >= 5 && fields.postalCode.trim());
 
-  // Carrito flotante → primero ofrecer bebida (una vez); si no procede, avanzar
-  // al primer paso pendiente hacia el pago.
+  // Carrito flotante → llevar a "Tu selección". Antes empujaba hacia adelante
+  // (popup de bebidas o siguiente paso), así que quien quería ver o corregir su
+  // pedido no tenía forma de llegar a la lista: en móvil queda a media página de
+  // scroll. El botón de continuar está justo debajo, así que no se pierde nada.
   useEffect(() => {
     function onCartOpen() {
-      if (canOfferDrinks) {
-        setShowDrinkModal(true);
-        return;
-      }
-      if (!step1Done) goToStep(1);
-      else if (!step2Done) goToStep(2);
-      else if (!step3Done) goToStep(3);
-      else if (!step4Done) goToStep(4);
-      else if (!step5Done) goToStep(5);
-      else goToStep(6);
+      goToStep(1);
+      // El paso 1 se despliega al cambiar de paso; hay que esperar al repintado
+      // para que el panel exista en el DOM antes de desplazarse a él.
+      setTimeout(() => {
+        seleccionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 180);
     }
     window.addEventListener("verde:cart:open", onCartOpen);
     return () => window.removeEventListener("verde:cart:open", onCartOpen);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step1Done, step2Done, step3Done, step4Done, step5Done, canOfferDrinks]);
+  }, []);
 
   // Recalcular animaciones GSAP cuando cambia el alto (al colapsar/expandir pasos)
   useEffect(() => {
@@ -1251,7 +1238,7 @@ export default function ReservationForm({
                 bloque de ofertas) y salsas (se añaden en el popup de extras,
                 que solo aparece una vez). */}
             {cartProducts.length > 0 && (
-              <div className="mt-6">
+              <div className="mt-6 scroll-mt-24" ref={seleccionRef} id="tu-seleccion">
                 <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-verde-bosque/60 mb-3">
                   Tu selección
                 </p>

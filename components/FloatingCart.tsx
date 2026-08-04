@@ -28,9 +28,10 @@ export default function FloatingCart({ onOpen }: { onOpen?: () => void }) {
     <div
       onClick={() => {
         onOpen?.();
-        // Avanza al primer paso pendiente del checkout (lo gestiona ReservationForm)
+        // Abre el paso 1 y baja a "Tu selección" — lo hace ReservationForm, que
+        // es quien sabe dónde está el panel. Aquí no se desplaza nada más para
+        // no pelearse con ese scroll.
         window.dispatchEvent(new CustomEvent("verde:cart:open"));
-        document.getElementById("reservar")?.scrollIntoView({ behavior: "smooth" });
       }}
       className="fixed bottom-6 right-6 z-[999] flex items-center gap-3 px-5 py-3 rounded-xl cursor-pointer transition-all duration-200 hover:-translate-y-1"
       style={{
@@ -48,7 +49,12 @@ export default function FloatingCart({ onOpen }: { onOpen?: () => void }) {
           {fmt(cart.total)}
         </div>
       </div>
-      <span className="text-sm" style={{ color: "rgba(245,240,232,0.55)" }}>→</span>
+      <span
+        className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+        style={{ color: "rgba(245,240,232,0.55)" }}
+      >
+        Ver / editar
+      </span>
     </div>
   );
 }
