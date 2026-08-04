@@ -380,6 +380,26 @@ export function getPacks(): Product[] {
   return PACKS.filter((p) => p.available);
 }
 
+// ─── Producto destacado del escaparate ─────────────────────────────────────
+// El bloque de arriba de la home admite packs Y platos sueltos. Este es el
+// plato que se empuja ahí, delante de los packs. Para destacar otro, cambiar
+// este id; para no destacar nada, dejarlo en "".
+export const DESTACADO_ID = "ceviche-jipijapa";
+
+/**
+ * Busca el destacado en la lista REAL de la carta (la del Sheet si está), no en
+ * el catálogo estático: así su precio y disponibilidad en el escaparate son los
+ * mismos que en la carta y que en el cobro.
+ */
+export function getDestacado(products: Product[]): Product | null {
+  if (!DESTACADO_ID) return null;
+  return (
+    products.find(
+      (p) => !p.isPack && p.available !== false && mismoId(p.id, DESTACADO_ID)
+    ) ?? null
+  );
+}
+
 export function getProductById(id: string): Product | undefined {
   return [
     ...PRODUCTS,

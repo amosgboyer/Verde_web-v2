@@ -130,6 +130,45 @@ function formatDateLabel(dateStr: string): string {
 
 const DAY_LABELS = ["L", "M", "X", "J", "V", "S", "D"];
 
+/**
+ * Desplazamiento suave a prueba de saltos de layout.
+ *
+ * Al cambiar de paso, el anterior se colapsa y la página encoge de golpe (la
+ * carta entera desaparece). Si el scroll sale antes de que el layout se asiente,
+ * el navegador persigue una posición que ya no existe y acaba al final. Por eso:
+ * esperar a que se pinte, ir, y corregir una vez más cuando GSAP ha recalculado.
+ *
+ * `getEl` se evalúa en CADA intento, nunca antes: el destino puede no estar
+ * montado todavía en el momento de la llamada.
+ */
+function scrollSuaveA(
+  getEl: () => HTMLElement | null,
+  block: ScrollLogicalPosition = "start"
+) {
+  const ir = (): boolean => {
+    const el = getEl();
+    if (!el) return false;
+    el.scrollIntoView({ behavior: "smooth", block });
+    return true;
+  };
+
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      if (!ir()) setTimeout(ir, 90); // aún no montado → un reintento
+      setTimeout(() => {
+        const el = getEl();
+        if (!el) return;
+        const top = el.getBoundingClientRect().top;
+        const desviado =
+          block === "center"
+            ? Math.abs(top - window.innerHeight / 2) > 140
+            : Math.abs(top) > 90;
+        if (desviado) ir();
+      }, 380);
+    })
+  );
+}
+
 // ─── Category helpers ───────────────────────────────────────────────────────
 
 // Precio en formato español: entero "10", decimal "2,20".
@@ -441,33 +480,14 @@ export default function ReservationForm({
       .catch(() => {});
   }, []);
 
-  function goToStep(step: number) {
+  // Cambia de paso. Con `scroll: false` NO se desplaza: es para quien va a
+  // llevar la vista a otro sitio (p. ej. al panel del carrito). Si ambos
+  // desplazamientos salen a la vez se pisan, y ganaba este — que sube arriba.
+  function goToStep(step: number, opts: { scroll?: boolean } = {}) {
     setCurrentStep(step);
     setMaxStep((prev) => Math.max(prev, step));
-
-    // Al cambiar de paso, el anterior se colapsa y la página encoge de golpe
-    // (la carta entera desaparece). Si el scroll sale antes de que el layout se
-    // asiente, el navegador persigue una posición que ya no existe y termina al
-    // final de la página. Por eso: esperar a que se pinte el nuevo layout, ir, y
-    // corregir una vez más cuando GSAP ha recalculado alturas.
-    // La referencia se lee DENTRO de cada intento, nunca antes: el paso al que
-    // vamos puede no estar montado todavía en el momento de la llamada.
-    const ir = (): boolean => {
-      const el = stepRefs[step - 1]?.current;
-      if (!el) return false;
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      return true;
-    };
-
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        if (!ir()) setTimeout(ir, 90); // aún no montado → un reintento
-        setTimeout(() => {
-          const el = stepRefs[step - 1]?.current;
-          if (el && Math.abs(el.getBoundingClientRect().top) > 90) ir();
-        }, 380);
-      })
-    );
+    if (opts.scroll === false) return;
+    scrollSuaveA(() => stepRefs[step - 1]?.current ?? null);
   }
 
   // ── Cart ──
@@ -734,12 +754,9 @@ export default function ReservationForm({
   // scroll. El botón de continuar está justo debajo, así que no se pierde nada.
   useEffect(() => {
     function onCartOpen() {
-      goToStep(1);
-      // El paso 1 se despliega al cambiar de paso; hay que esperar al repintado
-      // para que el panel exista en el DOM antes de desplazarse a él.
-      setTimeout(() => {
-        seleccionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 180);
+      // Sin scroll propio del paso: el destino es el panel, no la cabecera.
+      goToStep(1, { scroll: false });
+      scrollSuaveA(() => seleccionRef.current, "center");
     }
     window.addEventListener("verde:cart:open", onCartOpen);
     return () => window.removeEventListener("verde:cart:open", onCartOpen);

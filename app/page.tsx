@@ -1,4 +1,10 @@
-import { getAvailableProducts, getPacks, getSalsas, withExtraProducts } from "@/lib/products";
+import {
+  getAvailableProducts,
+  getPacks,
+  getSalsas,
+  withExtraProducts,
+  getDestacado,
+} from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { storeConfig, SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, EARLY_ACCESS_CODE, PUBLIC_OPEN_AT } from "@/lib/launch";
@@ -178,7 +184,7 @@ export default async function HomePage({
       {/* ── PACKS ── */}
       {reservationsOpen && (
         <section id="packs">
-          <Packs />
+          <Packs destacado={getDestacado(products)} />
         </section>
       )}
 

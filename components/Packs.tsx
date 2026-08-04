@@ -1,6 +1,7 @@
 "use client";
 
-import { getPacks } from "@/lib/products";
+import type { Product } from "@/lib/products";
+import { getPacks, imageForProduct } from "@/lib/products";
 
 // Nombre, descripción y PRECIO salen de lib/products.ts — que es lo que cobra
 // el checkout. Antes estaban copiados aquí a mano y un cambio de precio en el
@@ -39,7 +40,27 @@ const PACKS = getPacks().map((p) => {
   };
 });
 
-export default function Packs({ readOnly = false }: { readOnly?: boolean }) {
+interface PacksProps {
+  readOnly?: boolean;
+  /** Plato empujado al escaparate, delante de los packs. Viene de la carta
+   *  real (Sheet si está), así que su precio es el que se cobra. */
+  destacado?: Product | null;
+}
+
+export default function Packs({ readOnly = false, destacado = null }: PacksProps) {
+  // El bloque admite las dos cosas, así que el texto se adapta a lo que hay.
+  const copy = destacado
+    ? {
+        eyebrow: "Novedad · Combinaciones",
+        titulo: "Lo nuevo y lo que más se pide",
+        sub: "El plato recién llegado y las combinaciones de siempre, al mejor precio.",
+      }
+    : {
+        eyebrow: "Combinaciones",
+        titulo: "Packs de la casa",
+        sub: "Las combinaciones que más piden. Un poco de todo lo mejor, al mejor precio.",
+      };
+
   return (
     <section
       className="px-5 py-10 sm:px-8 sm:py-[4.5rem]"
@@ -50,7 +71,7 @@ export default function Packs({ readOnly = false }: { readOnly?: boolean }) {
         <div className="text-center max-w-[480px] mx-auto mb-6 sm:mb-10">
           <p className="font-mono text-[0.68rem] tracking-[0.2em] uppercase mb-2"
             style={{ color: "var(--g3, #7ab356)" }}>
-            Combinaciones
+            {copy.eyebrow}
           </p>
           <h2
             className="font-sans font-bold mb-2"
@@ -60,16 +81,91 @@ export default function Packs({ readOnly = false }: { readOnly?: boolean }) {
               lineHeight: 1.15,
             }}
           >
-            Packs de la casa
+            {copy.titulo}
           </h2>
           <p className="text-[0.85rem] leading-relaxed"
             style={{ color: "rgba(255,255,255,0.45)" }}>
-            Las combinaciones que más piden. Un poco de todo lo mejor, al mejor precio.
+            {copy.sub}
           </p>
         </div>
 
         {/* Grid */}
         <div className="gsap-stagger grid gap-3 sm:gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+          {/* Destacado: mismo marco que los packs, pero con la foto del plato
+              de fondo — es lo primero que se ve del bloque. */}
+          {destacado && (
+            <article
+              className="relative rounded-[14px] overflow-hidden flex flex-col"
+              style={{
+                border: "1px solid rgba(255,255,255,0.16)",
+                background: "rgba(255,255,255,0.06)",
+              }}
+            >
+              {/* Foto arriba, sin texto encima: el plato tiene que verse. */}
+              {imageForProduct(destacado) && (
+                <div className="relative w-full" style={{ aspectRatio: "16 / 11" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageForProduct(destacado)}
+                    alt={destacado.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  {/* Fundido corto solo al pie, para coser foto y texto. */}
+                  <div
+                    className="absolute inset-x-0 bottom-0 h-16"
+                    style={{
+                      background:
+                        "linear-gradient(to top, rgba(23,45,13,0.95), rgba(23,45,13,0))",
+                    }}
+                  />
+                  <div
+                    className="absolute top-[14px] right-[-24px] text-[0.62rem] font-medium tracking-[0.08em] uppercase px-8 py-1"
+                    style={{
+                      background: "var(--gold, #c8960a)",
+                      color: "var(--dark, #1a1a0e)",
+                      transform: "rotate(45deg)",
+                    }}
+                  >
+                    Nuevo
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col items-center text-center px-4 pb-4 pt-3 sm:px-[1.6rem] sm:pb-[1.6rem]">
+                <h3 className="font-sans font-bold text-[1rem] sm:text-[1.15rem] mb-1 text-white">
+                  {destacado.name}
+                </h3>
+                <p
+                  className="text-[0.76rem] sm:text-[0.78rem] leading-relaxed mb-3 sm:mb-5 max-w-[280px]"
+                  style={{ color: "rgba(255,255,255,0.6)" }}
+                >
+                  {destacado.description}
+                </p>
+                <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
+                  <span className="font-mono font-bold text-[1.3rem] sm:text-[1.5rem] text-white">
+                    {fmtPrecio(destacado.depositAmount || destacado.finalPrice)}
+                  </span>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        window.dispatchEvent(
+                          new CustomEvent("verde:add-pack", {
+                            detail: { items: [{ id: destacado.id, qty: 1 }] },
+                          })
+                        )
+                      }
+                      className="text-[0.78rem] font-medium px-6 py-2 rounded-lg text-white transition-colors cursor-pointer border-none"
+                      style={{ background: "rgba(255,255,255,0.16)" }}
+                    >
+                      Pedir →
+                    </button>
+                  )}
+                </div>
+              </div>
+            </article>
+          )}
+
           {PACKS.map((pack) => (
             <div
               key={pack.id}
