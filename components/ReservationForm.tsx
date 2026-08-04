@@ -444,12 +444,30 @@ export default function ReservationForm({
   function goToStep(step: number) {
     setCurrentStep(step);
     setMaxStep((prev) => Math.max(prev, step));
-    setTimeout(() => {
-      stepRefs[step - 1]?.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 60);
+
+    // Al cambiar de paso, el anterior se colapsa y la página encoge de golpe
+    // (la carta entera desaparece). Si el scroll sale antes de que el layout se
+    // asiente, el navegador persigue una posición que ya no existe y termina al
+    // final de la página. Por eso: esperar a que se pinte el nuevo layout, ir, y
+    // corregir una vez más cuando GSAP ha recalculado alturas.
+    // La referencia se lee DENTRO de cada intento, nunca antes: el paso al que
+    // vamos puede no estar montado todavía en el momento de la llamada.
+    const ir = (): boolean => {
+      const el = stepRefs[step - 1]?.current;
+      if (!el) return false;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      return true;
+    };
+
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        if (!ir()) setTimeout(ir, 90); // aún no montado → un reintento
+        setTimeout(() => {
+          const el = stepRefs[step - 1]?.current;
+          if (el && Math.abs(el.getBoundingClientRect().top) > 90) ir();
+        }, 380);
+      })
+    );
   }
 
   // ── Cart ──
@@ -1319,7 +1337,7 @@ export default function ReservationForm({
                     {cartProducts.length === 1 ? "producto" : "productos"}
                   </p>
                   <p className="text-sm font-semibold text-verde-bosque">
-                    Total: {totalDeposit} €
+                    Total: {fmtPrice(totalDeposit)} €
                   </p>
                 </div>
 

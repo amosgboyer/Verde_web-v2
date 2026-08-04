@@ -5,6 +5,13 @@ import { sendConfirmationToCustomer } from "@/lib/email";
 // Sends a CustomerReservationEmail with fake data to VERDE_INTERNAL_EMAIL.
 // Only for development / staging. Remove or protect in production.
 export async function GET() {
+  // En producción esta ruta NO existe. Es pública y cada visita ENVÍA un correo
+  // real: dejarla viva permite a cualquiera llenar el buzón interno y quemar la
+  // cuota de Resend. Solo se puede usar en desarrollo.
+  if (process.env.NODE_ENV !== "development") {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const to = process.env.VERDE_INTERNAL_EMAIL;
 
   if (!to) {

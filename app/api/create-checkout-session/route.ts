@@ -9,6 +9,7 @@ import { getActiveWeekendOffer, computeOfferDiscount, offerBadgeLabel } from "@/
 import { feeForZone } from "@/lib/delivery";
 import { SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, isAccessCodeValid } from "@/lib/launch";
+import { getDirectoStatus, todayMadrid } from "@/lib/directo";
 import { ZodError } from "zod";
 
 export async function POST(req: NextRequest) {
@@ -43,23 +44,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate date: not today, not past, respects minLeadDays
-    const today = new Date().toISOString().slice(0, 10);
-    if (parsed.reservationDate <= today) {
-      return NextResponse.json(
-        { error: "No puedes reservar para hoy. La primera fecha disponible es mañana." },
-        { status: 400 }
-      );
-    }
+    // ── Fecha ────────────────────────────────────────────────────────────────
+    // Las reservas normales son para mañana en adelante. El modo "en directo"
+    // (pedido para HOY) es la excepción — y hasta ahora chocaba con esta misma
+    // validación, así que el piloto no habría podido cobrar ni un pedido.
+    //
+    // El permiso NO se concede por el flag que manda el cliente: se comprueba
+    // en servidor que la ventana del directo esté realmente abierta y que la
+    // fecha sea hoy en Madrid. Si no, se aplica la regla de siempre.
+    const directoStatus = getDirectoStatus();
+    const esDirectoValido =
+      parsed.directo &&
+      directoStatus.isOpen &&
+      parsed.reservationDate === todayMadrid();
 
-    const minDate = new Date();
-    minDate.setDate(minDate.getDate() + settings.minLeadDays);
-    const minDateStr = minDate.toISOString().slice(0, 10);
-    if (parsed.reservationDate < minDateStr) {
-      return NextResponse.json(
-        { error: `Debes reservar con al menos ${settings.minLeadDays} día(s) de antelación.` },
-        { status: 400 }
-      );
+    if (!esDirectoValido) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (parsed.reservationDate <= today) {
+        return NextResponse.json(
+          { error: "No puedes reservar para hoy. La primera fecha disponible es mañana." },
+          { status: 400 }
+        );
+      }
+
+      const minDate = new Date();
+      minDate.setDate(minDate.getDate() + settings.minLeadDays);
+      const minDateStr = minDate.toISOString().slice(0, 10);
+      if (parsed.reservationDate < minDateStr) {
+        return NextResponse.json(
+          { error: `Debes reservar con al menos ${settings.minLeadDays} día(s) de antelación.` },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate delivery fields when method is "delivery"

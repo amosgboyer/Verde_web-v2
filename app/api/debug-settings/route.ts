@@ -8,6 +8,12 @@ export const dynamic = "force-dynamic";
 // Diagnoses exactly what Google Sheets is returning for each Settings key.
 // Does not expose credentials or secrets.
 export async function GET() {
+  // Expone la configuración interna de la tienda (horarios, promos, umbrales).
+  // No es secreta, pero tampoco tiene por qué ser pública: solo en desarrollo.
+  if (process.env.NODE_ENV !== "development") {
+    return new NextResponse(null, { status: 404 });
+  }
+
   try {
     const [rawRows, settings] = await Promise.all([
       getSettingsRawRows(),

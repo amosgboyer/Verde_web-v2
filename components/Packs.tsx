@@ -1,35 +1,43 @@
 "use client";
 
-const PACKS = [
-  {
-    id: "tigrillos",
-    name: "Los Dos Tigrillos",
-    desc: "2× Tigrillo Mixto. Hecho en demiglass de carne, chicharrón, mix de quesos y sal prieta.",
-    price: "27€",
-    saving: "ahorras 3€",
+import { getPacks } from "@/lib/products";
+
+// Nombre, descripción y PRECIO salen de lib/products.ts — que es lo que cobra
+// el checkout. Antes estaban copiados aquí a mano y un cambio de precio en el
+// catálogo dejaba este escaparate anunciando otro. Aquí solo vive lo que es
+// puramente de presentación (destacado, cinta y el "ahorras X").
+const PRESENTACION: Record<
+  string,
+  { titulo: string; ahorro: string; featured?: boolean; ribbon?: string }
+> = {
+  "pack-dos-tigrillos": {
+    titulo: "Los Dos Tigrillos",
+    ahorro: "ahorras 3€",
     featured: true,
     ribbon: "Popular",
-    items: [{ id: "pack-dos-tigrillos", qty: 1 }],
   },
-  {
-    id: "bolon-patacon",
-    name: "Bolón + Patacón",
-    desc: "Bolón Mixto de la Casa + Ración de Patacón con salsa verde de queso y queso manaba.",
-    price: "14€",
-    saving: "ahorras 2€",
-    featured: false,
-    items: [{ id: "pack-bolon-patacon", qty: 1 }],
-  },
-  {
-    id: "grupo",
-    name: "Para Todo el Grupo",
-    desc: "Ahora Comen Todos + Ración de Patacón. Para 3–4 personas con ganas de verde.",
-    price: "24€",
-    saving: "ahorras 2€",
-    featured: false,
-    items: [{ id: "pack-grupo", qty: 1 }],
-  },
-];
+  "pack-bolon-patacon": { titulo: "Bolón + Patacón", ahorro: "ahorras 2€" },
+  "pack-grupo": { titulo: "Para Todo el Grupo", ahorro: "ahorras 2€" },
+};
+
+// Precio en formato español, entero sin decimales: "27€", "14,50€".
+function fmtPrecio(n: number): string {
+  return (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",")) + "€";
+}
+
+const PACKS = getPacks().map((p) => {
+  const pres = PRESENTACION[p.id] ?? { titulo: p.name, ahorro: "" };
+  return {
+    id: p.id,
+    name: pres.titulo,
+    desc: p.description,
+    price: fmtPrecio(p.finalPrice),
+    saving: pres.ahorro,
+    featured: pres.featured ?? false,
+    ribbon: pres.ribbon,
+    items: [{ id: p.id, qty: 1 }],
+  };
+});
 
 export default function Packs({ readOnly = false }: { readOnly?: boolean }) {
   return (
