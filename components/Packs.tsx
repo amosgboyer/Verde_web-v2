@@ -1,7 +1,7 @@
 "use client";
 
 import type { Product } from "@/lib/products";
-import { getPacks, imageForProduct } from "@/lib/products";
+import { getPacks } from "@/lib/products";
 
 // Nombre, descripción y PRECIO salen de lib/products.ts — que es lo que cobra
 // el checkout. Antes estaban copiados aquí a mano y un cambio de precio en el
@@ -95,73 +95,56 @@ export default function Packs({ readOnly = false, destacado = null }: PacksProps
               de fondo — es lo primero que se ve del bloque. */}
           {destacado && (
             <article
-              className="relative rounded-[14px] overflow-hidden flex flex-col"
+              className="relative rounded-[14px] p-4 sm:p-[1.6rem] overflow-hidden flex flex-col items-center text-center"
               style={{
-                border: "1px solid rgba(255,255,255,0.16)",
-                background: "rgba(255,255,255,0.06)",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(200,150,10,0.45)",
               }}
             >
-              {/* Foto arriba, sin texto encima: el plato tiene que verse. */}
-              {imageForProduct(destacado) && (
-                <div className="relative w-full" style={{ aspectRatio: "16 / 11" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={imageForProduct(destacado)}
-                    alt={destacado.name}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                  {/* Fundido corto solo al pie, para coser foto y texto. */}
-                  <div
-                    className="absolute inset-x-0 bottom-0 h-16"
-                    style={{
-                      background:
-                        "linear-gradient(to top, rgba(23,45,13,0.95), rgba(23,45,13,0))",
-                    }}
-                  />
-                  <div
-                    className="absolute top-[14px] right-[-24px] text-[0.62rem] font-medium tracking-[0.08em] uppercase px-8 py-1"
-                    style={{
-                      background: "var(--gold, #c8960a)",
-                      color: "var(--dark, #1a1a0e)",
-                      transform: "rotate(45deg)",
-                    }}
-                  >
-                    Nuevo
-                  </div>
-                </div>
-              )}
+              <div
+                className="absolute top-[14px] right-[-24px] text-[0.62rem] font-medium tracking-[0.08em] uppercase px-8 py-1"
+                style={{
+                  background: "var(--gold, #c8960a)",
+                  color: "var(--dark, #1a1a0e)",
+                  transform: "rotate(45deg)",
+                }}
+              >
+                Nuevo
+              </div>
 
-              <div className="flex flex-col items-center text-center px-4 pb-4 pt-3 sm:px-[1.6rem] sm:pb-[1.6rem]">
-                <h3 className="font-sans font-bold text-[1rem] sm:text-[1.15rem] mb-1 text-white">
-                  {destacado.name}
-                </h3>
-                <p
-                  className="text-[0.76rem] sm:text-[0.78rem] leading-relaxed mb-3 sm:mb-5 max-w-[280px]"
-                  style={{ color: "rgba(255,255,255,0.6)" }}
+              <h3 className="font-sans font-bold text-[1rem] sm:text-[1.15rem] mb-1 text-white">
+                {destacado.name}
+              </h3>
+              <p
+                className="text-[0.76rem] sm:text-[0.78rem] leading-relaxed mb-3 sm:mb-5 max-w-[280px]"
+                style={{ color: "rgba(255,255,255,0.55)" }}
+              >
+                {destacado.description}
+              </p>
+
+              <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
+                <span
+                  className="font-mono font-bold text-[1.3rem] sm:text-[1.5rem]"
+                  style={{ color: "var(--gold, #c8960a)" }}
                 >
-                  {destacado.description}
-                </p>
-                <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
-                  <span className="font-mono font-bold text-[1.3rem] sm:text-[1.5rem] text-white">
-                    {fmtPrecio(destacado.depositAmount || destacado.finalPrice)}
-                  </span>
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        window.dispatchEvent(
-                          new CustomEvent("verde:add-pack", {
-                            detail: { items: [{ id: destacado.id, qty: 1 }] },
-                          })
-                        )
-                      }
-                      className="text-[0.78rem] font-medium px-6 py-2 rounded-lg text-white transition-colors cursor-pointer border-none"
-                      style={{ background: "rgba(255,255,255,0.16)" }}
-                    >
-                      Pedir →
-                    </button>
-                  )}
-                </div>
+                  {fmtPrecio(destacado.depositAmount || destacado.finalPrice)}
+                </span>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      window.dispatchEvent(
+                        new CustomEvent("verde:add-pack", {
+                          detail: { items: [{ id: destacado.id, qty: 1 }] },
+                        })
+                      )
+                    }
+                    className="text-[0.78rem] font-medium px-6 py-2 rounded-lg text-white transition-colors cursor-pointer border-none"
+                    style={{ background: "rgba(255,255,255,0.12)" }}
+                  >
+                    Pedir →
+                  </button>
+                )}
               </div>
             </article>
           )}
