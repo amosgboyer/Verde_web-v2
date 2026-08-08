@@ -10,6 +10,7 @@ import { feeForZone } from "@/lib/delivery";
 import { SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, isAccessCodeValid } from "@/lib/launch";
 import { getDirectoStatus, todayMadrid } from "@/lib/directo";
+import { trocearMeta, ErrorCliente } from "@/lib/stripe-meta";
 import { ZodError } from "zod";
 
 export async function POST(req: NextRequest) {
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
     const validatedItems = parsed.items.map((item) => {
       const sheetProduct = sheetsProducts.find((p) => p.productId === item.productId);
       if (sheetProduct) {
-        if (!sheetProduct.available) throw new Error(`${sheetProduct.name} no está disponible`);
+        if (!sheetProduct.available) throw new ErrorCliente(`${sheetProduct.name} no está disponible`);
         return {
           product: {
             id: sheetProduct.productId,
@@ -141,8 +142,8 @@ export async function POST(req: NextRequest) {
         };
       }
       const staticProduct = getProductById(item.productId);
-      if (!staticProduct) throw new Error(`Producto ${item.productId} no encontrado`);
-      if (!staticProduct.available) throw new Error(`${staticProduct.name} no está disponible`);
+      if (!staticProduct) throw new ErrorCliente(`Producto ${item.productId} no encontrado`);
+      if (!staticProduct.available) throw new ErrorCliente(`${staticProduct.name} no está disponible`);
       return {
         product: {
           id: staticProduct.id,
@@ -266,7 +267,8 @@ export async function POST(req: NextRequest) {
       mode: "payment",
       line_items: lineItems,
       metadata: {
-        items: itemsMeta,
+        // Troceado: el carrito de un pedido grande no cabe en una sola clave.
+        ...trocearMeta("items", itemsMeta),
         reservationDate: parsed.reservationDate,
         reservationTime: parsed.reservationTime,
         customerName: parsed.customerName,
@@ -320,12 +322,19 @@ export async function POST(req: NextRequest) {
         { status: 422 }
       );
     }
-    if (error instanceof Error) {
+    // Solo se le enseñan al cliente los mensajes escritos PARA él. Antes se
+    // devolvía `error.message` de cualquier error: un fallo de Stripe llegaba a
+    // la pantalla en inglés, con jerga y con ids y precios internos a la vista.
+    if (error instanceof ErrorCliente) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
     console.error("[create-checkout-session]", error);
     return NextResponse.json(
-      { error: "Error interno del servidor." },
+      {
+        error:
+          "No hemos podido crear tu reserva. Vuelve a intentarlo en un momento; " +
+          "si sigue fallando, escríbenos por WhatsApp y la hacemos nosotros.",
+      },
       { status: 500 }
     );
   }

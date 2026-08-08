@@ -8,6 +8,7 @@ import {
   findAddOrderContext,
 } from "@/lib/google-sheets";
 import { SOLD_OUT } from "@/lib/store-config";
+import { trocearMeta, ErrorCliente } from "@/lib/stripe-meta";
 
 const addSchema = z.object({
   sessionId: z.string().min(6),
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
       );
       if (sheetProduct) {
         if (!sheetProduct.available)
-          throw new Error(`${sheetProduct.name} no está disponible`);
+          throw new ErrorCliente(`${sheetProduct.name} no está disponible`);
         return {
           product: {
             id: sheetProduct.productId,
@@ -82,9 +83,9 @@ export async function POST(req: NextRequest) {
       }
       const staticProduct = getProductById(item.productId);
       if (!staticProduct)
-        throw new Error(`Producto ${item.productId} no encontrado`);
+        throw new ErrorCliente(`Producto ${item.productId} no encontrado`);
       if (!staticProduct.available)
-        throw new Error(`${staticProduct.name} no está disponible`);
+        throw new ErrorCliente(`${staticProduct.name} no está disponible`);
       return {
         product: {
           id: staticProduct.id,
@@ -144,7 +145,8 @@ export async function POST(req: NextRequest) {
         },
       ],
       metadata: {
-        items: itemsMeta,
+        // Troceado: ver lib/stripe-meta.ts — un carrito grande no cabe en una clave.
+        ...trocearMeta("items", itemsMeta),
         reservationDate: ctx.reservationDate,
         reservationTime: ctx.reservationTime,
         customerName: ctx.customerName,
@@ -187,11 +189,17 @@ export async function POST(req: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Datos inválidos." }, { status: 422 });
     }
-    if (error instanceof Error) {
+    // Igual que en el checkout: al cliente solo los mensajes escritos para él.
+    if (error instanceof ErrorCliente) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+    console.error("[add-to-order]", error);
     return NextResponse.json(
-      { error: "Error interno del servidor." },
+      {
+        error:
+          "No hemos podido añadir esto a tu pedido. Inténtalo de nuevo; " +
+          "si sigue fallando, escríbenos por WhatsApp.",
+      },
       { status: 500 }
     );
   }

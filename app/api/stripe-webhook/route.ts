@@ -8,6 +8,7 @@ import {
 } from "@/lib/email";
 import { isSlotAvailable, normalizeTime, normalizeDate } from "@/lib/availability";
 import { orderCodeFromSession } from "@/lib/order-code";
+import { unirMeta } from "@/lib/stripe-meta";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -62,11 +63,24 @@ export async function POST(req: NextRequest) {
       console.error("[stripe-webhook] Error en dedup check:", err);
     }
 
+    // El carrito puede venir troceado en items/items2/items3… (ver
+    // lib/stripe-meta.ts). Las sesiones antiguas traen solo `items` y se leen
+    // igual, así que un pago iniciado antes del cambio se procesa sin problema.
     let items: ItemMeta[] = [];
+    const itemsCrudo = unirMeta(meta, "items");
     try {
-      items = JSON.parse(meta.items ?? "[]");
+      items = JSON.parse(itemsCrudo || "[]");
     } catch {
-      console.error("[stripe-webhook] Error parseando items:", session.id);
+      console.error(
+        "[stripe-webhook] Error parseando items:",
+        session.id,
+        `(${itemsCrudo.length} caracteres)`
+      );
+    }
+    if (items.length === 0) {
+      // Sin líneas no hay pedido que guardar: mejor gritar en los logs que
+      // escribir una fila vacía en Orders y que nadie se entere.
+      console.error("[stripe-webhook] Sesión SIN ítems legibles:", session.id);
     }
 
     const totalDeposit = Number(meta.totalDeposit);
