@@ -1,12 +1,15 @@
 // ─── Alérgenos: dos vocabularios que no se hablaban ─────────────────────────
 //
 // El cliente marca de la lista oficial de 14 (Reglamento UE 1169/2011), donde
-// el cacahuete se llama "Cacahuetes". La carta los etiqueta con el vocabulario
-// de cocina, "Maní". La comprobación de conflictos comparaba las cadenas TAL
-// CUAL, así que quien marcaba "Cacahuetes" NO recibía ningún aviso en platos
-// llenos de maní — el alérgeno más presente en esta carta (salsa de maní y sal
-// prieta están en media carta). El aviso salía en "Lácteos" y "Pescado" porque
-// ahí las dos listas usan la misma palabra; con el maní, nunca.
+// el cacahuete se llama "Cacahuetes". La hoja usa ese mismo vocabulario en casi
+// toda la carta —así que la comparación en crudo funcionaba— pero NO siempre:
+// el Ceviche Jipijapa está etiquetado "Maní", la palabra de cocina, y ahí un
+// alérgico al cacahuete que marcaba su casilla no recibía ningún aviso. El
+// catálogo de respaldo del código usa "Maní" en todos los platos, así que si la
+// hoja falla el problema se extiende a la carta entera.
+//
+// Basta con que alguien escriba "maní", "queso" o "frutos secos" en una celda
+// para reabrirlo. Por eso la comparación deja de ser literal.
 //
 // Esta tabla solo puede AÑADIR avisos, nunca quitarlos: en el peor caso avisa
 // de más, que en alergias es el lado correcto del error.

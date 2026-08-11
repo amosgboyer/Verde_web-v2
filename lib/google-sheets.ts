@@ -69,12 +69,12 @@ function parsePrice(value: string | undefined): number {
   return isNaN(n) ? 0 : n;
 }
 
-// La columna de alérgenos se rellena a mano y en la hoja van separados por
-// "·", no por comas. Partir solo por coma dejaba TODA la lista dentro de un
-// único elemento del array: en la carta se veía bien (se vuelve a unir con
-// " · ") pero ninguna comparación casaba, así que el aviso de alergias del
-// checkout no saltaba NUNCA, con ningún plato ni ningún alérgeno.
-// Se aceptan todos los separadores que alguien pueda teclear.
+// La columna de alérgenos se rellena a mano. Hoy se usa la coma y funciona,
+// pero basta que alguien escriba "Pescado · Huevos" para que toda la lista
+// quede dentro de un único elemento del array: en la carta se seguiría viendo
+// bien (se vuelve a unir con " · " para mostrarla) mientras el aviso de
+// alergias del checkout deja de casar nada. Un fallo así no se ve.
+// Por eso se aceptan todos los separadores que alguien pueda teclear.
 function partirAlergenos(celda?: string): string[] {
   return (celda ?? "")
     .split(/[,;/·•|\n]+/)
