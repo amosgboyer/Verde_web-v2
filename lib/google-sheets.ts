@@ -69,6 +69,32 @@ function parsePrice(value: string | undefined): number {
   return isNaN(n) ? 0 : n;
 }
 
+// Palabras que en un nombre de plato van en minúscula ("Bolón Mixto de la Casa").
+const MINUSCULAS = new Set(["de", "del", "la", "las", "los", "el", "y", "con", "en", "a", "al"]);
+
+/**
+ * Arregla los nombres tecleados TODO en minúsculas ("colonche de chicharrón" →
+ * "Colonche de Chicharrón"). Si el nombre ya trae alguna mayúscula se respeta
+ * tal cual: no es tarea del código reescribir lo que la cocina ha decidido.
+ *
+ * Va aquí, en el punto donde se leen los productos, y no en la tarjeta, para
+ * que el nombre salga igual en la carta, en el correo de confirmación y en la
+ * fila del pedido. Si se arregla solo al pintar, el cliente ve una cosa y la
+ * cocina recibe otra.
+ */
+function nombreBonito(bruto: string): string {
+  const n = (bruto ?? "").trim();
+  if (!n || n !== n.toLowerCase()) return n; // ya tiene mayúsculas → no tocar
+  return n
+    .split(/\s+/)
+    .map((palabra, i) =>
+      i > 0 && MINUSCULAS.has(palabra)
+        ? palabra
+        : palabra.charAt(0).toUpperCase() + palabra.slice(1)
+    )
+    .join(" ");
+}
+
 // La columna de alérgenos se rellena a mano. Hoy se usa la coma y funciona,
 // pero basta que alguien escriba "Pescado · Huevos" para que toda la lista
 // quede dentro de un único elemento del array: en la carta se seguiría viendo
@@ -99,7 +125,7 @@ export async function getProductsRows(): Promise<ProductRow[]> {
       }
       return {
         productId: r[0] ?? "",
-        name: r[1] ?? "",
+        name: nombreBonito(r[1] ?? ""),
         description: r[2] ?? "",
         finalPrice,
         depositAmount,

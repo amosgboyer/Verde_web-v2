@@ -265,7 +265,7 @@ export const EXTRA_PLATOS: Product[] = [
     depositAmount: 15,
     available: true,
     allergens: ["Maní"],
-    category: "otros",
+    category: "verde", // igual que en el Sheet, por si algún día se lee de aquí
     image: "/productos/colonche-de-chicharron.jpg",
   },
   {
