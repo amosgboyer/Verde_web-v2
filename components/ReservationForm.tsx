@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { Product, NormalizedCategory } from "@/lib/products";
 import { imageForProduct, normalizeCategory } from "@/lib/products";
+import { platoDeclaraAlergeno, platoSinDetallar } from "@/lib/allergens";
 import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
@@ -629,14 +630,23 @@ export default function ReservationForm({
 
   // Choque entre las alergias marcadas por el cliente y los platos del carrito.
   // (Los toggles del checkout y la columna G del Sheet usan el mismo vocabulario.)
+  // La comparación pasa por lib/allergens.ts: la carta escribe "Maní" y el
+  // cliente marca "Cacahuetes", y en crudo no casaban (ver el fichero).
   const allergenConflicts = allergens
     .map((a) => ({
       allergen: a,
       dishes: cartProducts
-        .filter((p) => (p.allergens ?? []).includes(a))
+        .filter((p) => platoDeclaraAlergeno(p.allergens, a))
         .map((p) => p.name),
     }))
     .filter((c) => c.dishes.length > 0);
+
+  // Platos del carrito sin alérgenos detallados ("Consultar"). Solo importan si
+  // el cliente ha marcado alguna alergia: no se le puede decir que son seguros.
+  const dishesSinDetallar =
+    allergens.length > 0
+      ? cartProducts.filter((p) => platoSinDetallar(p.allergens)).map((p) => p.name)
+      : [];
 
   // Bebidas (para decidir si se ofrece el popup "Completa tu pedido")
   const drinkProducts = products.filter(
@@ -1570,7 +1580,7 @@ export default function ReservationForm({
                   </p>
 
                   {/* Alerta: alergia marcada que está en algún plato del carrito */}
-                  {allergenConflicts.length > 0 && (
+                  {(allergenConflicts.length > 0 || dishesSinDetallar.length > 0) && (
                     <div
                       className="mt-3 rounded-xl border px-3.5 py-3"
                       style={{
@@ -1596,6 +1606,13 @@ export default function ReservationForm({
                           y tu pedido incluye: {c.dishes.join(", ")}.
                         </p>
                       ))}
+                      {dishesSinDetallar.length > 0 && (
+                        <p className="text-[12.5px] leading-snug text-negro/75">
+                          No tenemos detallados los alérgenos de:{" "}
+                          {dishesSinDetallar.join(", ")}. Pregúntanos antes de
+                          pedirlo.
+                        </p>
+                      )}
                       <p className="text-[11px] text-negro/50 mt-1.5">
                         Revísalo antes de pagar. Si es una alergia grave, no lo
                         pidas y escríbenos.
