@@ -18,6 +18,11 @@ export async function GET() {
       pricesMatch: p.finalPrice === p.depositAmount,
       available: p.available,
       category: p.category,
+      // Cómo queda el array de alérgenos tras parsear la celda. Importa que
+      // sean elementos SUELTOS: si sale uno solo con todo dentro, el aviso de
+      // alergias del checkout no puede casar nada.
+      allergens: p.allergens,
+      allergensCount: p.allergens.length,
       // rawRow only in development — never exposes credentials or customer data
       ...(isDev && {
         _raw: {
