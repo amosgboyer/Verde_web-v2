@@ -69,6 +69,19 @@ function parsePrice(value: string | undefined): number {
   return isNaN(n) ? 0 : n;
 }
 
+// La columna de alérgenos se rellena a mano y en la hoja van separados por
+// "·", no por comas. Partir solo por coma dejaba TODA la lista dentro de un
+// único elemento del array: en la carta se veía bien (se vuelve a unir con
+// " · ") pero ninguna comparación casaba, así que el aviso de alergias del
+// checkout no saltaba NUNCA, con ningún plato ni ningún alérgeno.
+// Se aceptan todos los separadores que alguien pueda teclear.
+function partirAlergenos(celda?: string): string[] {
+  return (celda ?? "")
+    .split(/[,;/·•|\n]+/)
+    .map((a) => a.trim())
+    .filter(Boolean);
+}
+
 export async function getProductsRows(): Promise<ProductRow[]> {
   const rows = await getSheetValues("Products!A2:I");
   return rows
@@ -91,7 +104,7 @@ export async function getProductsRows(): Promise<ProductRow[]> {
         finalPrice,
         depositAmount,
         available,
-        allergens: r[6] ? r[6].split(",").map((a) => a.trim()).filter(Boolean) : [],
+        allergens: partirAlergenos(r[6]),
         imageUrl: r[7] ?? "",
         category: r[8] ?? "",
       };
