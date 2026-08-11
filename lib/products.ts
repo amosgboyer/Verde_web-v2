@@ -181,6 +181,7 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   "tropical": "/productos/tropical.jpg",
   "inca-kola": "/productos/inca-kola.jpg",
   "ceviche-jipijapa": "/productos/ceviche-jipijapa.jpg",
+  "colonche-de-chicharron": "/productos/colonche-de-chicharron.jpg",
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
@@ -255,6 +256,18 @@ export function getBebidas(): Product[] {
 // aquí se puede añadir producto sin tocarlo. Si el Sheet acaba trayendo el
 // mismo id, manda el Sheet y este deja de usarse (no se duplica).
 export const EXTRA_PLATOS: Product[] = [
+  {
+    id: "colonche-de-chicharron",
+    name: "Colonche de Chicharrón",
+    description:
+      "Patacones, rehogado de la casa, salsa de maní, aguacate, sal prieta y mucho chicharrón.",
+    finalPrice: 15,
+    depositAmount: 15,
+    available: true,
+    allergens: ["Maní"],
+    category: "otros",
+    image: "/productos/colonche-de-chicharron.jpg",
+  },
   {
     id: "ceviche-jipijapa",
     name: "Ceviche Jipijapa",
