@@ -42,24 +42,35 @@ const PACKS = getPacks().map((p) => {
 
 interface PacksProps {
   readOnly?: boolean;
-  /** Plato empujado al escaparate, delante de los packs. Viene de la carta
-   *  real (Sheet si está), así que su precio es el que se cobra. */
-  destacado?: Product | null;
+  /** Platos nuevos que van arriba, antes de los packs. Vienen de la carta real
+   *  (Sheet si está), así que su precio es el que se cobra. */
+  destacados?: Product[];
 }
 
-export default function Packs({ readOnly = false, destacado = null }: PacksProps) {
+export default function Packs({ readOnly = false, destacados = [] }: PacksProps) {
+  const hayNovedades = destacados.length > 0;
+
   // El bloque admite las dos cosas, así que el texto se adapta a lo que hay.
-  const copy = destacado
+  const copy = hayNovedades
     ? {
-        eyebrow: "Novedad · Combinaciones",
+        eyebrow: "Novedades · Combinaciones",
         titulo: "Lo nuevo y lo que más se pide",
-        sub: "El plato recién llegado y las combinaciones de siempre, al mejor precio.",
+        sub: "Los platos recién llegados y las combinaciones de siempre, al mejor precio.",
       }
     : {
         eyebrow: "Combinaciones",
         titulo: "Packs de la casa",
         sub: "Las combinaciones que más piden. Un poco de todo lo mejor, al mejor precio.",
       };
+
+  const subtitulo = (texto: string) => (
+    <p
+      className="font-mono text-[0.62rem] tracking-[0.25em] uppercase mb-3 mt-1"
+      style={{ color: "var(--g3, #7ab356)" }}
+    >
+      {texto}
+    </p>
+  );
 
   return (
     <section
@@ -89,66 +100,77 @@ export default function Packs({ readOnly = false, destacado = null }: PacksProps
           </p>
         </div>
 
-        {/* Grid */}
-        <div className="gsap-stagger grid gap-3 sm:gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
-          {/* Destacado: mismo marco que los packs, pero con la foto del plato
-              de fondo — es lo primero que se ve del bloque. */}
-          {destacado && (
-            <article
-              className="relative rounded-[14px] p-4 sm:p-[1.6rem] overflow-hidden flex flex-col items-center text-center"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(200,150,10,0.45)",
-              }}
+        {/* ── Novedades: platos nuevos, antes de los packs ── */}
+        {hayNovedades && (
+          <div className="mb-8 sm:mb-12">
+            {subtitulo("Novedades")}
+            <div
+              className="gsap-stagger grid gap-3 sm:gap-5"
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
             >
-              <div
-                className="absolute top-[14px] right-[-24px] text-[0.62rem] font-medium tracking-[0.08em] uppercase px-8 py-1"
-                style={{
-                  background: "var(--gold, #c8960a)",
-                  color: "var(--dark, #1a1a0e)",
-                  transform: "rotate(45deg)",
-                }}
-              >
-                Nuevo
-              </div>
-
-              <h3 className="font-sans font-bold text-[1rem] sm:text-[1.15rem] mb-1 text-white">
-                {destacado.name}
-              </h3>
-              <p
-                className="text-[0.76rem] sm:text-[0.78rem] leading-relaxed mb-3 sm:mb-5 max-w-[280px]"
-                style={{ color: "rgba(255,255,255,0.55)" }}
-              >
-                {destacado.description}
-              </p>
-
-              <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
-                <span
-                  className="font-mono font-bold text-[1.3rem] sm:text-[1.5rem]"
-                  style={{ color: "var(--gold, #c8960a)" }}
+              {destacados.map((plato) => (
+                <article
+                  key={plato.id}
+                  className="relative rounded-[14px] p-4 sm:p-[1.6rem] overflow-hidden flex flex-col items-center text-center"
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(200,150,10,0.45)",
+                  }}
                 >
-                  {fmtPrecio(destacado.depositAmount || destacado.finalPrice)}
-                </span>
-                {!readOnly && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      window.dispatchEvent(
-                        new CustomEvent("verde:add-pack", {
-                          detail: { items: [{ id: destacado.id, qty: 1 }] },
-                        })
-                      )
-                    }
-                    className="text-[0.78rem] font-medium px-6 py-2 rounded-lg text-white transition-colors cursor-pointer border-none"
-                    style={{ background: "rgba(255,255,255,0.12)" }}
+                  <div
+                    className="absolute top-[14px] right-[-24px] text-[0.62rem] font-medium tracking-[0.08em] uppercase px-8 py-1"
+                    style={{
+                      background: "var(--gold, #c8960a)",
+                      color: "var(--dark, #1a1a0e)",
+                      transform: "rotate(45deg)",
+                    }}
                   >
-                    Pedir →
-                  </button>
-                )}
-              </div>
-            </article>
-          )}
+                    Nuevo
+                  </div>
 
+                  <h3 className="font-sans font-bold text-[1rem] sm:text-[1.15rem] mb-1 text-white">
+                    {plato.name}
+                  </h3>
+                  <p
+                    className="text-[0.76rem] sm:text-[0.78rem] leading-relaxed mb-3 sm:mb-5 max-w-[280px]"
+                    style={{ color: "rgba(255,255,255,0.55)" }}
+                  >
+                    {plato.description}
+                  </p>
+
+                  <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
+                    <span
+                      className="font-mono font-bold text-[1.3rem] sm:text-[1.5rem]"
+                      style={{ color: "var(--gold, #c8960a)" }}
+                    >
+                      {fmtPrecio(plato.depositAmount || plato.finalPrice)}
+                    </span>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          window.dispatchEvent(
+                            new CustomEvent("verde:add-pack", {
+                              detail: { items: [{ id: plato.id, qty: 1 }] },
+                            })
+                          )
+                        }
+                        className="text-[0.78rem] font-medium px-6 py-2 rounded-lg text-white transition-colors cursor-pointer border-none"
+                        style={{ background: "rgba(255,255,255,0.12)" }}
+                      >
+                        Pedir →
+                      </button>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Packs ── */}
+        {hayNovedades && subtitulo("Packs de la casa")}
+        <div className="gsap-stagger grid gap-3 sm:gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
           {PACKS.map((pack) => (
             <div
               key={pack.id}

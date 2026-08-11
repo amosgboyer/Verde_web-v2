@@ -393,24 +393,25 @@ export function getPacks(): Product[] {
   return PACKS.filter((p) => p.available);
 }
 
-// ─── Producto destacado del escaparate ─────────────────────────────────────
-// El bloque de arriba de la home admite packs Y platos sueltos. Este es el
-// plato que se empuja ahí, delante de los packs. Para destacar otro, cambiar
-// este id; para no destacar nada, dejarlo en "".
-export const DESTACADO_ID = "ceviche-jipijapa";
+// ─── Novedades del escaparate ──────────────────────────────────────────────
+// El bloque de arriba de la home tiene una zona de "Novedades" (platos sueltos)
+// y otra de packs. Estos son los platos que se empujan arriba, EN ESTE ORDEN.
+// Para cambiar las novedades, tocar esta lista; vaciarla oculta la zona entera.
+export const DESTACADOS_IDS: string[] = [
+  "colonche-de-chicharron",
+  "ceviche-jipijapa",
+];
 
 /**
- * Busca el destacado en la lista REAL de la carta (la del Sheet si está), no en
- * el catálogo estático: así su precio y disponibilidad en el escaparate son los
- * mismos que en la carta y que en el cobro.
+ * Resuelve las novedades contra la lista REAL de la carta (la del Sheet si
+ * está), no contra el catálogo estático: así el precio y la disponibilidad del
+ * escaparate son los mismos que los de la carta y los del cobro. Un id que no
+ * exista o esté agotado simplemente no sale.
  */
-export function getDestacado(products: Product[]): Product | null {
-  if (!DESTACADO_ID) return null;
-  return (
-    products.find(
-      (p) => !p.isPack && p.available !== false && mismoId(p.id, DESTACADO_ID)
-    ) ?? null
-  );
+export function getDestacados(products: Product[]): Product[] {
+  return DESTACADOS_IDS.map((id) =>
+    products.find((p) => !p.isPack && p.available !== false && mismoId(p.id, id))
+  ).filter((p): p is Product => !!p);
 }
 
 export function getProductById(id: string): Product | undefined {
