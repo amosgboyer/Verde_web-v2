@@ -182,6 +182,7 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   "inca-kola": "/productos/inca-kola.jpg",
   "ceviche-jipijapa": "/productos/ceviche-jipijapa.jpg",
   "colonche-de-chicharron": "/productos/colonche-de-chicharron.jpg",
+  "chicharron-con-guacamole": "/productos/chicharron-con-guacamole.jpg",
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
@@ -256,6 +257,22 @@ export function getBebidas(): Product[] {
 // aquí se puede añadir producto sin tocarlo. Si el Sheet acaba trayendo el
 // mismo id, manda el Sheet y este deja de usarse (no se duplica).
 export const EXTRA_PLATOS: Product[] = [
+  {
+    id: "chicharron-con-guacamole",
+    name: "Chicharrón con Guacamole",
+    description:
+      "Panceta fresca crujiente, guacamole de la casa, patacón, ají manaba y lima.",
+    finalPrice: 14,
+    depositAmount: 14,
+    available: true,
+    // "Consultar" a propósito: tres subrecetas (guacamole, ají manaba y ajís
+    // encurtidos) no están desglosadas y el ají manabita lleva maní a menudo.
+    // Así la web dice al alérgico que pregunte, en vez de callar y dar a
+    // entender que no hay nada. Sustituir por el valor real al confirmarlo.
+    allergens: ["Consultar"],
+    category: "otros",
+    image: "/productos/chicharron-con-guacamole.jpg",
+  },
   {
     id: "colonche-de-chicharron",
     name: "Colonche de Chicharrón",
@@ -398,6 +415,7 @@ export function getPacks(): Product[] {
 // y otra de packs. Estos son los platos que se empujan arriba, EN ESTE ORDEN.
 // Para cambiar las novedades, tocar esta lista; vaciarla oculta la zona entera.
 export const DESTACADOS_IDS: string[] = [
+  "chicharron-con-guacamole",
   "colonche-de-chicharron",
   "ceviche-jipijapa",
 ];

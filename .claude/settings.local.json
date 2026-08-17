@@ -10,7 +10,14 @@
       "Bash(npx skills *)",
       "Bash(npm install *)",
       "Bash(node -e \"require\\('@react-email/components'\\); console.log\\('OK'\\)\")",
-      "Bash(npx next *)"
+      "Bash(npx next *)",
+      "Bash(node .crop.mjs ~/Desktop/\"chicharron con guacamole.jpeg\" public/productos/chicharron-con-guacamole.jpg 48 170 800 1000)",
+      "Bash(rm -f .crop.mjs)",
+      "Bash(echo \"tsc=$?\")",
+      "Bash(env -u RESEND_API_KEY STRIPE_SECRET_KEY=sk_test_dummy STRIPE_WEBHOOK_SECRET=whsec_dummy GOOGLE_SHEETS_CLIENT_EMAIL=d@e.com GOOGLE_SHEETS_SPREADSHEET_ID=d GOOGLE_SHEETS_PRIVATE_KEY=d npm run build)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
