@@ -4,6 +4,7 @@ import {
   getSalsas,
   withExtraProducts,
   getDestacados,
+  mismoId,
 } from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { storeConfig, SOLD_OUT } from "@/lib/store-config";
@@ -197,8 +198,10 @@ export default async function HomePage({
           <ReservationForm
             products={[
               ...products,
-              ...getPacks().filter((pk) => !products.some((p) => p.id === pk.id)),
-              ...getSalsas().filter((s) => !products.some((p) => p.id === s.id)),
+              // Dedupe sin distinguir mayúsculas: los ids del Sheet se teclean
+              // a mano ("Inca-kola") y el dedupe exacto dejaba duplicados.
+              ...getPacks().filter((pk) => !products.some((p) => mismoId(p.id, pk.id))),
+              ...getSalsas().filter((s) => !products.some((p) => mismoId(p.id, s.id))),
             ]}
             config={config}
             promotion={activePromotion}

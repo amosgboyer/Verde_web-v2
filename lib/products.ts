@@ -213,6 +213,19 @@ export const EXTRA_SALSAS: Product[] = [
     available: true,
     category: "Salsas",
   },
+  {
+    id: "salsa-mani-secreta",
+    name: "Salsa de maní secreta",
+    description: "Salsa de maní de la casa, nuestra receta única.",
+    finalPrice: 1.5,
+    depositAmount: 1.5,
+    available: true,
+    // Kewpie = huevo, pasta de maní = cacahuete, ajonjolí = sésamo. Falta
+    // confirmar la etiqueta de la salsa kimchi (pescado/crustáceos/soja son
+    // habituales) — si los trae, añadirlos aquí Y en la columna G del Sheet.
+    allergens: ["Cacahuetes", "Huevos", "Sésamo"],
+    category: "Salsas",
+  },
 ];
 
 export function getSalsas(): Product[] {
@@ -334,8 +347,9 @@ const BEBIDAS_PRIMERO: string[] = ["tropical", "inca-kola"];
 
 // Los ids del Sheet se teclean a mano: "Inca-kola" y "inca-kola" son el mismo
 // producto. Comparar en crudo duplicaría la card (una del Sheet y otra del
-// código), así que todas las comparaciones de id van normalizadas.
-const mismoId = (a: string, b: string) =>
+// código), así que todas las comparaciones de id van normalizadas. Exportada
+// para que las páginas dedupliquen igual (salsas y packs contra el Sheet).
+export const mismoId = (a: string, b: string) =>
   a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**
