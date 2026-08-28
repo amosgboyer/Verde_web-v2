@@ -90,15 +90,23 @@ export default function ProductCard({
         </div>
       )}
 
-      {/* Cinta de oferta */}
-      {offerBadge && (
+      {/* Cinta de oferta — o de agotado, que manda sobre la oferta: anunciar
+          un descuento en algo que no se puede comprar sería tomar el pelo. */}
+      {!active.available ? (
+        <div
+          className="absolute top-0 left-0 z-[4] text-white text-[9px] font-bold uppercase tracking-[0.08em] px-2.5 py-1 rounded-br-[10px]"
+          style={{ background: "rgba(26,26,14,0.88)" }}
+        >
+          🔥 Agotado hoy
+        </div>
+      ) : offerBadge ? (
         <div
           className="absolute top-0 left-0 z-[4] text-white text-[9px] font-bold uppercase tracking-[0.08em] px-2.5 py-1 rounded-br-[10px]"
           style={{ background: "var(--terra, #c85a2a)" }}
         >
           {offerBadge}
         </div>
-      )}
+      ) : null}
 
       {/* Precio (siempre visible) */}
       <div
@@ -268,8 +276,11 @@ export default function ProductCard({
               </button>
             )
           ) : (
-            <span className="uppercase tracking-widest" style={{ fontSize: "0.62rem", color: "rgba(245,240,232,0.6)" }}>
-              Agotado
+            <span className="uppercase tracking-widest text-right leading-snug" style={{ fontSize: "0.62rem", color: "rgba(245,240,232,0.75)" }}>
+              🔥 Agotado hoy
+              <span className="block normal-case tracking-normal" style={{ color: "rgba(245,240,232,0.5)" }}>
+                vuelve mañana
+              </span>
             </span>
           )}
         </div>

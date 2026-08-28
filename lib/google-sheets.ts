@@ -134,8 +134,15 @@ export async function getProductsRows(): Promise<ProductRow[]> {
         imageUrl: r[7] ?? "",
         category: r[8] ?? "",
       };
-    })
-    .filter((p) => p.available);
+    });
+  // OJO: se devuelven TAMBIÉN las filas con available=FALSE. Antes se filtraban
+  // aquí y eso tenía dos consecuencias malas: (1) un plato agotado desaparecía
+  // de la carta sin dejar rastro, en vez de verse "agotado hoy"; (2) para los
+  // platos que además viven en el catálogo de respaldo del código, quitarlos de
+  // la lista hacía que el código los REINYECTARA como disponibles — marcar
+  // FALSE en la hoja no solo no los ocultaba: los dejaba comprables. Cada
+  // consumidor decide ahora qué hacer con los no disponibles (la carta los
+  // enseña con cartel, el checkout los rechaza con mensaje, /anadir los omite).
 }
 
 // ─── Settings ────────────────────────────────────────────────────────────────

@@ -648,12 +648,20 @@ export default function ReservationForm({
       ? cartProducts.filter((p) => platoSinDetallar(p.allergens)).map((p) => p.name)
       : [];
 
-  // Bebidas (para decidir si se ofrece el popup "Completa tu pedido")
+  // Bebidas (para decidir si se ofrece el popup "Completa tu pedido").
+  // Los agotados se quedan fuera del popup: en la carta se ven con su cartel,
+  // pero ofrecerlos como upsell sería invitar a algo que no se puede comprar.
   const drinkProducts = products.filter(
-    (p) => !p.isPack && normalizeCategory(p.category ?? "") === "Bebidas"
+    (p) =>
+      !p.isPack &&
+      p.available !== false &&
+      normalizeCategory(p.category ?? "") === "Bebidas"
   );
   const salsaProducts = products.filter(
-    (p) => !p.isPack && (p.category ?? "").trim().toLowerCase() === "salsas"
+    (p) =>
+      !p.isPack &&
+      p.available !== false &&
+      (p.category ?? "").trim().toLowerCase() === "salsas"
   );
 
   // Popup "Completa tu pedido" (bebidas + salsas + cubiertos): se ofrece una vez
