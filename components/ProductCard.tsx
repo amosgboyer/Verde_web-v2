@@ -50,8 +50,9 @@ export default function ProductCard({
     <article
       className={clsx(
         "pc w-full aspect-[4/5] rounded-[15px] cursor-pointer select-none",
-        open && "is-open",
-        !active.available && "opacity-60"
+        open && "is-open"
+        // Sin opacity-60 en agotados: el velo rojo ya lo comunica, y atenuar
+        // la card entera apagaría también el velo y la foto tras las letras.
       )}
       style={{
         border: offerBadge
@@ -90,23 +91,58 @@ export default function ProductCard({
         </div>
       )}
 
-      {/* Cinta de oferta — o de agotado, que manda sobre la oferta: anunciar
-          un descuento en algo que no se puede comprar sería tomar el pelo. */}
-      {!active.available ? (
-        <div
-          className="absolute top-0 left-0 z-[4] text-white text-[9px] font-bold uppercase tracking-[0.08em] px-2.5 py-1 rounded-br-[10px]"
-          style={{ background: "rgba(26,26,14,0.88)" }}
+      {/* Velo de agotado: rojo al ~70% cubriendo toda la card, con SOLD/OUT en
+          negativo — las letras son agujeros de la máscara y dejan ver la foto.
+          Va en z-[1]: por encima de la foto, por debajo del nombre, el precio y
+          el panel desplegable, para que la card siga siendo legible al abrirla.
+          El id de la máscara lleva el id del producto: con dos agotados en la
+          misma página, dos <mask id="soldout"> iguales se pisarían. */}
+      {!active.available && (
+        <svg
+          className="absolute inset-0 z-[1] w-full h-full pointer-events-none"
+          viewBox="0 0 400 500"
+          aria-hidden="true"
         >
-          🔥 Agotado hoy
-        </div>
-      ) : offerBadge ? (
+          <defs>
+            <mask id={`soldout-${active.id.replace(/[^a-zA-Z0-9_-]/g, "")}`}>
+              <rect width="400" height="500" fill="#fff" />
+              {/* El trazo negro sobre texto negro ENGORDA el agujero de la
+                  máscara: letras infladas se mire con la fuente que se mire,
+                  y más ventana a la foto. Juntas (tracking 0) a propósito. */}
+              <text
+                x="200" y="248" textAnchor="middle"
+                fontWeight="900" fontSize="118" letterSpacing="0" fill="#000"
+                stroke="#000" strokeWidth="12" strokeLinejoin="round"
+              >
+                SOLD
+              </text>
+              <text
+                x="200" y="378" textAnchor="middle"
+                fontWeight="900" fontSize="118" letterSpacing="2" fill="#000"
+                stroke="#000" strokeWidth="12" strokeLinejoin="round"
+              >
+                OUT
+              </text>
+            </mask>
+          </defs>
+          <rect
+            width="400" height="500"
+            fill="rgba(185,28,28,0.7)"
+            mask={`url(#soldout-${active.id.replace(/[^a-zA-Z0-9_-]/g, "")})`}
+          />
+        </svg>
+      )}
+
+      {/* Cinta de oferta — nunca sobre un agotado: anunciar un descuento en
+          algo que no se puede comprar sería tomar el pelo. */}
+      {active.available && offerBadge && (
         <div
           className="absolute top-0 left-0 z-[4] text-white text-[9px] font-bold uppercase tracking-[0.08em] px-2.5 py-1 rounded-br-[10px]"
           style={{ background: "var(--terra, #c85a2a)" }}
         >
           {offerBadge}
         </div>
-      ) : null}
+      )}
 
       {/* Precio (siempre visible) */}
       <div
@@ -277,7 +313,7 @@ export default function ProductCard({
             )
           ) : (
             <span className="uppercase tracking-widest text-right leading-snug" style={{ fontSize: "0.62rem", color: "rgba(245,240,232,0.75)" }}>
-              🔥 Agotado hoy
+              Agotado hoy
               <span className="block normal-case tracking-normal" style={{ color: "rgba(245,240,232,0.5)" }}>
                 vuelve muy pronto
               </span>
