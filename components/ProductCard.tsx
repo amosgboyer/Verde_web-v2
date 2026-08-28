@@ -106,23 +106,31 @@ export default function ProductCard({
           <defs>
             <mask id={`soldout-${active.id.replace(/[^a-zA-Z0-9_-]/g, "")}`}>
               <rect width="400" height="500" fill="#fff" />
-              {/* El trazo negro sobre texto negro ENGORDA el agujero de la
-                  máscara: letras infladas se mire con la fuente que se mire,
-                  y más ventana a la foto. Juntas (tracking 0) a propósito. */}
-              <text
-                x="200" y="248" textAnchor="middle"
-                fontWeight="900" fontSize="118" letterSpacing="0" fill="#000"
-                stroke="#000" strokeWidth="12" strokeLinejoin="round"
-              >
-                SOLD
-              </text>
-              <text
-                x="200" y="378" textAnchor="middle"
-                fontWeight="900" fontSize="118" letterSpacing="2" fill="#000"
-                stroke="#000" strokeWidth="12" strokeLinejoin="round"
-              >
-                OUT
-              </text>
+              {/* Letras a toda tarjeta, estilo rótulo hinchado: cada línea va
+                  en su <g> con scale vertical (las estira a lo alto) y
+                  textLength fuerza a que abarquen casi todo el ancho — SOLD
+                  (4 letras) se comprime hasta tocarse, OUT (3) se ensancha.
+                  El trazo (miter, sin redondear) engorda y funde los huecos. */}
+              <g transform="translate(0 238) scale(1 1.55)">
+                <text
+                  x="200" y="0" textAnchor="middle"
+                  fontWeight="900" fontSize="200" letterSpacing="0" fill="#000"
+                  textLength="386" lengthAdjust="spacingAndGlyphs"
+                  stroke="#000" strokeWidth="8" strokeLinejoin="miter"
+                >
+                  SOLD
+                </text>
+              </g>
+              <g transform="translate(0 484) scale(1 1.55)">
+                <text
+                  x="200" y="0" textAnchor="middle"
+                  fontWeight="900" fontSize="200" letterSpacing="0" fill="#000"
+                  textLength="386" lengthAdjust="spacingAndGlyphs"
+                  stroke="#000" strokeWidth="8" strokeLinejoin="miter"
+                >
+                  OUT
+                </text>
+              </g>
             </mask>
           </defs>
           <rect
