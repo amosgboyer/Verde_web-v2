@@ -1,3 +1,5 @@
+import { todayMadrid } from "./directo";
+
 export interface Product {
   id: string;
   name: string;
@@ -352,6 +354,31 @@ const BEBIDAS_PRIMERO: string[] = ["tropical", "inca-kola"];
 export const mismoId = (a: string, b: string) =>
   a.trim().toLowerCase() === b.trim().toLowerCase();
 
+// ─── Agotados temporales (con fecha de caducidad) ──────────────────────────
+// Fuerzan el cartel "Agotado hoy" en la web hasta la fecha indicada INCLUSIVE
+// (día natural de Madrid), pisando lo que diga la hoja. Al día siguiente se
+// reactivan SOLOS — nadie tiene que acordarse de revertir nada, igual que las
+// ofertas con ventana. Para agotar algo sin fecha de vuelta, usar la columna F
+// de la hoja, que para eso está.
+const AGOTADOS_TEMPORALES: { id: string; hasta: string }[] = [
+  // Fin de semana del 28-30 ago: vuelven el lunes 31 a las 00:00.
+  { id: "patacón-con-rabo-de-toto", hasta: "2026-08-30" },
+  { id: "chicharron-con-guacamole", hasta: "2026-08-30" },
+];
+
+/**
+ * ¿Está este producto agotado por código ahora mismo? La usan también el
+ * checkout y /api/add-to-order: sin esa comprobación en servidor, un carrito
+ * abierto en otra pestaña podría comprar el plato "agotado" igualmente —
+ * la hoja sigue diciendo TRUE y el cartel solo vive en la carta.
+ */
+export function estaAgotadoTemporal(id: string): boolean {
+  const hoy = todayMadrid();
+  return AGOTADOS_TEMPORALES.some(
+    (a) => mismoId(a.id, id) && hoy <= a.hasta
+  );
+}
+
 /**
  * Deja la carta con las bebidas destacadas al frente del bloque de bebidas:
  *
@@ -413,11 +440,15 @@ export function withExtraPlatos(products: Product[]): Product[] {
   return salida;
 }
 
-// Todo lo que se añade desde código, en una sola llamada. Es lo que usan las
-// páginas: así, al añadir un producto nuevo aquí, no hay que acordarse de
-// tocar cada página por separado.
+// Todo lo que se añade o se pisa desde código, en una sola llamada. Es lo que
+// usan las páginas: así, al añadir un producto o un agotado temporal, no hay
+// que acordarse de tocar cada página por separado. El agotado se aplica al
+// FINAL, sobre la lista ya fusionada, para que pise igual la versión de la
+// hoja que la del respaldo.
 export function withExtraProducts(products: Product[]): Product[] {
-  return withExtraPlatos(withExtraBebidas(products));
+  return withExtraPlatos(withExtraBebidas(products)).map((p) =>
+    estaAgotadoTemporal(p.id) ? { ...p, available: false } : p
+  );
 }
 
 export function getPacks(): Product[] {

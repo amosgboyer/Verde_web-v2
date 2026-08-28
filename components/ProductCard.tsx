@@ -279,7 +279,7 @@ export default function ProductCard({
             <span className="uppercase tracking-widest text-right leading-snug" style={{ fontSize: "0.62rem", color: "rgba(245,240,232,0.75)" }}>
               🔥 Agotado hoy
               <span className="block normal-case tracking-normal" style={{ color: "rgba(245,240,232,0.5)" }}>
-                vuelve mañana
+                vuelve muy pronto
               </span>
             </span>
           )}

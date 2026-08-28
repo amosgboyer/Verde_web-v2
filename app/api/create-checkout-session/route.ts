@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { getProductById } from "@/lib/products";
+import { getProductById, estaAgotadoTemporal } from "@/lib/products";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { isSlotAvailable } from "@/lib/availability";
 import { reservationSchema } from "@/lib/validators";
@@ -128,6 +128,13 @@ export async function POST(req: NextRequest) {
     }
 
     const validatedItems = parsed.items.map((item) => {
+      // Agotados temporales definidos en código: la hoja sigue diciendo TRUE,
+      // así que sin esta comprobación un carrito abierto podría comprarlos.
+      if (estaAgotadoTemporal(item.productId)) {
+        throw new ErrorCliente(
+          "Uno de los platos de tu pedido se ha agotado hoy. Quítalo del carrito para continuar."
+        );
+      }
       const sheetProduct = sheetsProducts.find((p) => p.productId === item.productId);
       if (sheetProduct) {
         if (!sheetProduct.available) throw new ErrorCliente(`${sheetProduct.name} no está disponible`);

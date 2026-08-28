@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { stripe } from "@/lib/stripe";
-import { getProductById } from "@/lib/products";
+import { getProductById, estaAgotadoTemporal } from "@/lib/products";
 import {
   getProductsRows,
   getSettings,
@@ -65,6 +65,13 @@ export async function POST(req: NextRequest) {
     }
 
     const validatedItems = parsed.items.map((item) => {
+      // Mismo guard que el checkout: los agotados temporales viven en código,
+      // la hoja sigue en TRUE y aquí también hay que cortarlos.
+      if (estaAgotadoTemporal(item.productId)) {
+        throw new ErrorCliente(
+          "Uno de los platos se ha agotado hoy. Quítalo para continuar."
+        );
+      }
       const sheetProduct = sheetsProducts.find(
         (p) => p.productId === item.productId
       );
