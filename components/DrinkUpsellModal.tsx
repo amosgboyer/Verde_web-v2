@@ -211,15 +211,12 @@ export default function DrinkUpsellModal({
             al añadir salsas/bebidas y el aviso desaparece solo al llegar. */}
         {faltaMinimo > 0 && minOrder > 0 && (
           <div
-            className="mx-4 mt-3 flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5"
+            className="mx-4 mt-3 rounded-xl border px-3.5 py-2.5"
             style={{
               background: "rgba(200,90,42,0.09)",
               borderColor: "rgba(200,90,42,0.32)",
             }}
           >
-            <span className="text-base leading-none" aria-hidden>
-              🛵
-            </span>
             <p className="text-[12.5px] leading-snug text-negro/75">
               <span className="font-bold text-[#a8451f]">
                 Pedido mínimo a domicilio: {fmtPrice(minOrder)} €.

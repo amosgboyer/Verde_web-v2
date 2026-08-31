@@ -362,9 +362,10 @@ export const mismoId = (a: string, b: string) =>
 // ofertas con ventana. Para agotar algo sin fecha de vuelta, usar la columna F
 // de la hoja, que para eso está.
 const AGOTADOS_TEMPORALES: { id: string; hasta: string }[] = [
-  // Fin de semana del 28-30 ago: vuelven el lunes 31 a las 00:00.
-  { id: "patacón-con-rabo-de-toto", hasta: "2026-08-30" },
-  { id: "chicharron-con-guacamole", hasta: "2026-08-30" },
+  // Pedido de Amos (31-08): siguen agotados hasta la semana que viene.
+  // Vuelven solos el martes 02-09 a las 00:00.
+  { id: "patacón-con-rabo-de-toto", hasta: "2026-09-01" },
+  { id: "chicharron-con-guacamole", hasta: "2026-09-01" },
 ];
 
 /**
