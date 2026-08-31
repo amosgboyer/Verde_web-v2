@@ -155,19 +155,19 @@ export default function DrinkUpsellModal({
 
   const modal = (
     <div
-      className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center bg-negro/55 backdrop-blur-sm px-4 py-6 animate-fade-in"
+      className="fixed inset-0 z-[1200] flex items-end sm:items-center justify-center bg-negro/55 backdrop-blur-sm px-4 py-6 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="extras-title"
       onClick={onContinue}
     >
       <div
-        className="w-full max-w-md bg-crema rounded-t-[28px] sm:rounded-[28px] shadow-verde-lg overflow-hidden animate-slide-up"
+        className="w-full max-w-md bg-crema rounded-t-[28px] sm:rounded-[28px] shadow-verde-lg overflow-hidden animate-slide-up flex flex-col max-h-[calc(100dvh-3rem)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Cabecera ── */}
         <div
-          className="relative px-6 pt-8 pb-6 text-center"
+          className="relative shrink-0 px-6 pt-8 pb-6 text-center"
           style={{ background: "linear-gradient(135deg, #2E4F20 0%, #509234 100%)" }}
         >
           <button
@@ -211,24 +211,26 @@ export default function DrinkUpsellModal({
             al añadir salsas/bebidas y el aviso desaparece solo al llegar. */}
         {faltaMinimo > 0 && minOrder > 0 && (
           <div
-            className="mx-4 mt-3 rounded-xl border px-3.5 py-2.5"
+            className="mx-4 mt-3 shrink-0 rounded-xl border-2 px-4 py-3"
             style={{
-              background: "rgba(200,90,42,0.09)",
-              borderColor: "rgba(200,90,42,0.32)",
+              background: "rgba(200,90,42,0.14)",
+              borderColor: "#c85a2a",
             }}
           >
-            <p className="text-[12.5px] leading-snug text-negro/75">
-              <span className="font-bold text-[#a8451f]">
-                Pedido mínimo a domicilio: {fmtPrice(minOrder)} €.
-              </span>{" "}
-              Te faltan {fmtPrice(faltaMinimo)} € — añade una salsa o una
-              bebida y llegas.
+            <p
+              className="text-[14px] font-bold leading-snug"
+              style={{ color: "#a8451f" }}
+            >
+              Pedido mínimo a domicilio: {fmtPrice(minOrder)} €. Te faltan{" "}
+              {fmtPrice(faltaMinimo)} €.
             </p>
           </div>
         )}
 
-        {/* ── Contenido de la fase ── */}
-        <div className="px-4 py-4 space-y-2 max-h-[42vh] overflow-y-auto">
+        {/* ── Contenido de la fase ──
+            Único bloque que scrollea: en pantallas bajas encoge él, nunca la
+            cabecera, el aviso del mínimo ni el botón de continuar. */}
+        <div className="px-4 py-4 space-y-2 flex-1 min-h-0 max-h-[46vh] overflow-y-auto">
           {step === "bebidas" && drinks.map((d) => ItemRow(d))}
           {step === "extras" && (
             <>
@@ -265,7 +267,7 @@ export default function DrinkUpsellModal({
         </div>
 
         {/* ── Acción ── */}
-        <div className="px-4 pb-5 pt-1 space-y-2">
+        <div className="shrink-0 px-4 pb-5 pt-1 space-y-2">
           <button
             type="button"
             onClick={next}
