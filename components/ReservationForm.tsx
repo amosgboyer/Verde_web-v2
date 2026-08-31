@@ -15,7 +15,11 @@ import {
   offerRuleText,
   offerReservationText,
 } from "@/lib/offers";
-import { quoteDeliveryByPostalCode, minOrderForZone } from "@/lib/delivery";
+import {
+  quoteDeliveryByPostalCode,
+  minOrderForZone,
+  defaultMinOrder,
+} from "@/lib/delivery";
 import { todayMadrid, etaFromNow } from "@/lib/directo";
 import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
@@ -326,6 +330,9 @@ export default function ReservationForm({
   // Popup "Completa tu pedido" (bebidas + salsas + cubiertos), una vez por sesión.
   const [showDrinkModal, setShowDrinkModal] = useState(false);
   const [drinkModalSeen, setDrinkModalSeen] = useState(false);
+  // El popup también se reabre como "rescate" si el pedido a domicilio no
+  // llega al mínimo al ir a pagar (aunque ya se haya visto una vez).
+  const [minOrderRescue, setMinOrderRescue] = useState(false);
   const [cutlery, setCutlery] = useState(false);
   const [allergens, setAllergens] = useState<string[]>([]);
   const toggleAllergen = (a: string) =>
@@ -579,6 +586,12 @@ export default function ReservationForm({
     // (debe ajustar la dirección o elegir recogida).
     if (faltaParaMinimo(d.zone) > 0) {
       setDeliveryError(mensajeMinimo(d.zone));
+      // Rescate: se reabre el popup de salsas/bebidas con el aviso del mínimo
+      // para que añada ahí mismo (aunque ya lo hubiera visto una vez).
+      if (drinkProducts.length > 0 || salsaProducts.length > 0) {
+        setMinOrderRescue(true);
+        setShowDrinkModal(true);
+      }
       return;
     }
     goToStep(6);
@@ -689,6 +702,21 @@ export default function ReservationForm({
   function dismissDrinkModal() {
     setDrinkModalSeen(true);
     setShowDrinkModal(false);
+    // Cierre del rescate por pedido mínimo: si ya llega, directo al pago; si
+    // sigue corto, al paso de entrega con el aviso visible (NO se reabre el
+    // popup otra vez — sería un bucle molesto).
+    if (minOrderRescue) {
+      setMinOrderRescue(false);
+      if (
+        fields.deliveryMethod !== "delivery" ||
+        faltaParaMinimo(delivery?.zone ?? null) <= 0
+      ) {
+        goToStep(6);
+      } else {
+        goToStep(5);
+      }
+      return;
+    }
     // Tras cerrar, avanzar al primer paso pendiente (nunca hacia atrás).
     if (!step2Done) goToStep(2);
     else if (!step3Done) goToStep(3);
@@ -707,6 +735,17 @@ export default function ReservationForm({
     0
   );
   const totalPending = totalFinal - totalDeposit;
+
+  // Aviso de pedido mínimo en el popup de extras. Si aún no hay zona
+  // calculada se usa el mínimo por defecto (en Fase 1 es el de todas las
+  // zonas). Solo aplica a domicilio; en recogida no hay mínimo.
+  const minPedidoAviso = delivery?.zone
+    ? minOrderForZone(delivery.zone)
+    : defaultMinOrder();
+  const faltaMinimoAviso =
+    fields.deliveryMethod === "delivery"
+      ? Math.max(0, minPedidoAviso - totalDeposit)
+      : 0;
 
   // Discount — visual estimate only; backend is always source of truth
   const subtotalCents = Math.round(totalDeposit * 100);
@@ -2106,6 +2145,9 @@ export default function ReservationForm({
           onIncrement={increment}
           onDecrement={decrement}
           onContinue={dismissDrinkModal}
+          minOrder={minPedidoAviso}
+          faltaMinimo={faltaMinimoAviso}
+          continueLabel={minOrderRescue ? "Seguir con mi pedido" : undefined}
         />
       )}
     </section>

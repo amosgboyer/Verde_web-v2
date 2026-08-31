@@ -38,10 +38,12 @@ export interface TramoEnvio {
 
 // FASE 1 (activa): tarifas de HOY con el mapa corregido. Ningún CP cercano
 // paga más; solo se corrigen los viajes ≥8 km regalados y se corta en 12 km.
+// Pedido mínimo de 15 € en todas las zonas (decisión de Amos, 31-08-2026 —
+// se adelanta a la Fase 2, que lo mantiene en Z1/Z2 y lo sube en Z3/Z4).
 const TRAMOS_ENVIO: TramoEnvio[] = [
-  { maxKm: 5, zona: 1, precio: 2.9, minimoPedido: 0 },
-  { maxKm: 8, zona: 2, precio: 3.9, minimoPedido: 0 },
-  { maxKm: 12, zona: 3, precio: 5.9, minimoPedido: 0 },
+  { maxKm: 5, zona: 1, precio: 2.9, minimoPedido: 15 },
+  { maxKm: 8, zona: 2, precio: 3.9, minimoPedido: 15 },
+  { maxKm: 12, zona: 3, precio: 5.9, minimoPedido: 15 },
 ];
 // FASE 2 (NO activar aún — la activa Amos, ~3–4 semanas después, y requiere
 // coordinar el MISMO día con el terminal de THE JUNGLE: umbrales de zonaDe()
@@ -52,6 +54,15 @@ const TRAMOS_ENVIO: TramoEnvio[] = [
 //   { maxKm: 9,  zona: 3, precio: 6.9, minimoPedido: 25 },
 //   { maxKm: 12, zona: 4, precio: 9.9, minimoPedido: 40 },
 // ];
+
+// Mínimo "por defecto" para avisos tempranos (popup de extras), cuando aún no
+// se conoce la zona del cliente: el mínimo más bajo de la tabla. En Fase 1 es
+// exacto (todas las zonas piden 15); si en Fase 2 hay mínimos mayores por
+// zona, el aviso temprano se queda corto a propósito y el chequeo duro por
+// zona (paso de entrega + servidor) pone la cifra real.
+export function defaultMinOrder(): number {
+  return Math.min(...TRAMOS_ENVIO.map((t) => t.minimoPedido));
+}
 
 export interface DeliveryQuote {
   deliverable: boolean;
