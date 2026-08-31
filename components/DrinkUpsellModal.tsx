@@ -132,8 +132,14 @@ export default function DrinkUpsellModal({
     );
   }
 
+  // El precio de las salsas sale del producto real (Sheet/código), no de un
+  // texto fijo: así una subida de carta no deja este copy desactualizado.
+  const salsaPrecio = salsas[0]?.finalPrice;
+  const salsaPrecioTxt = salsaPrecio
+    ? ` a ${Number.isInteger(salsaPrecio) ? salsaPrecio : salsaPrecio.toFixed(2).replace(".", ",")} €`
+    : "";
   const HEAD: Record<string, { title: string; sub: string }> = {
-    extras: { title: "Salsas y cubiertos", sub: "Salsas de la casa a 1,50 € y elige si quieres cubiertos." },
+    extras: { title: "Salsas y cubiertos", sub: `Salsas de la casa${salsaPrecioTxt} y elige si quieres cubiertos.` },
     bebidas: { title: "¿Algo para beber?", sub: "Añade una bebida bien fría." },
   };
 

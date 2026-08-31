@@ -49,7 +49,10 @@ export default function ZoneMap() {
     setResult({
       type: "ok",
       msg: `✅ Podemos llevarte el verde · ${quote.fee.toFixed(2).replace(".", ",")} € de envío`,
-      sub: `Zona ${quote.zone} · Pedido mínimo ${quote.minOrder} € de comida. El envío se añade automáticamente a tu pedido.`,
+      sub:
+        `Zona ${quote.zone}` +
+        (quote.minOrder > 0 ? ` · Pedido mínimo ${quote.minOrder} € de comida` : "") +
+        ". El envío se añade automáticamente a tu pedido.",
     });
     // Sincroniza con el carrito / formulario de pago
     window.dispatchEvent(
