@@ -49,7 +49,7 @@ const CAMBIOS: Record<string, { hoy: number; nuevo: number }> = {
   "bolon-mixto": { hoy: 10, nuevo: 11 },
   "bolon-mixto-con-maduro": { hoy: 10, nuevo: 11 },
   "tigrillo-mixto": { hoy: 15, nuevo: 16 },
-  "corviche-de-pescado": { hoy: 15, nuevo: 16 },
+  // corviche-de-pescado NO sube: excepción decidida por Amos (31-08), se queda en 15 €.
   "patacón-con-rabo-de-toto": { hoy: 10, nuevo: 11 },
   "canoa-de-maduro": { hoy: 12, nuevo: 13 },
   "ceviche-jipijapa": { hoy: 18, nuevo: 19 },

@@ -53,8 +53,9 @@ export const PRODUCTS: Product[] = [
     name: "Corviche de Pescado",
     description:
       "Corviche frito, pesca del día en su reahogado, salsa de maní, aceite de cilantro y ensalada manaba de col.",
-    finalPrice: 16,
-    depositAmount: 16,
+    // Excepción a la subida ago-2026: Amos decidió dejarlo en 15 € (31-08).
+    finalPrice: 15,
+    depositAmount: 15,
     available: true,
     allergens: ["Pescado", "Maní"],
     category: "verde",
