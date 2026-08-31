@@ -15,7 +15,7 @@ import {
   offerRuleText,
   offerReservationText,
 } from "@/lib/offers";
-import { quoteDelivery } from "@/lib/delivery";
+import { quoteDeliveryByPostalCode, minOrderForZone } from "@/lib/delivery";
 import { todayMadrid, etaFromNow } from "@/lib/directo";
 import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
@@ -371,14 +371,16 @@ export default function ReservationForm({
   // Coste de envío calculado en el comprobador de zonas → se sincroniza aquí
   useEffect(() => {
     function onDelivery(e: Event) {
-      const d = (e as CustomEvent<DeliveryInfo & { address?: string }>).detail;
+      const d = (e as CustomEvent<DeliveryInfo & { address?: string; postalCode?: string }>).detail;
       setDelivery({ deliverable: d.deliverable, zone: d.zone, fee: d.fee });
       setDeliveryError(null);
-      setFields((prev) =>
-        d.address && !prev.deliveryAddress
-          ? { ...prev, deliveryAddress: d.address }
-          : prev
-      );
+      setFields((prev) => ({
+        ...prev,
+        deliveryAddress:
+          d.address && !prev.deliveryAddress ? d.address : prev.deliveryAddress,
+        postalCode:
+          d.postalCode && !prev.postalCode ? d.postalCode : prev.postalCode,
+      }));
     }
     window.addEventListener('verde:delivery:update', onDelivery);
     return () => window.removeEventListener('verde:delivery:update', onDelivery);
@@ -394,7 +396,6 @@ export default function ReservationForm({
   const [savedDataDetected, setSavedDataDetected] = useState(false);
   const [livePromotion, setLivePromotion] = useState<ActivePromotion | null>(promotion ?? null);
   const [delivery, setDelivery] = useState<DeliveryInfo | null>(null);
-  const [deliveryLoading, setDeliveryLoading] = useState(false);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [accessCode, setAccessCode] = useState("");
   const [unlocked, setUnlocked] = useState(!requireAccessCode);
@@ -525,58 +526,62 @@ export default function ReservationForm({
     });
   }
 
-  // Calcula el envío a partir de la dirección introducida en el paso de entrega
-  async function calcDelivery(): Promise<{
-    deliverable: boolean;
-    zone: number | null;
-    fee: number;
-  } | null> {
-    const query = [fields.deliveryAddress, fields.postalCode].filter(Boolean).join(", ");
-    if (query.trim().length < 4) {
-      setDeliveryError("Introduce tu dirección para calcular el envío.");
+  // Calcula el envío desde el código postal (tabla CP → zona, sin geocoding).
+  // La misma tabla vive en el servidor: lo que se enseña aquí es lo que se cobra.
+  function calcDelivery(): DeliveryInfo | null {
+    const cp = fields.postalCode.match(/\b\d{5}\b/)?.[0];
+    if (!cp) {
+      setDeliveryError("Introduce tu código postal para calcular el envío.");
+      setDelivery(null);
       return null;
     }
-    setDeliveryLoading(true);
+    const quote = quoteDeliveryByPostalCode(cp);
+    if (!quote.deliverable) {
+      const d = { deliverable: false, zone: null, fee: 0 };
+      setDelivery(d);
+      setDeliveryError(
+        "Ahora mismo no llegamos a tu código postal (repartimos hasta 12 km de la cocina). " +
+          "Puedes elegir recogida en local o escribirnos por WhatsApp."
+      );
+      return d;
+    }
+    const d = { deliverable: true, zone: quote.zone, fee: quote.fee };
+    setDelivery(d);
     setDeliveryError(null);
-    try {
-      const quote = await quoteDelivery(query);
-      if (!quote) {
-        setDeliveryError("No encontramos esa dirección. Prueba con calle + número.");
-        setDelivery(null);
-        return null;
-      } else if (!quote.deliverable) {
-        const d = { deliverable: false, zone: null, fee: 0 };
-        setDelivery(d);
-        setDeliveryError("Aún no llegamos a tu zona. Te contactaremos por WhatsApp.");
-        return d;
-      } else {
-        const d = { deliverable: true, zone: quote.zone, fee: quote.fee };
-        setDelivery(d);
-        return d;
-      }
-    } catch {
-      setDeliveryError("Error al calcular el envío. Inténtalo de nuevo.");
-      return null;
-    } finally {
-      setDeliveryLoading(false);
-    }
+    return d;
+  }
+
+  // Pedido mínimo de la zona: cuánto falta de comida (sin envío) para llegar.
+  function faltaParaMinimo(zone: number | null): number {
+    const min = minOrderForZone(zone);
+    return Math.max(0, min - totalDeposit);
+  }
+
+  function mensajeMinimo(zone: number | null): string {
+    const min = minOrderForZone(zone);
+    const falta = faltaParaMinimo(zone).toFixed(2).replace(".", ",");
+    return (
+      `Pedido mínimo a domicilio en tu zona: ${min} € (sin contar el envío). ` +
+      `Te faltan ${falta} € — ¿añades una salsa o una bebida?`
+    );
   }
 
   // Avanzar al pago: si es entrega y no se ha calculado el envío, se calcula
   // automáticamente aquí (el cliente no tiene que pulsar "Calcular envío").
-  async function continueFromDelivery() {
+  function continueFromDelivery() {
     if (fields.deliveryMethod === "pickup") {
       goToStep(6);
       return;
     }
-    if (delivery?.deliverable) {
-      goToStep(6);
+    const d = delivery?.deliverable ? delivery : calcDelivery();
+    if (!d?.deliverable) return;
+    // Si no es entregable, calcDelivery ya muestra el aviso y NO avanzamos
+    // (debe ajustar la dirección o elegir recogida).
+    if (faltaParaMinimo(d.zone) > 0) {
+      setDeliveryError(mensajeMinimo(d.zone));
       return;
     }
-    const r = await calcDelivery();
-    if (r?.deliverable) goToStep(6);
-    // Si no es entregable o no se pudo geolocalizar, calcDelivery ya muestra el
-    // aviso y NO avanzamos (debe ajustar la dirección o elegir recogida).
+    goToStep(6);
   }
 
   // ── Fields ──
@@ -837,6 +842,13 @@ export default function ReservationForm({
       if (!delivery.deliverable) {
         setError("Aún no llegamos a tu zona. Elige recogida en local o prueba otra dirección.");
         goToStep(5);
+        return;
+      }
+      // El carrito puede haber cambiado después del paso de entrega: el mínimo
+      // por zona se revalida aquí (y el servidor lo vuelve a comprobar).
+      if (faltaParaMinimo(delivery.zone) > 0) {
+        setError(mensajeMinimo(delivery.zone));
+        goToStep(1);
         return;
       }
     }
@@ -1808,15 +1820,19 @@ export default function ReservationForm({
                     <button
                       type="button"
                       onClick={calcDelivery}
-                      disabled={deliveryLoading}
-                      className="text-[11px] font-semibold tracking-[0.15em] uppercase px-5 py-3 bg-verde-bosque text-crema transition-colors hover:bg-verde-platano disabled:opacity-50"
+                      className="text-[11px] font-semibold tracking-[0.15em] uppercase px-5 py-3 bg-verde-bosque text-crema transition-colors hover:bg-verde-platano"
                     >
-                      {deliveryLoading ? "Calculando..." : "Calcular envío"}
+                      Calcular envío
                     </button>
                     {delivery?.deliverable && effectiveDeliveryFee > 0 && (
                       <span className="text-sm font-medium text-verde-bosque">
                         Envío{delivery.zone ? ` · Zona ${delivery.zone}` : ""}:{" "}
                         {effectiveDeliveryFee.toFixed(2).replace(".", ",")} €
+                        {minOrderForZone(delivery.zone) > 0 && (
+                          <span className="font-normal text-negro/40">
+                            {" "}· pedido mínimo {minOrderForZone(delivery.zone)} €
+                          </span>
+                        )}
                       </span>
                     )}
                   </div>
@@ -1847,16 +1863,16 @@ export default function ReservationForm({
 
               <button
                 type="button"
-                disabled={!step5Done || deliveryLoading}
+                disabled={!step5Done}
                 onClick={() => step5Done && continueFromDelivery()}
                 className={clsx(
                   "w-full text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
-                  step5Done && !deliveryLoading
+                  step5Done
                     ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
                     : "bg-negro/8 text-negro/30 cursor-not-allowed"
                 )}
               >
-                {deliveryLoading ? "Calculando envío…" : "Ver resumen y pagar"}
+                Ver resumen y pagar
               </button>
             </StepSection>
           )}

@@ -1,44 +1,62 @@
 "use client";
 
 import { useState } from "react";
-import { quoteDelivery } from "@/lib/delivery";
+import { quoteDeliveryByPostalCode } from "@/lib/delivery";
+import { PICKUP_ADDRESS } from "@/lib/store-config";
+
+const WHATSAPP_URL =
+  "https://wa.me/34605442809?text=" +
+  encodeURIComponent("Hola VERDE 👋 Mi código postal no sale en vuestra zona de envío. ¿Podéis llegar hasta mí?");
 
 export default function ZoneMap() {
-  const [address, setAddress] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ type: "ok" | "warn" | "blocked" | null; msg: string; sub?: string }>({ type: null, msg: "" });
+  const [input, setInput] = useState("");
+  const [result, setResult] = useState<{
+    type: "ok" | "warn" | "blocked" | null;
+    msg: string;
+    sub?: string;
+    showWhatsApp?: boolean;
+  }>({ type: null, msg: "" });
 
-  async function calcZone() {
-    if (!address.trim()) return;
-    setLoading(true);
-    setResult({ type: null, msg: "" });
-    try {
-      const quote = await quoteDelivery(address);
-      if (!quote) {
-        setResult({ type: "warn", msg: "No encontramos esa dirección", sub: "Prueba: Calle + número + Madrid" });
-        setLoading(false);
-        return;
-      }
-
-      if (!quote.deliverable) {
-        setResult({ type: "blocked", msg: "Aún no llegamos a tu zona 🙏", sub: "Estamos creciendo y pronto ampliaremos el reparto. Síguenos en @verde_madrid para enterarte cuando lleguemos a tu barrio." });
-        window.dispatchEvent(new CustomEvent("verde:delivery:update", { detail: { deliverable: false, zone: null, fee: 0, address } }));
-      } else {
-        const price = quote.fee;
-        setResult({
-          type: quote.zone && quote.zone <= 2 ? "ok" : "warn",
-          msg: `✅ Podemos llevarte el verde · ${price.toFixed(2).replace(".", ",")} € de envío`,
-          sub: "El envío se añade automáticamente a tu pedido.",
-        });
-        // Sincroniza con el carrito / formulario de pago
-        window.dispatchEvent(new CustomEvent("verde:delivery:update", {
-          detail: { deliverable: true, zone: quote.zone, fee: quote.fee, address },
-        }));
-      }
-    } catch {
-      setResult({ type: "warn", msg: "Error de conexión", sub: "Inténtalo de nuevo." });
+  function calcZone() {
+    if (!input.trim()) return;
+    // Acepta el CP suelto o dentro de una dirección ("Calle X 4, 28015 Madrid").
+    const cp = input.match(/\b\d{5}\b/)?.[0];
+    if (!cp) {
+      setResult({
+        type: "warn",
+        msg: "Dinos tu código postal",
+        sub: "Con los 5 dígitos nos vale — p. ej. 28039.",
+      });
+      return;
     }
-    setLoading(false);
+
+    const quote = quoteDeliveryByPostalCode(cp);
+    if (!quote.deliverable) {
+      setResult({
+        type: "blocked",
+        msg: "Aún no llegamos a tu zona 🙏",
+        sub: `Repartimos hasta 12 km de nuestra cocina. Puedes recoger tu pedido en ${PICKUP_ADDRESS} o escribirnos por WhatsApp y lo vemos.`,
+        showWhatsApp: true,
+      });
+      window.dispatchEvent(
+        new CustomEvent("verde:delivery:update", {
+          detail: { deliverable: false, zone: null, fee: 0, postalCode: cp },
+        })
+      );
+      return;
+    }
+
+    setResult({
+      type: "ok",
+      msg: `✅ Podemos llevarte el verde · ${quote.fee.toFixed(2).replace(".", ",")} € de envío`,
+      sub: `Zona ${quote.zone} · Pedido mínimo ${quote.minOrder} € de comida. El envío se añade automáticamente a tu pedido.`,
+    });
+    // Sincroniza con el carrito / formulario de pago
+    window.dispatchEvent(
+      new CustomEvent("verde:delivery:update", {
+        detail: { deliverable: true, zone: quote.zone, fee: quote.fee, postalCode: cp },
+      })
+    );
   }
 
   const resultStyles = {
@@ -54,26 +72,26 @@ export default function ZoneMap() {
         <p className="text-[10px] font-medium tracking-[0.2em] uppercase mb-2" style={{ color: "#c85a2a" }}>Zona de reparto</p>
         <h2 className="font-sans font-bold text-2xl mb-2" style={{ color: "#2d5a1b" }}>¿Llegamos a tu barrio?</h2>
         <p className="text-sm mb-6 mx-auto max-w-md" style={{ color: "rgba(46,46,30,0.5)" }}>
-          Introduce tu dirección y te decimos si podemos llevarte el verde y cuánto cuesta el envío.
+          Introduce tu código postal y te decimos si podemos llevarte el verde y cuánto cuesta el envío.
         </p>
 
         <div className="flex gap-2 mb-4 max-w-lg mx-auto">
           <input
             type="text"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
+            inputMode="numeric"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && calcZone()}
-            placeholder="Tu dirección en Madrid..."
+            placeholder="Tu código postal (p. ej. 28039)"
             className="flex-1 border-0 border-b bg-transparent px-0 py-2.5 text-sm focus:outline-none transition-colors text-center"
             style={{ borderColor: "rgba(46,46,30,0.15)", color: "#2e2e1e" }}
           />
           <button
             onClick={calcZone}
-            disabled={loading}
-            className="text-[11px] font-bold tracking-[0.15em] uppercase px-5 py-2.5 transition-colors disabled:opacity-50"
+            className="text-[11px] font-bold tracking-[0.15em] uppercase px-5 py-2.5 transition-colors"
             style={{ background: "#2d5a1b", color: "#f2ead8" }}
           >
-            {loading ? "..." : "Calcular"}
+            Calcular
           </button>
         </div>
 
@@ -81,6 +99,16 @@ export default function ZoneMap() {
           <div className="mb-2 p-4 text-sm max-w-lg mx-auto border" style={{ background: rs.bg, color: rs.color, borderColor: rs.border }}>
             <strong className="block mb-1">{result.msg}</strong>
             {result.sub && <span className="text-xs opacity-80">{result.sub}</span>}
+            {result.showWhatsApp && (
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block mt-2 text-xs font-bold underline underline-offset-2"
+              >
+                Escribirnos por WhatsApp ↗
+              </a>
+            )}
           </div>
         )}
       </div>

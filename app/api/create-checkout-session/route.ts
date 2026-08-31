@@ -6,7 +6,12 @@ import { isSlotAvailable } from "@/lib/availability";
 import { reservationSchema } from "@/lib/validators";
 import { getActivePromotion, calculateDiscount } from "@/lib/promotions";
 import { getActiveWeekendOffer, computeOfferDiscount, offerBadgeLabel } from "@/lib/offers";
-import { feeForZone } from "@/lib/delivery";
+import {
+  feeForZone,
+  minOrderForZone,
+  zoneForPostalCode,
+  zoneLabel,
+} from "@/lib/delivery";
 import { SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, isAccessCodeValid } from "@/lib/launch";
 import { getDirectoStatus, todayMadrid } from "@/lib/directo";
@@ -80,6 +85,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate delivery fields when method is "delivery"
+    // La zona se recalcula en servidor desde el código postal (tabla CP → zona
+    // de lib/delivery.ts) — nunca se confía en la que manda el cliente. CP no
+    // listado = sin envío: no se deja pasar el checkout a domicilio.
+    let serverZone: number | null = null;
     if (parsed.deliveryMethod !== "pickup") {
       if (!parsed.deliveryAddress || parsed.deliveryAddress.trim().length < 5) {
         return NextResponse.json(
@@ -93,10 +102,21 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      // El envío DEBE estar calculado: sin zona válida (1 o 2) no se permite la
-      // entrega. Evita que se cuele un pedido a domicilio con envío 0 € cuando el
-      // cliente no pulsa "Calcular envío".
-      if (parsed.deliveryZoneLevel !== 1 && parsed.deliveryZoneLevel !== 2) {
+      serverZone = zoneForPostalCode(parsed.postalCode);
+      if (!serverZone) {
+        return NextResponse.json(
+          {
+            error:
+              "Ahora mismo no llegamos a ese código postal (repartimos hasta 12 km de la cocina). " +
+              "Puedes elegir recogida en local o escribirnos por WhatsApp y lo vemos.",
+          },
+          { status: 403 }
+        );
+      }
+      // El envío DEBE estar calculado y coincidir con la zona del servidor: así
+      // el cliente nunca paga una tarifa distinta de la que vio en pantalla
+      // (p. ej. una pestaña abierta con tarifas viejas tras un despliegue).
+      if (parsed.deliveryZoneLevel !== serverZone) {
         return NextResponse.json(
           {
             error:
@@ -169,6 +189,25 @@ export async function POST(req: NextRequest) {
     );
     const totalItems = validatedItems.reduce((s, { quantity }) => s + quantity, 0);
 
+    // Pedido mínimo por zona: se valida sobre la comida (sin la línea de envío)
+    // ANTES de cobrar. Mensaje con upsell en vez de un "no" seco.
+    if (parsed.deliveryMethod !== "pickup" && serverZone) {
+      const minOrder = minOrderForZone(serverZone);
+      if (productsSubtotal < minOrder) {
+        const falta = (minOrder - productsSubtotal)
+          .toFixed(2)
+          .replace(".", ",");
+        return NextResponse.json(
+          {
+            error:
+              `Pedido mínimo a domicilio en tu zona: ${minOrder} € (sin contar el envío). ` +
+              `Te faltan ${falta} € — ¿añades una salsa o una bebida?`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const promo = getActivePromotion(settings);
     const discount = calculateDiscount(productsSubtotal, promo);
 
@@ -203,11 +242,9 @@ export async function POST(req: NextRequest) {
     // cliente haya escrito una dirección antes de cambiar a "Recogida").
     const isPickup = parsed.deliveryMethod === "pickup";
 
-    // Envío — recalculado en servidor desde la zona (no se confía en el cliente).
-    // Solo aplica con entrega a domicilio; recogida = 0.
-    const deliveryFee = isPickup
-      ? 0
-      : feeForZone(parsed.deliveryZoneLevel ?? null);
+    // Envío — recalculado en servidor desde la zona del CP (no se confía en el
+    // cliente). Solo aplica con entrega a domicilio; recogida = 0.
+    const deliveryFee = isPickup ? 0 : feeForZone(serverZone);
     const chargeTotal = subtotalAfterDiscount + deliveryFee;
 
     console.log(
@@ -287,13 +324,16 @@ export async function POST(req: NextRequest) {
         deliveryAddress: isPickup ? "" : parsed.deliveryAddress ?? "",
         deliveryDetails: isPickup ? "" : parsed.deliveryDetails ?? "",
         postalCode: isPickup ? "" : parsed.postalCode ?? "",
-        deliveryZone: isPickup ? "" : parsed.deliveryZone ?? "",
+        // Zona explícita al principio ("Z2 · Salamanca"): el terminal la lee
+        // con /^Z(\d)/ — el precio ya no identifica la zona con las tarifas nuevas.
+        deliveryZone:
+          isPickup || !serverZone ? "" : zoneLabel(serverZone, parsed.deliveryZone),
         totalItems: String(totalItems),
         totalFinal: String(productsSubtotal),
         totalDeposit: String(chargeTotal), // monto real cobrado (productos − promo + envío)
         totalPending: "0",
         deliveryFee: String(deliveryFee),
-        deliveryZoneLevel: isPickup ? "" : String(parsed.deliveryZoneLevel ?? ""),
+        deliveryZoneLevel: isPickup ? "" : String(serverZone ?? ""),
         privacyAccepted: String(parsed.privacyAccepted),
         termsAccepted: String(parsed.termsAccepted),
         acceptedAt,
