@@ -221,8 +221,13 @@ export default function DrinkUpsellModal({
               className="text-[14px] font-bold leading-snug"
               style={{ color: "#a8451f" }}
             >
-              Pedido mínimo a domicilio: {fmtPrice(minOrder)} €. Te faltan{" "}
-              {fmtPrice(faltaMinimo)} €.
+              Pedido mínimo a domicilio: {fmtPrice(minOrder)} €.
+            </p>
+            <p
+              className="text-[14px] font-bold leading-snug mt-1"
+              style={{ color: "#a8451f" }}
+            >
+              Te faltan {fmtPrice(faltaMinimo)} €.
             </p>
           </div>
         )}
