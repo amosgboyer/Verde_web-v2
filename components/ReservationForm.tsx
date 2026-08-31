@@ -331,8 +331,9 @@ export default function ReservationForm({
   const [showDrinkModal, setShowDrinkModal] = useState(false);
   const [drinkModalSeen, setDrinkModalSeen] = useState(false);
   // El popup también se reabre como "rescate" si el pedido a domicilio no
-  // llega al mínimo al ir a pagar (aunque ya se haya visto una vez).
-  const [minOrderRescue, setMinOrderRescue] = useState(false);
+  // llega al mínimo (aunque ya se haya visto una vez). Guarda desde dónde se
+  // reabrió para volver al sitio correcto al cerrarlo.
+  const [rescueOrigin, setRescueOrigin] = useState<null | "menu" | "entrega">(null);
   const [cutlery, setCutlery] = useState(false);
   const [allergens, setAllergens] = useState<string[]>([]);
   const toggleAllergen = (a: string) =>
@@ -493,6 +494,12 @@ export default function ReservationForm({
   // llevar la vista a otro sitio (p. ej. al panel del carrito). Si ambos
   // desplazamientos salen a la vez se pisan, y ganaba este — que sube arriba.
   function goToStep(step: number, opts: { scroll?: boolean } = {}) {
+    // Candado del pedido mínimo: por debajo no se avanza a NINGÚN paso (ni a
+    // elegir el día) — se rebota al carrito, donde el aviso vivo del mínimo
+    // ya está a la vista. Todos los "Continuar" pasan por aquí.
+    if (step > 1 && faltaParaEmpezar() > 0) {
+      step = 1;
+    }
     setCurrentStep(step);
     setMaxStep((prev) => Math.max(prev, step));
     if (opts.scroll === false) return;
@@ -573,6 +580,22 @@ export default function ReservationForm({
     );
   }
 
+  // Mínimo para EMPEZAR el pedido (candado del carrito y del calendario):
+  // aún no se conoce la zona, así que usa el mínimo por defecto. Quien tiene
+  // "Recogida" guardada de otra compra no tiene mínimo.
+  function faltaParaEmpezar(): number {
+    if (fields.deliveryMethod === "pickup") return 0;
+    return Math.max(0, defaultMinOrder() - totalDeposit);
+  }
+
+  function mensajeMinimoGlobal(): string {
+    const falta = faltaParaEmpezar().toFixed(2).replace(".", ",");
+    return (
+      `Pedido mínimo a domicilio: ${defaultMinOrder()} € (sin contar el envío). ` +
+      `Te faltan ${falta} € — añade una salsa o una bebida para continuar.`
+    );
+  }
+
   // Avanzar al pago: si es entrega y no se ha calculado el envío, se calcula
   // automáticamente aquí (el cliente no tiene que pulsar "Calcular envío").
   function continueFromDelivery() {
@@ -589,7 +612,7 @@ export default function ReservationForm({
       // Rescate: se reabre el popup de salsas/bebidas con el aviso del mínimo
       // para que añada ahí mismo (aunque ya lo hubiera visto una vez).
       if (drinkProducts.length > 0 || salsaProducts.length > 0) {
-        setMinOrderRescue(true);
+        setRescueOrigin("entrega");
         setShowDrinkModal(true);
       }
       return;
@@ -612,6 +635,12 @@ export default function ReservationForm({
   }
 
   function selectDate(date: string) {
+    // Por debajo del mínimo tampoco se puede elegir día (el calendario puede
+    // seguir montado si el cliente quitó productos después de avanzar).
+    if (faltaParaEmpezar() > 0) {
+      goToStep(1);
+      return;
+    }
     // Clearing time — slots are specific to each date
     setFields((prev) => ({ ...prev, reservationDate: date, reservationTime: "" }));
     setError(null);
@@ -691,6 +720,17 @@ export default function ReservationForm({
     (drinkProducts.length > 0 || salsaProducts.length > 0);
 
   function continueFromMenu() {
+    // Por debajo del mínimo, el popup de extras hace de rescate (aunque ya se
+    // hubiera visto): que completen ahí mismo. Si no hay extras que ofrecer,
+    // goToStep aplica el candado y muestra el aviso.
+    if (
+      faltaParaEmpezar() > 0 &&
+      (drinkProducts.length > 0 || salsaProducts.length > 0)
+    ) {
+      setRescueOrigin("menu");
+      setShowDrinkModal(true);
+      return;
+    }
     if (canOfferDrinks) {
       setShowDrinkModal(true);
       return;
@@ -702,11 +742,11 @@ export default function ReservationForm({
   function dismissDrinkModal() {
     setDrinkModalSeen(true);
     setShowDrinkModal(false);
-    // Cierre del rescate por pedido mínimo: si ya llega, directo al pago; si
-    // sigue corto, al paso de entrega con el aviso visible (NO se reabre el
-    // popup otra vez — sería un bucle molesto).
-    if (minOrderRescue) {
-      setMinOrderRescue(false);
+    // Rescate desde el paso de entrega: si ya llega al mínimo de su zona,
+    // directo al pago; si sigue corto, al paso de entrega con el aviso (NO se
+    // reabre el popup otra vez — sería un bucle molesto).
+    if (rescueOrigin === "entrega") {
+      setRescueOrigin(null);
       if (
         fields.deliveryMethod !== "delivery" ||
         faltaParaMinimo(delivery?.zone ?? null) <= 0
@@ -717,7 +757,10 @@ export default function ReservationForm({
       }
       return;
     }
+    setRescueOrigin(null);
     // Tras cerrar, avanzar al primer paso pendiente (nunca hacia atrás).
+    // goToStep aplica el candado del mínimo: si sigue corto, se queda en el
+    // carrito con el aviso en vez de avanzar.
     if (!step2Done) goToStep(2);
     else if (!step3Done) goToStep(3);
     else if (!step4Done) goToStep(4);
@@ -1434,6 +1477,24 @@ export default function ReservationForm({
                 >
                   Continuar con la fecha
                 </button>
+
+                {/* Aviso vivo del pedido mínimo: visible desde el primer
+                    producto si el pedido no llega, baja al añadir y desaparece
+                    solo al alcanzar el mínimo. El candado de goToStep impide
+                    avanzar mientras este aviso esté a la vista. */}
+                {faltaParaEmpezar() > 0 && (
+                  <div
+                    className="mt-3 rounded-xl border px-3.5 py-2.5"
+                    style={{
+                      background: "rgba(200,90,42,0.09)",
+                      borderColor: "rgba(200,90,42,0.32)",
+                    }}
+                  >
+                    <p className="text-[12.5px] leading-snug text-negro/75">
+                      {mensajeMinimoGlobal()}
+                    </p>
+                  </div>
+                )}
               </>
             )}
           </StepSection>
@@ -2147,7 +2208,7 @@ export default function ReservationForm({
           onContinue={dismissDrinkModal}
           minOrder={minPedidoAviso}
           faltaMinimo={faltaMinimoAviso}
-          continueLabel={minOrderRescue ? "Seguir con mi pedido" : undefined}
+          continueLabel={rescueOrigin ? "Seguir con mi pedido" : undefined}
         />
       )}
     </section>
