@@ -461,7 +461,6 @@ export function getPacks(): Product[] {
 // y otra de packs. Estos son los platos que se empujan arriba, EN ESTE ORDEN.
 // Para cambiar las novedades, tocar esta lista; vaciarla oculta la zona entera.
 export const DESTACADOS_IDS: string[] = [
-  "chicharron-con-guacamole",
   "colonche-de-chicharron",
   "ceviche-jipijapa",
 ];
