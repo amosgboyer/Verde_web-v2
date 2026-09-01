@@ -186,6 +186,7 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   "ceviche-jipijapa": "/productos/ceviche-jipijapa.jpg",
   "colonche-de-chicharron": "/productos/colonche-de-chicharron.jpg",
   "chicharron-con-guacamole": "/productos/chicharron-con-guacamole.jpg",
+  "sango-de-pescado": "/productos/sango-de-pescado.jpg",
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
@@ -462,6 +463,7 @@ export function getPacks(): Product[] {
 // y otra de packs. Estos son los platos que se empujan arriba, EN ESTE ORDEN.
 // Para cambiar las novedades, tocar esta lista; vaciarla oculta la zona entera.
 export const DESTACADOS_IDS: string[] = [
+  "sango-de-pescado", // nuevo (sep 2026) — la fila vive en el Sheet
   "colonche-de-chicharron",
   "ceviche-jipijapa",
 ];
