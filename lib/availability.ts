@@ -32,13 +32,20 @@ export interface DayAvailability {
   slots: TimeSlot[];
 }
 
-// Horas que NO se ofrecen para reservar (p. ej. franja de comida). Editar aquí.
-const BLOCKED_TIMES = ["14:00"];
+// Horas que NO se ofrecen para reservar. Editar aquí.
+// 10:00 fuera todos los días (pedido de Amos, 01-09) · 14:00 = hueco de comida.
+const BLOCKED_TIMES = ["10:00", "14:00"];
 
-// Capacidad por slot por defecto cuando la pestaña Availability no la define
-// (columna C vacía/0 en un día abierto). Evita que la web salga "sold out"
-// por una casilla sin rellenar. Se puede sobreescribir por día en el Sheet.
-const DEFAULT_MAX_ORDERS_PER_SLOT = 10;
+// Capacidad por slot por defecto: 2 pedidos por hora (régimen de Amos desde
+// el 01-09). La columna C de la pestaña Availability la sobreescribe por día.
+const DEFAULT_MAX_ORDERS_PER_SLOT = 2;
+
+// Desde el 01-09 se abre TODOS los días: un día futuro sin fila en la pestaña
+// Availability se ofrece abierto con el cupo por defecto, dentro de esta
+// ventana rodante. La hoja pasa a ser el override — sirve para CERRAR un día
+// (open=FALSE, como el 09/10-09), marcar sold out manual, poner nota o cupo
+// especial — y ya no hay que abrir filas cada mes.
+const DEFAULT_OPEN_DAYS_AHEAD = 30;
 
 export function buildTimeSlots(
   startTime: string,
@@ -88,7 +95,27 @@ export async function getAvailabilityDays(): Promise<DayAvailability[]> {
       quantity: Number(o.quantity) || 0,
     }));
 
-  return availRows.map((day): DayAvailability => {
+  // Días abiertos por defecto: se rellenan los huecos de la ventana rodante
+  // que no tengan fila propia en la hoja (la fila, si existe, manda).
+  const fechasConFila = new Set(availRows.map((r) => normalizeDate(r.date)));
+  const allDays = [...availRows];
+  for (let i = 1; i <= DEFAULT_OPEN_DAYS_AHEAD; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const iso = d.toISOString().slice(0, 10);
+    if (!fechasConFila.has(iso)) {
+      allDays.push({
+        date: iso,
+        isOpen: true,
+        maxOrdersPerSlot: 0, // 0 → cae al cupo por defecto
+        manuallySoldOut: false,
+        note: "",
+      });
+    }
+  }
+  allDays.sort((a, b) => normalizeDate(a.date).localeCompare(normalizeDate(b.date)));
+
+  return allDays.map((day): DayAvailability => {
     const dayDate = normalizeDate(day.date);
 
     if (dayDate <= today) {
