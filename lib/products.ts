@@ -187,6 +187,7 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   "colonche-de-chicharron": "/productos/colonche-de-chicharron.jpg",
   "chicharron-con-guacamole": "/productos/chicharron-con-guacamole.jpg",
   "sango-de-pescado": "/productos/sango-de-pescado.jpg",
+  "sango-media-racion": "/productos/sango-de-pescado.jpg",
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
