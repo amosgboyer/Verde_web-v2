@@ -153,7 +153,12 @@ export async function getAvailabilityDays(): Promise<DayAvailability[]> {
       const matchedOrders = paidOrders.filter(
         (o) => o.reservationDate === dayDate && o.reservationTime === normTime
       );
-      const usedCapacity = matchedOrders.reduce((sum, o) => sum + o.quantity, 0);
+      // El cupo cuenta PEDIDOS, no líneas: la hoja escribe una fila por plato
+      // (+ la línea de envío), así que sumar cantidades vaciaba la franja con
+      // un solo pedido de 2+ productos (bug real: 1 pedido de 3 líneas dejaba
+      // "sold out" una franja con cupo 2). Un pedido = una sesión de Stripe.
+      const usedCapacity = new Set(matchedOrders.map((o) => o.stripeSessionId))
+        .size;
       const remaining = Math.max(0, capacity - usedCapacity);
 
       if (process.env.NODE_ENV === "development") {
