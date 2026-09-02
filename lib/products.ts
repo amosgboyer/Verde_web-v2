@@ -379,12 +379,22 @@ export function getPlatosExtra(): Product[] {
 // Fuente única del vocabulario de categorías. La carta (ReservationForm) y la
 // vitrina (MenuShowcase) agrupan con esto mismo, así que un producto añadido
 // desde código cae exactamente en el bloque que se ve en pantalla.
-export type NormalizedCategory = "Verde" | "Maduro" | "Pesca" | "Otros" | "Bebidas";
+export type NormalizedCategory =
+  | "Menu"
+  | "Verde"
+  | "Maduro"
+  | "Pesca"
+  | "Otros"
+  | "Bebidas";
 
 export function normalizeCategory(raw: string): NormalizedCategory {
   const lower = (raw ?? "").trim().toLowerCase();
   if (lower === "verde") return "Verde";
   if (lower === "maduro") return "Maduro";
+  // "menu", "menú", "menu semana"… → sección Menú de la Semana (sep 2026).
+  // La fila `menu-semana` vive en el Sheet y Amos la reescribe cada lunes
+  // (descripción, precio y col G de alérgenos) — sin deploys.
+  if (lower.startsWith("menu") || lower.startsWith("menú")) return "Menu";
   // "pesca", "pesca del día", "pescado"… → sección Pesca del Día (sep 2026)
   if (lower.startsWith("pesca")) return "Pesca";
   if (
