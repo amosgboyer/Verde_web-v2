@@ -19,6 +19,11 @@ const PRESENTACION: Record<
   },
   "pack-bolon-patacon": { titulo: "Bolón + Patacón", ahorro: "ahorras 2€" },
   "pack-grupo": { titulo: "Para Todo el Grupo", ahorro: "ahorras 2€" },
+  // Menús con bebida: la bebida sale a 1,90 € dentro del menú (suelta 2,50).
+  "menu-tigrillo": { titulo: "Menú Tigrillo", ahorro: "bebida a 1,90€" },
+  "menu-corviche": { titulo: "Menú Corviche", ahorro: "bebida a 1,90€" },
+  "menu-ceviche": { titulo: "Menú Ceviche", ahorro: "bebida a 1,90€" },
+  "menu-sango": { titulo: "Menú Sango", ahorro: "bebida a 1,90€" },
 };
 
 // Precio en formato español, entero sin decimales: "27€", "14,50€".

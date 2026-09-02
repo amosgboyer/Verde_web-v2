@@ -49,10 +49,12 @@ export default function DrinkUpsellModal({
   faltaMinimo = 0,
   continueLabel = "Continuar con la fecha",
 }: DrinkUpsellModalProps) {
-  // Fases activas: primero salsas + cubiertos, luego bebidas (si hay).
+  // Fases activas: primero BEBIDAS (el impulso necesita el primer golpe de
+  // atención — en ago-2026 las salsas convertían 30% y las bebidas 9% yendo
+  // ellas segundas), luego salsas + cubiertos.
   const steps: ("bebidas" | "extras")[] = [];
-  steps.push("extras");
   if (drinks.length > 0) steps.push("bebidas");
+  steps.push("extras");
 
   const [stepIdx, setStepIdx] = useState(0);
   const step = steps[Math.min(stepIdx, steps.length - 1)];
@@ -150,7 +152,7 @@ export default function DrinkUpsellModal({
     : "";
   const HEAD: Record<string, { title: string; sub: string }> = {
     extras: { title: "Salsas y cubiertos", sub: `Salsas de la casa${salsaPrecioTxt} y elige si quieres cubiertos.` },
-    bebidas: { title: "¿Algo para beber?", sub: "Añade una bebida bien fría." },
+    bebidas: { title: "¿Algo para beber?", sub: "🧊 Bien frías: Tropical e Inca Kola, las de Ecuador." },
   };
 
   const modal = (

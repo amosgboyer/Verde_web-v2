@@ -161,6 +161,60 @@ export const PACKS: Product[] = [
     category: "pack",
     isPack: true,
   },
+
+  // ─── MENÚS CON BEBIDA (sep 2026) ─────────────────────────────────────────
+  // Plato héroe + bebida ecuatoriana a 1,90 € dentro del menú (suelta 2,50).
+  // Sale Tropical por defecto; el cliente puede pedir Inca Kola en las notas.
+  // Palanca de attach de bebidas: en ago-2026 solo el 9% de pedidos llevaba
+  // bebida frente al 30% de salsas.
+  {
+    id: "menu-tigrillo",
+    name: "Menú · Tigrillo + Bebida",
+    description:
+      "Tigrillo Mixto + Tropical bien fría. ¿La prefieres Inca Kola? Dínoslo en las notas del pedido.",
+    finalPrice: 17.9,
+    depositAmount: 17.9,
+    available: true,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    id: "menu-corviche",
+    name: "Menú · Corviche + Bebida",
+    description:
+      "Corviche de Pescado + Tropical bien fría. ¿La prefieres Inca Kola? Dínoslo en las notas del pedido.",
+    finalPrice: 16.9,
+    depositAmount: 16.9,
+    available: true,
+    allergens: ["Pescado", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    id: "menu-ceviche",
+    name: "Menú · Ceviche + Bebida",
+    description:
+      "Ceviche Jipijapa + Tropical bien fría. ¿La prefieres Inca Kola? Dínoslo en las notas del pedido.",
+    finalPrice: 20.9,
+    depositAmount: 20.9,
+    available: true,
+    allergens: ["Pescado", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    id: "menu-sango",
+    name: "Menú · Sango + Bebida",
+    description:
+      "Sango de pescado a la parrilla + Tropical bien fría. ¿La prefieres Inca Kola? Dínoslo en las notas del pedido.",
+    finalPrice: 26.9,
+    depositAmount: 26.9,
+    available: true,
+    allergens: ["Pescado", "Cacahuetes", "Lácteos"],
+    category: "pack",
+    isPack: true,
+  },
 ];
 
 // Fotos de los platos (en /public/productos). Se usan si el producto no trae
