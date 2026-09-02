@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { Product, NormalizedCategory } from "@/lib/products";
 import {
   imageForProduct,
@@ -25,6 +25,10 @@ import {
   minOrderForZone,
   defaultMinOrder,
 } from "@/lib/delivery";
+import {
+  usePlacesAutocomplete,
+  type PlaceSelection,
+} from "@/lib/use-places-autocomplete";
 import { todayMadrid, etaFromNow } from "@/lib/directo";
 import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
@@ -107,6 +111,46 @@ const ALLERGENS = [
 ] as const;
 
 const STORAGE_KEY = "verde_customer_data";
+
+// Con key de Maps configurada, el campo de dirección autocompleta con Google
+// Places; sin ella se comporta como input manual (la constante se inlinea en
+// build, así que el bundle sin key ni siquiera intenta cargar el script).
+const PLACES_ENABLED = Boolean(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
+
+// Datos del cliente guardados SOLO en su navegador (localStorage). Nunca
+// viajan a ningún servidor: es la memoria del dispositivo del recurrente.
+interface SavedProfile {
+  customerName: string;
+  email: string;
+  phone: string;
+  deliveryAddress: string;
+  deliveryDetails: string;
+  postalCode: string;
+  deliveryZone: string;
+  deliveryMethod: "delivery" | "pickup";
+}
+
+function parseSavedProfile(raw: string | null): SavedProfile | null {
+  if (!raw) return null;
+  try {
+    const data = JSON.parse(raw) as Record<string, unknown>;
+    const str = (v: unknown) => (typeof v === "string" ? v : "");
+    const profile: SavedProfile = {
+      customerName: str(data.customerName),
+      email: str(data.email),
+      phone: str(data.phone),
+      deliveryAddress: str(data.deliveryAddress),
+      deliveryDetails: str(data.deliveryDetails),
+      postalCode: str(data.postalCode),
+      deliveryZone: str(data.deliveryZone),
+      deliveryMethod: data.deliveryMethod === "pickup" ? "pickup" : "delivery",
+    };
+    // Sin nombre no hay saludo ni ahorro real de tecleo: se ignora.
+    return profile.customerName.trim() ? profile : null;
+  } catch {
+    return null;
+  }
+}
 
 const inputClass =
   "w-full border-0 border-b border-negro/15 bg-transparent px-0 py-2.5 text-sm text-negro placeholder:text-negro/28 focus:outline-none focus:border-verde-bosque transition-colors duration-200";
@@ -435,8 +479,17 @@ export default function ReservationForm({
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
-  const [saveData, setSaveData] = useState(false);
+  // Guardado activado por defecto: tras el primer pedido, la próxima visita
+  // desde este navegador ya no tiene que re-teclear nada. Se puede desmarcar.
+  const [saveData, setSaveData] = useState(true);
   const [savedDataDetected, setSavedDataDetected] = useState(false);
+  // Memoria del dispositivo (cliente recurrente): perfil detectado y estado
+  // del saludo. "offer" = banner con [Usar mis datos] [Editar] [No soy yo];
+  // "applied" = confirmación compacta tras cargar los datos.
+  const [savedProfile, setSavedProfile] = useState<SavedProfile | null>(null);
+  const [profileBanner, setProfileBanner] = useState<
+    "hidden" | "offer" | "applied"
+  >("hidden");
   const [livePromotion, setLivePromotion] = useState<ActivePromotion | null>(promotion ?? null);
   const [delivery, setDelivery] = useState<DeliveryInfo | null>(null);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
@@ -479,6 +532,42 @@ export default function ReservationForm({
   const seleccionRef = useRef<HTMLDivElement>(null);
   const stepRefs = [ref1, ref2, ref3, ref4, ref5, ref6];
 
+  // ── Google Places en el campo de dirección (paso 5) ──
+  // Al elegir una sugerencia: dirección + CP + barrio rellenos, y el CP
+  // alimenta el cálculo de zona/tarifa existente (misma tabla que el servidor).
+  const addressInputRef = useRef<HTMLInputElement>(null);
+  const handlePlaceSelected = useCallback((place: PlaceSelection) => {
+    setFields((prev) => ({
+      ...prev,
+      deliveryAddress: place.address || prev.deliveryAddress,
+      postalCode: place.postalCode || prev.postalCode,
+      // El barrio de Google solo entra si el cliente no escribió el suyo.
+      deliveryZone: prev.deliveryZone || place.barrio,
+    }));
+    setError(null);
+    if (place.postalCode) {
+      const quote = quoteDeliveryByPostalCode(place.postalCode);
+      if (quote.deliverable) {
+        setDelivery({ deliverable: true, zone: quote.zone, fee: quote.fee });
+        setDeliveryError(null);
+      } else {
+        setDelivery({ deliverable: false, zone: null, fee: 0 });
+        setDeliveryError(
+          "Ahora mismo no llegamos a tu código postal (repartimos hasta 12 km de la cocina). " +
+            "Puedes elegir recogida en local o escribirnos por WhatsApp."
+        );
+      }
+    } else {
+      // Sugerencia sin CP (p. ej. una calle sin número): que lo complete a mano.
+      setDelivery(null);
+    }
+  }, []);
+  usePlacesAutocomplete(
+    addressInputRef,
+    currentStep === 5 && fields.deliveryMethod === "delivery",
+    handlePlaceSelected
+  );
+
   useEffect(() => {
     fetch("/api/availability")
       .then((r) => r.json())
@@ -487,26 +576,18 @@ export default function ReservationForm({
       .finally(() => setLoadingAvailability(false));
   }, []);
 
+  // Detección del recurrente: se lee el perfil guardado pero NO se rellena
+  // nada todavía — el cliente decide en el banner ("Usar mis datos" / "Editar"
+  // / "No soy yo"). El dato nunca sale de su navegador.
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw);
-      setSavedDataDetected(true);
-      setFields((prev) => ({
-        ...prev,
-        customerName: saved.customerName || prev.customerName,
-        email: saved.email || prev.email,
-        phone: saved.phone || prev.phone,
-        deliveryAddress: saved.deliveryAddress || prev.deliveryAddress,
-        deliveryDetails: saved.deliveryDetails || prev.deliveryDetails,
-        postalCode: saved.postalCode || prev.postalCode,
-        deliveryZone: saved.deliveryZone || prev.deliveryZone,
-        deliveryMethod: saved.deliveryMethod || prev.deliveryMethod,
-      }));
+      const profile = parseSavedProfile(localStorage.getItem(STORAGE_KEY));
+      if (!profile) return;
+      setSavedProfile(profile);
+      setProfileBanner("offer");
     } catch {
-      // ignore malformed stored data
+      // localStorage inaccesible (modo privado, etc.): formulario normal
     }
   }, []);
 
@@ -688,9 +769,16 @@ export default function ReservationForm({
 
   function clearSavedData() {
     if (typeof window === "undefined") return;
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // sin acceso a storage no hay nada que borrar
+    }
     setSavedDataDetected(false);
     setSaveData(false);
+    setSavedProfile(null);
+    setProfileBanner("hidden");
+    setDelivery(null);
     setFields((prev) => ({
       ...prev,
       customerName: "",
@@ -702,6 +790,40 @@ export default function ReservationForm({
       deliveryZone: "",
       deliveryMethod: "delivery",
     }));
+  }
+
+  // "Usar mis datos" / "Editar": vuelca el perfil guardado en el formulario
+  // (los campos siguen siendo editables en los pasos 4 y 5). Si hay CP de
+  // entrega, la zona y la tarifa se dejan ya calculadas.
+  function applySavedData() {
+    if (!savedProfile) return;
+    setFields((prev) => ({
+      ...prev,
+      customerName: savedProfile.customerName,
+      email: savedProfile.email,
+      phone: savedProfile.phone,
+      deliveryAddress: savedProfile.deliveryAddress,
+      deliveryDetails: savedProfile.deliveryDetails,
+      postalCode: savedProfile.postalCode,
+      deliveryZone: savedProfile.deliveryZone,
+      deliveryMethod: savedProfile.deliveryMethod,
+    }));
+    setSavedDataDetected(true);
+    setSaveData(true);
+    setProfileBanner("applied");
+    if (savedProfile.deliveryMethod === "delivery" && savedProfile.postalCode) {
+      const quote = quoteDeliveryByPostalCode(savedProfile.postalCode);
+      setDelivery(
+        quote.deliverable
+          ? { deliverable: true, zone: quote.zone, fee: quote.fee }
+          : null
+      );
+    }
+  }
+
+  // "No soy yo": borra la memoria del dispositivo y deja el formulario limpio.
+  function rejectSavedData() {
+    clearSavedData();
   }
 
   // ── Derived values (unchanged from original) ──
@@ -1230,6 +1352,67 @@ export default function ReservationForm({
         )}
 
         {(!requireAccessCode || unlocked) && (
+        <>
+
+        {/* ── Cliente recurrente: memoria del dispositivo ──
+            Los datos viven SOLO en el localStorage de este navegador; aquí se
+            decide si se usan. Nada se rellena hasta que el cliente lo pide. */}
+        {savedProfile && profileBanner === "offer" && (
+          <div className="mb-10 rounded-xl border border-verde-bosque/25 bg-verde-bosque/[0.05] p-5">
+            <p className="text-verde-bosque font-semibold text-base mb-1.5">
+              👋 Hola de nuevo, {savedProfile.customerName.trim().split(/\s+/)[0]}
+            </p>
+            <p className="text-xs text-negro/55 leading-relaxed">
+              Tenemos tus datos guardados en este dispositivo
+              {savedProfile.deliveryMethod === "delivery" &&
+              savedProfile.deliveryAddress
+                ? `: ${savedProfile.phone} · ${savedProfile.deliveryAddress}${
+                    savedProfile.postalCode ? ` (${savedProfile.postalCode})` : ""
+                  }`
+                : `: ${savedProfile.phone} · recogida en local`}
+              . Nunca salen de tu navegador.
+            </p>
+            <div className="flex flex-wrap gap-2.5 mt-4">
+              <button
+                type="button"
+                onClick={applySavedData}
+                className="text-[10px] font-semibold uppercase tracking-[0.18em] bg-verde-bosque text-crema px-4 py-2.5 rounded-full hover:bg-verde-platano transition-colors duration-150"
+              >
+                Usar mis datos
+              </button>
+              <button
+                type="button"
+                onClick={applySavedData}
+                className="text-[10px] font-semibold uppercase tracking-[0.18em] text-verde-bosque border border-verde-bosque/35 px-4 py-2.5 rounded-full hover:bg-verde-bosque/10 transition-colors duration-150"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                onClick={rejectSavedData}
+                className="text-[10px] font-semibold uppercase tracking-[0.18em] text-negro/40 px-4 py-2.5 rounded-full hover:text-tierra transition-colors duration-150"
+              >
+                No soy yo
+              </button>
+            </div>
+          </div>
+        )}
+        {profileBanner === "applied" && (
+          <div className="mb-10 flex items-start justify-between gap-4 border-l-2 border-verde-bosque/40 pl-3 py-1">
+            <p className="text-xs text-negro/55 leading-relaxed">
+              ✓ Datos cargados. Los verás rellenos en «Tus datos» y «Entrega» —
+              puedes cambiar cualquier campo ahí.
+            </p>
+            <button
+              type="button"
+              onClick={rejectSavedData}
+              className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.15em] text-negro/30 hover:text-tierra transition-colors underline underline-offset-2"
+            >
+              No soy yo
+            </button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} noValidate>
 
           {/* ── PASO 1: PRODUCTO ── */}
@@ -1950,15 +2133,24 @@ export default function ReservationForm({
                         Dirección de entrega
                       </label>
                       <input
+                        ref={addressInputRef}
+                        data-places-input="1"
                         id="deliveryAddress"
                         name="deliveryAddress"
                         type="text"
                         required
+                        autoComplete="off"
                         placeholder="Calle, número, piso…"
                         value={fields.deliveryAddress}
                         onChange={handleFieldChange}
                         className={inputClass}
                       />
+                      {PLACES_ENABLED && (
+                        <p className="text-[11px] text-negro/40 mt-2">
+                          Empieza a escribir y elige tu dirección: el código
+                          postal y el envío se calculan solos.
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label htmlFor="postalCode" className={labelClass}>
@@ -2282,6 +2474,7 @@ export default function ReservationForm({
           )}
 
         </form>
+        </>
         )}
       </div>
 
