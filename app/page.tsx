@@ -185,7 +185,12 @@ export default async function HomePage({
       {/* ── PACKS ── */}
       {reservationsOpen && (
         <section id="packs">
-          <Packs destacados={getDestacados(products)} />
+          <Packs
+            destacados={getDestacados(products)}
+            menuSemana={products.find(
+              (p) => mismoId(p.id, "menu-semana") && p.available !== false
+            )}
+          />
         </section>
       )}
 

@@ -156,7 +156,7 @@ export const PACKS: Product[] = [
       "Ahora Comen Todos + Ración de Patacón. Para 3–4 personas con ganas de verde.",
     finalPrice: 26,
     depositAmount: 26,
-    available: true,
+    available: false, // APAGADO 02-09: el pack que menos se pide (decisión Amos)
     allergens: ["Consultar"],
     category: "pack",
     isPack: true,

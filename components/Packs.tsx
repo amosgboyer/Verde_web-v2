@@ -50,9 +50,12 @@ interface PacksProps {
   /** Platos nuevos que van arriba, antes de los packs. Vienen de la carta real
    *  (Sheet si está), así que su precio es el que se cobra. */
   destacados?: Product[];
+  /** El menú de la semana (fila `menu-semana` del Sheet). Se pinta como la
+   *  card MÁS destacada del bloque de packs, con la bebida a elegir. */
+  menuSemana?: Product;
 }
 
-export default function Packs({ readOnly = false, destacados = [] }: PacksProps) {
+export default function Packs({ readOnly = false, destacados = [], menuSemana }: PacksProps) {
   const hayNovedades = destacados.length > 0;
 
   // El bloque admite las dos cosas, así que el texto se adapta a lo que hay.
@@ -176,6 +179,71 @@ export default function Packs({ readOnly = false, destacados = [] }: PacksProps)
         {/* ── Packs ── */}
         {hayNovedades && subtitulo("Packs de la casa")}
         <div className="gsap-stagger grid gap-3 sm:gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+          {/* Menú de la semana — la card que más resalta del bloque */}
+          {menuSemana && (
+            <div
+              className="relative rounded-[14px] p-4 sm:p-[1.6rem] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 flex flex-col items-center text-center"
+              style={{
+                background:
+                  "linear-gradient(150deg, rgba(200,150,10,0.28), rgba(200,90,42,0.22))",
+                border: "1.5px solid var(--gold, #c8960a)",
+                boxShadow: "0 8px 44px rgba(200,150,10,0.35)",
+              }}
+            >
+              <div
+                className="absolute top-[14px] right-[-24px] text-[0.62rem] font-medium tracking-[0.08em] uppercase px-8 py-1"
+                style={{
+                  background: "var(--gold, #c8960a)",
+                  color: "var(--dark, #1a1a0e)",
+                  transform: "rotate(45deg)",
+                }}
+              >
+                Cada semana
+              </div>
+
+              <h3 className="font-sans font-bold text-[1.05rem] sm:text-[1.2rem] mb-1 text-white">
+                Menú de la Semana
+              </h3>
+              <p
+                className="text-[0.76rem] sm:text-[0.78rem] leading-relaxed mb-2 max-w-[280px]"
+                style={{ color: "rgba(255,255,255,0.75)" }}
+              >
+                {menuSemana.description ||
+                  "Plato, acompañante y bebida a precio cerrado. Cambia cada semana."}
+              </p>
+              <span
+                className="text-[0.68rem] px-2.5 py-0.5 rounded-full mb-3 sm:mb-4"
+                style={{ background: "rgba(200,150,10,0.3)", color: "#f5edd8" }}
+              >
+                bebida incluida a elegir
+              </span>
+
+              <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
+                <span
+                  className="font-mono font-bold text-[1.4rem] sm:text-[1.6rem]"
+                  style={{ color: "var(--gold, #c8960a)" }}
+                >
+                  {fmtPrecio(menuSemana.depositAmount || menuSemana.finalPrice)}
+                </span>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      window.dispatchEvent(
+                        new CustomEvent("verde:add-pack", {
+                          detail: { items: [{ id: menuSemana.id, qty: 1 }] },
+                        })
+                      )
+                    }
+                    className="text-[0.78rem] font-medium px-6 py-2 rounded-lg transition-colors cursor-pointer border-none"
+                    style={{ background: "var(--gold, #c8960a)", color: "var(--dark, #1a1a0e)", fontWeight: 700 }}
+                  >
+                    Pedir →
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
           {PACKS.map((pack) => (
             <div
               key={pack.id}

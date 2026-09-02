@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 const CATS = [
-  { label: "Menú de la Semana", id: "cat-menu" },
   { label: "Verde y Solo Verde", id: "cat-verde" },
   { label: "Para los amantes del Maduro", id: "cat-maduro" },
   { label: "Pesca del Día", id: "cat-pesca" },

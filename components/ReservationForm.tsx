@@ -184,7 +184,9 @@ function fmtPrice(n: number): string {
 // El vocabulario de categorías vive en lib/products.ts: es el mismo que usa la
 // inyección de productos desde código, así que un plato añadido allí cae en el
 // bloque que toca. Tenerlo duplicado aquí era invitar a que se desincronizara.
-const CATEGORY_ORDER: NormalizedCategory[] = ["Menu", "Verde", "Maduro", "Pesca", "Otros", "Bebidas"];
+// "Menu" queda fuera a propósito: el menú de la semana no tiene sección en la
+// carta — vive como card destacada en el bloque de Packs de la home (02-09).
+const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Pesca", "Otros", "Bebidas"];
 
 const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: string }> = {
   Menu: {
@@ -1464,12 +1466,33 @@ export default function ReservationForm({
                             )}
                           </p>
                           {choiceCfg && (
-                            <p className="text-[11px] text-negro/45 mt-0.5">
-                              {choiceCfg.label}:{" "}
-                              <span className="font-semibold text-negro/60">
-                                {choices[p.id] ?? choiceCfg.options[0]}
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                              <span className="text-[11px] text-negro/45">
+                                {choiceCfg.label}:
                               </span>
-                            </p>
+                              {choiceCfg.options.map((opt) => {
+                                const sel =
+                                  (choices[p.id] ?? choiceCfg.options[0]) === opt;
+                                return (
+                                  <button
+                                    key={opt}
+                                    type="button"
+                                    onClick={() =>
+                                      setChoices((prev) => ({ ...prev, [p.id]: opt }))
+                                    }
+                                    aria-pressed={sel}
+                                    className={clsx(
+                                      "rounded-full border px-2.5 py-0.5 text-[10.5px] font-semibold transition-colors",
+                                      sel
+                                        ? "border-verde-bosque bg-verde-bosque/10 text-verde-bosque"
+                                        : "border-negro/15 text-negro/45 hover:border-negro/30"
+                                    )}
+                                  >
+                                    {opt}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           )}
                           <p className="text-xs font-semibold text-verde-bosque mt-0.5">
                             {fmtPrice(p.depositAmount * qty)} €
