@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Product, NormalizedCategory } from "@/lib/products";
-import { imageForProduct, normalizeCategory } from "@/lib/products";
+import { imageForProduct, normalizeCategory, mismoId } from "@/lib/products";
 import { platoDeclaraAlergeno, platoSinDetallar } from "@/lib/allergens";
 import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
@@ -245,6 +245,18 @@ const PRODUCT_ADDONS: { baseId: string; addons: { label: string; id: string }[] 
   },
 ];
 
+// ─── Elecciones incluidas en un producto ─────────────────────────────────────
+// Opciones que NO cambian el precio (p. ej. la bebida del menú de la semana).
+// Se eligen con pills en la card y viajan al pedido en las notas — la cocina
+// las lee donde ya lee alergias y cubiertos; el contrato del Sheet no cambia.
+const PRODUCT_CHOICES: { productId: string; label: string; options: string[] }[] = [
+  {
+    productId: "menu-semana",
+    label: "Bebida del menú",
+    options: ["Tropical", "Inca Kola"],
+  },
+];
+
 // ─── StepSection ───────────────────────────────────────────────────────────
 // Renders a step row: collapsed summary when not active, full content when active.
 
@@ -350,6 +362,9 @@ export default function ReservationForm({
   // reabrió para volver al sitio correcto al cerrarlo.
   const [rescueOrigin, setRescueOrigin] = useState<null | "menu" | "entrega">(null);
   const [cutlery, setCutlery] = useState(false);
+  // Elecciones incluidas por producto (id → opción elegida). Sin entrada =
+  // primera opción del PRODUCT_CHOICES correspondiente.
+  const [choices, setChoices] = useState<Record<string, string>>({});
   const [allergens, setAllergens] = useState<string[]>([]);
   const toggleAllergen = (a: string) =>
     setAllergens((prev) =>
@@ -996,6 +1011,14 @@ export default function ReservationForm({
               ? `Alergias: ${allergens.join(", ")}`
               : "Alergias: ninguna",
             `Cubiertos: ${cutlery ? "sí" : "no"}`,
+            // Elecciones incluidas (p. ej. bebida del menú): van solas a las
+            // notas — la cocina las lee donde ya lee alergias y cubiertos.
+            ...PRODUCT_CHOICES.filter((c) =>
+              cartProducts.some((p) => mismoId(p.id, c.productId))
+            ).map((c) => {
+              const prod = cartProducts.find((p) => mismoId(p.id, c.productId))!;
+              return `${c.label}: ${choices[prod.id] ?? c.options[0]}`;
+            }),
             fields.notes.trim(),
           ]
             .filter(Boolean)
@@ -1358,7 +1381,11 @@ export default function ReservationForm({
                       )}
                       {/* Móvil: fila deslizable · Escritorio: rejilla */}
                       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-3 sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:gap-4 sm:overflow-visible sm:pb-0">
-                        {grouped[cat]!.map((product) => (
+                        {grouped[cat]!.map((product) => {
+                          const choiceCfg = PRODUCT_CHOICES.find((c) =>
+                            mismoId(c.productId, product.id)
+                          );
+                          return (
                           <div
                             key={product.id}
                             className="shrink-0 w-[46%] snap-start sm:w-full"
@@ -1374,6 +1401,16 @@ export default function ReservationForm({
                               addons={addonsByBase[product.id]}
                               quantityOf={(id) => cart[id] ?? 0}
                               image={imageForProduct(product)}
+                              choiceLabel={choiceCfg?.label}
+                              choiceOptions={choiceCfg?.options}
+                              choiceValue={
+                                choiceCfg
+                                  ? choices[product.id] ?? choiceCfg.options[0]
+                                  : undefined
+                              }
+                              onChoiceChange={(v) =>
+                                setChoices((prev) => ({ ...prev, [product.id]: v }))
+                              }
                               offerBadge={
                                 weekendOffer &&
                                 productMatchesOffer(weekendOffer, {
@@ -1385,7 +1422,8 @@ export default function ReservationForm({
                               }
                             />
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
@@ -1408,6 +1446,9 @@ export default function ReservationForm({
                   {cartProducts.map((p) => {
                     const qty = cart[p.id] ?? 0;
                     const enTope = qty >= config.maxQuantityPerOrder;
+                    const choiceCfg = PRODUCT_CHOICES.find((c) =>
+                      mismoId(c.productId, p.id)
+                    );
                     return (
                       <div
                         key={p.id}
@@ -1422,6 +1463,14 @@ export default function ReservationForm({
                               </span>
                             )}
                           </p>
+                          {choiceCfg && (
+                            <p className="text-[11px] text-negro/45 mt-0.5">
+                              {choiceCfg.label}:{" "}
+                              <span className="font-semibold text-negro/60">
+                                {choices[p.id] ?? choiceCfg.options[0]}
+                              </span>
+                            </p>
+                          )}
                           <p className="text-xs font-semibold text-verde-bosque mt-0.5">
                             {fmtPrice(p.depositAmount * qty)} €
                             {qty > 1 && (

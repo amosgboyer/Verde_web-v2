@@ -27,11 +27,18 @@ interface ProductCardProps {
   quantityOf?: (productId: string) => number;
   addons?: { label: string; product: Product }[];
   image?: string;
+  /** Elección incluida en el producto (no cambia el precio), p. ej. la bebida
+   *  del menú. Se enseña como pills y el padre la manda en las notas. */
+  choiceLabel?: string;
+  choiceOptions?: string[];
+  choiceValue?: string;
+  onChoiceChange?: (value: string) => void;
 }
 
 export default function ProductCard({
   product, quantity, maxQuantity, onAdd, onIncrement, onDecrement, offerBadge,
   sizeOptions, quantityOf, addons, image,
+  choiceLabel, choiceOptions, choiceValue, onChoiceChange,
 }: ProductCardProps) {
   const hasSizes = !!sizeOptions && sizeOptions.length > 1;
   const [sizeIdx, setSizeIdx] = useState(0);
@@ -258,6 +265,44 @@ export default function ProductCard({
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {/* Elección incluida (p. ej. bebida del menú) — mismo look que tamaños */}
+        {choiceOptions && choiceOptions.length > 1 && (
+          <div onClick={stop}>
+            {choiceLabel && (
+              <div
+                className="px-0.5 mb-1"
+                style={{ fontSize: "0.62rem", color: "rgba(245,240,232,0.72)" }}
+              >
+                {choiceLabel}
+              </div>
+            )}
+            <div
+              className="flex gap-1 p-0.5 rounded-lg"
+              style={{ background: "rgba(255,255,255,0.1)" }}
+            >
+              {choiceOptions.map((opt) => {
+                const selected = (choiceValue ?? choiceOptions[0]) === opt;
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={(e) => { stop(e); onChoiceChange?.(opt); }}
+                    aria-pressed={selected}
+                    className="flex-1 rounded-md py-1 text-[0.68rem] font-semibold transition-colors"
+                    style={
+                      selected
+                        ? { background: "var(--leaf, #509234)", color: "#fff" }
+                        : { background: "transparent", color: "rgba(245,240,232,0.7)" }
+                    }
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
