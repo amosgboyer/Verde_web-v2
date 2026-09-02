@@ -58,7 +58,7 @@ export const PRODUCTS: Product[] = [
     depositAmount: 15,
     available: true,
     allergens: ["Pescado", "Maní"],
-    category: "verde",
+    category: "pesca",
   },
   {
     id: "patacon-rabo-toro",
@@ -312,7 +312,7 @@ export const EXTRA_PLATOS: Product[] = [
     depositAmount: 19,
     available: true,
     allergens: ["Pescado", "Maní"],
-    category: "otros",
+    category: "pesca",
     image: "/productos/ceviche-jipijapa.jpg",
   },
 ];
@@ -325,12 +325,14 @@ export function getPlatosExtra(): Product[] {
 // Fuente única del vocabulario de categorías. La carta (ReservationForm) y la
 // vitrina (MenuShowcase) agrupan con esto mismo, así que un producto añadido
 // desde código cae exactamente en el bloque que se ve en pantalla.
-export type NormalizedCategory = "Verde" | "Maduro" | "Otros" | "Bebidas";
+export type NormalizedCategory = "Verde" | "Maduro" | "Pesca" | "Otros" | "Bebidas";
 
 export function normalizeCategory(raw: string): NormalizedCategory {
   const lower = (raw ?? "").trim().toLowerCase();
   if (lower === "verde") return "Verde";
   if (lower === "maduro") return "Maduro";
+  // "pesca", "pesca del día", "pescado"… → sección Pesca del Día (sep 2026)
+  if (lower.startsWith("pesca")) return "Pesca";
   if (
     lower === "bebida" ||
     lower === "bebidas" ||

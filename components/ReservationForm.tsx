@@ -184,7 +184,7 @@ function fmtPrice(n: number): string {
 // El vocabulario de categorías vive en lib/products.ts: es el mismo que usa la
 // inyección de productos desde código, así que un plato añadido allí cae en el
 // bloque que toca. Tenerlo duplicado aquí era invitar a que se desincronizara.
-const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Otros", "Bebidas"];
+const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Pesca", "Otros", "Bebidas"];
 
 const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: string }> = {
   Verde: {
@@ -194,6 +194,10 @@ const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: str
   Maduro: {
     title: "PARA LOS AMANTES DEL MADURO",
     subtitle: "Una versión más dulce, intensa y contundente.",
+  },
+  Pesca: {
+    title: "PESCA DEL DÍA",
+    subtitle: "Pesca fresca del día, del mar al verde.",
   },
   Otros: {
     title: "OTROS PRODUCTOS",
