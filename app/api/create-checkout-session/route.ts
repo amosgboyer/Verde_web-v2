@@ -15,6 +15,7 @@ import {
 import { SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, isAccessCodeValid } from "@/lib/launch";
 import { getDirectoStatus, todayMadrid } from "@/lib/directo";
+import { ventanaAplicaAlPago, promocionVentana } from "@/lib/ventana-lunes";
 import { trocearMeta, ErrorCliente } from "@/lib/stripe-meta";
 import { ZodError } from "zod";
 
@@ -209,7 +210,20 @@ export async function POST(req: NextRequest) {
     }
 
     const promo = getActivePromotion(settings);
-    const discount = calculateDiscount(productsSubtotal, promo);
+    let discount = calculateDiscount(productsSubtotal, promo);
+
+    // La Ventana del Lunes (lunes 15:33-15:48 Madrid, entrega en mié/jue):
+    // compite con la promo del Sheet y SE QUEDA LA MAYOR, nunca se suman —
+    // sumar porcentajes por accidente sería un incidente de precios. La
+    // comprobación usa el reloj del SERVIDOR, con la gracia de 90 s para que
+    // quien vio el descuento en los últimos segundos no lo pierda tecleando
+    // la tarjeta.
+    if (ventanaAplicaAlPago(parsed.reservationDate)) {
+      const descuentoVentana = calculateDiscount(productsSubtotal, promocionVentana());
+      if (descuentoVentana.discountAmount > discount.discountAmount) {
+        discount = descuentoVentana;
+      }
+    }
 
     // ── Oferta de fin de semana (nivel ítem) ─────────────────────────────────
     // Se recalcula en servidor desde los ítems validados (fuente de verdad); no

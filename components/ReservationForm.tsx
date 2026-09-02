@@ -26,6 +26,7 @@ import {
   defaultMinOrder,
 } from "@/lib/delivery";
 import { todayMadrid, etaFromNow } from "@/lib/directo";
+import { estadoVentana, esMiercolesOJueves, VENTANA_LUNES } from "@/lib/ventana-lunes";
 import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
 import DrinkUpsellModal from "./DrinkUpsellModal";
@@ -438,6 +439,17 @@ export default function ReservationForm({
   const [saveData, setSaveData] = useState(false);
   const [savedDataDetected, setSavedDataDetected] = useState(false);
   const [livePromotion, setLivePromotion] = useState<ActivePromotion | null>(promotion ?? null);
+
+  // Ventana del Lunes: tic de 1 s para que el descuento estimado aparezca y
+  // desaparezca EN VIVO con la ventana (el banner ya cuenta atrás; esto mueve
+  // los totales). Estimación visual — el servidor recalcula al pagar.
+  const [ventanaLive, setVentanaLive] = useState(false);
+  useEffect(() => {
+    const tick = () => setVentanaLive(estadoVentana().live);
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, []);
   const [delivery, setDelivery] = useState<DeliveryInfo | null>(null);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [accessCode, setAccessCode] = useState("");
@@ -827,9 +839,22 @@ export default function ReservationForm({
 
   // Discount — visual estimate only; backend is always source of truth
   const subtotalCents = Math.round(totalDeposit * 100);
+  // Misma regla que el servidor: la promo del Sheet y la Ventana del Lunes
+  // COMPITEN y gana la mayor — nunca se suman. La ventana solo cuenta si está
+  // abierta ahora y la entrega elegida cae en miércoles o jueves.
+  const ventanaCuentaAqui =
+    ventanaLive && esMiercolesOJueves(fields.reservationDate);
+  const pctSheet = livePromotion?.isActive ? livePromotion.promoValue : 0;
+  const pctVentana = ventanaCuentaAqui ? VENTANA_LUNES.porcentaje : 0;
+  const promoAplicada =
+    pctVentana > pctSheet
+      ? { nombre: VENTANA_LUNES.nombre, pct: pctVentana }
+      : pctSheet > 0
+      ? { nombre: livePromotion!.promoName, pct: pctSheet }
+      : null;
   const discountCents =
-    livePromotion?.isActive && totalDeposit > 0
-      ? Math.round(subtotalCents * livePromotion.promoValue / 100)
+    promoAplicada && totalDeposit > 0
+      ? Math.round(subtotalCents * promoAplicada.pct / 100)
       : 0;
   const discountAmount = discountCents / 100;
 
@@ -2179,9 +2204,16 @@ export default function ReservationForm({
                   <span>Subtotal</span>
                   <span>{totalDeposit.toFixed(2).replace(".", ",")} €</span>
                 </div>
-                {livePromotion?.isActive && discountAmount > 0 && (
+                {ventanaLive && !esMiercolesOJueves(fields.reservationDate) && (
+                  <p className="text-[11px] leading-snug text-[#b3261e]">
+                    El −{VENTANA_LUNES.porcentaje}% de la {VENTANA_LUNES.nombre} es
+                    solo para entregas de miércoles o jueves. Cambia el día para
+                    aprovecharla.
+                  </p>
+                )}
+                {promoAplicada && discountAmount > 0 && (
                   <div className="flex justify-between text-verde-bosque/75">
-                    <span>{livePromotion.promoName} −{livePromotion.promoValue}%</span>
+                    <span>{promoAplicada.nombre} −{promoAplicada.pct}%</span>
                     <span>−{discountAmount.toFixed(2).replace(".", ",")} €</span>
                   </div>
                 )}

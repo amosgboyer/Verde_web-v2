@@ -23,6 +23,7 @@ import ZoneMap from "@/components/ZoneMap";
 import Reviews from "@/components/Reviews";
 import ContactHelp from "@/components/ContactHelp";
 import FloatingCart from "@/components/FloatingCart";
+import VentanaLunes from "@/components/VentanaLunes";
 import type { Product } from "@/lib/products";
 import Image from "next/image";
 
@@ -237,6 +238,9 @@ export default async function HomePage({
 
       {/* ── CARRITO FLOTANTE ── */}
       <FloatingCart />
+
+      {/* ── VENTANA DEL LUNES (banner con countdown; se oculta solo) ── */}
+      {reservationsOpen && <VentanaLunes />}
     </>
   );
 }
