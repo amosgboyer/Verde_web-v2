@@ -174,7 +174,7 @@ export const PACKS: Product[] = [
       "Tigrillo Mixto + Tropical bien fría. ¿La prefieres Inca Kola? Dínoslo en las notas del pedido.",
     finalPrice: 17.9,
     depositAmount: 17.9,
-    available: true,
+    available: false, // APAGADO: pendiente de decidir combinación/precios con Amos
     allergens: ["Lácteos", "Maní"],
     category: "pack",
     isPack: true,
@@ -186,7 +186,7 @@ export const PACKS: Product[] = [
       "Corviche de Pescado + Tropical bien fría. ¿La prefieres Inca Kola? Dínoslo en las notas del pedido.",
     finalPrice: 16.9,
     depositAmount: 16.9,
-    available: true,
+    available: false, // APAGADO: pendiente de decidir combinación/precios con Amos
     allergens: ["Pescado", "Maní"],
     category: "pack",
     isPack: true,
@@ -198,7 +198,7 @@ export const PACKS: Product[] = [
       "Ceviche Jipijapa + Tropical bien fría. ¿La prefieres Inca Kola? Dínoslo en las notas del pedido.",
     finalPrice: 20.9,
     depositAmount: 20.9,
-    available: true,
+    available: false, // APAGADO: pendiente de decidir combinación/precios con Amos
     allergens: ["Pescado", "Maní"],
     category: "pack",
     isPack: true,
@@ -210,7 +210,7 @@ export const PACKS: Product[] = [
       "Sango de pescado a la parrilla + Tropical bien fría. ¿La prefieres Inca Kola? Dínoslo en las notas del pedido.",
     finalPrice: 26.9,
     depositAmount: 26.9,
-    available: true,
+    available: false, // APAGADO: pendiente de decidir combinación/precios con Amos
     allergens: ["Pescado", "Cacahuetes", "Lácteos"],
     category: "pack",
     isPack: true,
