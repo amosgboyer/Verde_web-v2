@@ -32,9 +32,13 @@ export interface DayAvailability {
   slots: TimeSlot[];
 }
 
-// Horas que NO se ofrecen para reservar. Editar aquí.
-// 10:00 fuera todos los días (pedido de Amos, 01-09) · 14:00 = hueco de comida.
-const BLOCKED_TIMES = ["10:00", "14:00"];
+// Horas que NO se ofrecen para reservar. Editar aquí. 14:00 = hueco de comida.
+const BLOCKED_TIMES = ["14:00"];
+
+// Cupos especiales por HORA, recurrentes todos los días (el resto de horas
+// usa el cupo del día — col C del Sheet — o el por defecto). Pedido de Amos
+// (02-09): a las 10:00 entra UN solo pedido; la franja no se cierra.
+const CAPACITY_BY_TIME: Record<string, number> = { "10:00": 1 };
 
 // Capacidad por slot por defecto: 2 pedidos por hora (régimen de Amos desde
 // el 01-09). La columna C de la pestaña Availability la sobreescribe por día.
@@ -145,10 +149,12 @@ export async function getAvailabilityDays(): Promise<DayAvailability[]> {
         day.maxOrdersPerSlot > 0
           ? day.maxOrdersPerSlot
           : DEFAULT_MAX_ORDERS_PER_SLOT;
+      // Prioridad: override puntual del Sheet (fecha+hora) → cupo recurrente
+      // por hora → cupo del día.
       const capacity =
         override?.maxOrdersOverride != null
           ? override.maxOrdersOverride
-          : dayCapacity;
+          : CAPACITY_BY_TIME[normTime] ?? dayCapacity;
 
       const matchedOrders = paidOrders.filter(
         (o) => o.reservationDate === dayDate && o.reservationTime === normTime
