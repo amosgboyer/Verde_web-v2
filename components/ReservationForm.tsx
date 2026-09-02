@@ -26,7 +26,7 @@ import {
   defaultMinOrder,
 } from "@/lib/delivery";
 import {
-  usePlacesAutocomplete,
+  useAddressAutocomplete,
   type PlaceSelection,
 } from "@/lib/use-places-autocomplete";
 import { todayMadrid, etaFromNow } from "@/lib/directo";
@@ -535,7 +535,6 @@ export default function ReservationForm({
   // ── Google Places en el campo de dirección (paso 5) ──
   // Al elegir una sugerencia: dirección + CP + barrio rellenos, y el CP
   // alimenta el cálculo de zona/tarifa existente (misma tabla que el servidor).
-  const addressInputRef = useRef<HTMLInputElement>(null);
   const handlePlaceSelected = useCallback((place: PlaceSelection) => {
     setFields((prev) => ({
       ...prev,
@@ -562,9 +561,13 @@ export default function ReservationForm({
       setDelivery(null);
     }
   }, []);
-  usePlacesAutocomplete(
-    addressInputRef,
+  const {
+    suggestions: addressSuggestions,
+    selectSuggestion: selectAddressSuggestion,
+    dismissSuggestions: dismissAddressSuggestions,
+  } = useAddressAutocomplete(
     currentStep === 5 && fields.deliveryMethod === "delivery",
+    fields.deliveryAddress,
     handlePlaceSelected
   );
 
@@ -2128,13 +2131,11 @@ export default function ReservationForm({
                     WhatsApp.
                   </p>
                   <div className="grid gap-8 sm:grid-cols-2">
-                    <div className="sm:col-span-2">
+                    <div className="sm:col-span-2 relative">
                       <label htmlFor="deliveryAddress" className={labelClass}>
                         Dirección de entrega
                       </label>
                       <input
-                        ref={addressInputRef}
-                        data-places-input="1"
                         id="deliveryAddress"
                         name="deliveryAddress"
                         type="text"
@@ -2143,8 +2144,46 @@ export default function ReservationForm({
                         placeholder="Calle, número, piso…"
                         value={fields.deliveryAddress}
                         onChange={handleFieldChange}
+                        onKeyDown={(e) => {
+                          // Con el desplegable abierto, Enter elige la primera
+                          // sugerencia (y nunca envía el formulario); Escape cierra.
+                          if (addressSuggestions.length === 0) return;
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            selectAddressSuggestion(addressSuggestions[0].id);
+                          } else if (e.key === "Escape") {
+                            dismissAddressSuggestions();
+                          }
+                        }}
+                        onBlur={() => {
+                          // Retraso para que el clic/tap en una sugerencia llegue antes.
+                          setTimeout(dismissAddressSuggestions, 150);
+                        }}
                         className={inputClass}
                       />
+                      {addressSuggestions.length > 0 && (
+                        <ul className="absolute z-20 left-0 right-0 top-full mt-1 bg-white border border-negro/10 rounded-lg shadow-lg overflow-hidden">
+                          {addressSuggestions.map((s) => (
+                            <li key={s.id}>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => selectAddressSuggestion(s.id)}
+                                className="w-full text-left px-3.5 py-2.5 hover:bg-verde-bosque/5 transition-colors duration-100"
+                              >
+                                <span className="block text-sm text-negro/85 leading-snug">
+                                  {s.main}
+                                </span>
+                                {s.secondary && (
+                                  <span className="block text-[11px] text-negro/45 leading-snug">
+                                    {s.secondary}
+                                  </span>
+                                )}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       {PLACES_ENABLED && (
                         <p className="text-[11px] text-negro/40 mt-2">
                           Empieza a escribir y elige tu dirección: el código
