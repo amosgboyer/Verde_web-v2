@@ -217,6 +217,30 @@ export const PACKS: Product[] = [
   },
 ];
 
+// ─── Elecciones incluidas en un producto ─────────────────────────────────────
+// Opciones que NO cambian el precio (p. ej. la bebida del menú de la semana).
+// Se eligen en la tarjeta del producto y viajan al pedido en las NOTAS — la
+// cocina las lee donde ya lee alergias y cubiertos; el contrato del Sheet no
+// cambia. Fuente única: la usan la card del bloque de packs y el formulario.
+export const PRODUCT_CHOICES: {
+  productId: string;
+  label: string;
+  options: string[];
+}[] = [
+  {
+    productId: "menu-semana",
+    label: "Bebida del menú",
+    options: [
+      "Tropical",
+      "Inca Kola",
+      "Coca-Cola",
+      "Coca-Cola Zero",
+      "Fuze Tea",
+      "Agua",
+    ],
+  },
+];
+
 // Fotos de los platos (en /public/productos). Se usan si el producto no trae
 // imageUrl propio desde el Sheet. Clave = productId del Sheet.
 export const PRODUCT_IMAGES: Record<string, string> = {

@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import type { Product } from "@/lib/products";
-import { getPacks } from "@/lib/products";
+import { getPacks, PRODUCT_CHOICES, mismoId } from "@/lib/products";
 
 // Nombre, descripción y PRECIO salen de lib/products.ts — que es lo que cobra
 // el checkout. Antes estaban copiados aquí a mano y un cambio de precio en el
@@ -57,6 +58,15 @@ interface PacksProps {
 
 export default function Packs({ readOnly = false, destacados = [], menuSemana }: PacksProps) {
   const hayNovedades = destacados.length > 0;
+
+  // Bebida del menú de la semana: se elige AQUÍ, en la propia tarjeta, y
+  // viaja con el evento al carrito (y de ahí a las notas del pedido).
+  const menuChoice = menuSemana
+    ? PRODUCT_CHOICES.find((c) => mismoId(c.productId, menuSemana.id))
+    : undefined;
+  const [bebidaMenu, setBebidaMenu] = useState<string>(
+    menuChoice?.options[0] ?? ""
+  );
 
   // El bloque admite las dos cosas, así que el texto se adapta a lo que hay.
   const copy = hayNovedades
@@ -211,12 +221,46 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
                 {menuSemana.description ||
                   "Plato, acompañante y bebida a precio cerrado. Cambia cada semana."}
               </p>
-              <span
-                className="text-[0.68rem] px-2.5 py-0.5 rounded-full mb-3 sm:mb-4"
-                style={{ background: "rgba(200,150,10,0.3)", color: "#f5edd8" }}
-              >
-                bebida incluida a elegir
-              </span>
+              {/* Bebida incluida: se elige en la tarjeta, antes de pedir */}
+              {menuChoice && (
+                <div className="mb-3 sm:mb-4 w-full max-w-[300px]">
+                  <p
+                    className="text-[0.62rem] font-medium tracking-[0.15em] uppercase mb-1.5"
+                    style={{ color: "rgba(245,237,216,0.75)" }}
+                  >
+                    Elige tu bebida (incluida)
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    {menuChoice.options.map((opt) => {
+                      const sel = bebidaMenu === opt;
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setBebidaMenu(opt)}
+                          aria-pressed={sel}
+                          className="rounded-full px-2.5 py-1 text-[0.68rem] font-semibold transition-colors border"
+                          style={
+                            sel
+                              ? {
+                                  background: "var(--gold, #c8960a)",
+                                  color: "var(--dark, #1a1a0e)",
+                                  borderColor: "var(--gold, #c8960a)",
+                                }
+                              : {
+                                  background: "rgba(255,255,255,0.08)",
+                                  color: "rgba(245,237,216,0.8)",
+                                  borderColor: "rgba(245,237,216,0.25)",
+                                }
+                          }
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
                 <span
@@ -231,7 +275,12 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
                     onClick={() =>
                       window.dispatchEvent(
                         new CustomEvent("verde:add-pack", {
-                          detail: { items: [{ id: menuSemana.id, qty: 1 }] },
+                          detail: {
+                            items: [{ id: menuSemana.id, qty: 1 }],
+                            choice: menuChoice
+                              ? { productId: menuSemana.id, value: bebidaMenu }
+                              : undefined,
+                          },
                         })
                       )
                     }

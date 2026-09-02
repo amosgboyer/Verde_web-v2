@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Product, NormalizedCategory } from "@/lib/products";
-import { imageForProduct, normalizeCategory, mismoId } from "@/lib/products";
+import {
+  imageForProduct,
+  normalizeCategory,
+  mismoId,
+  PRODUCT_CHOICES,
+} from "@/lib/products";
 import { platoDeclaraAlergeno, platoSinDetallar } from "@/lib/allergens";
 import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
@@ -247,17 +252,8 @@ const PRODUCT_ADDONS: { baseId: string; addons: { label: string; id: string }[] 
   },
 ];
 
-// ─── Elecciones incluidas en un producto ─────────────────────────────────────
-// Opciones que NO cambian el precio (p. ej. la bebida del menú de la semana).
-// Se eligen con pills en la card y viajan al pedido en las notas — la cocina
-// las lee donde ya lee alergias y cubiertos; el contrato del Sheet no cambia.
-const PRODUCT_CHOICES: { productId: string; label: string; options: string[] }[] = [
-  {
-    productId: "menu-semana",
-    label: "Bebida del menú",
-    options: ["Tropical", "Inca Kola"],
-  },
-];
+// Las elecciones incluidas (bebida del menú, etc.) viven en lib/products.ts
+// (PRODUCT_CHOICES): las comparte la card del bloque de packs.
 
 // ─── StepSection ───────────────────────────────────────────────────────────
 // Renders a step row: collapsed summary when not active, full content when active.
@@ -394,12 +390,19 @@ export default function ReservationForm({
   }, [isDirecto, directoAvailable]);
   useEffect(() => {
     function onAddPack(e: Event) {
-      const { items } = (e as CustomEvent<{items:{id:string,qty:number}[]}>).detail;
+      const { items, choice } = (e as CustomEvent<{
+        items: { id: string; qty: number }[];
+        choice?: { productId: string; value: string };
+      }>).detail;
       setCart(prev => {
         const next = {...prev};
         items.forEach(({id, qty}) => { next[id] = (next[id] ?? 0) + qty; });
         return next;
       });
+      // La bebida elegida en la tarjeta del menú llega con el evento.
+      if (choice) {
+        setChoices((prev) => ({ ...prev, [choice.productId]: choice.value }));
+      }
       // Llevar al formulario pero SIN colapsar la carta, por si quiere añadir más
       goToStep(1);
     }
