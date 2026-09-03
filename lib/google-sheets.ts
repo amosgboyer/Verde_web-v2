@@ -421,6 +421,14 @@ export interface OrderRow {
   totalAfterDiscount: number;
 }
 
+// Texto del cliente que empieza por =, +, - o @ es una fórmula para Sheets
+// (con USER_ENTERED): un teléfono "+34 …" acababa como #ERROR! en la hoja.
+// El apóstrofe inicial fuerza texto literal y NO forma parte del valor — al
+// leer la celda por API o desde el terminal se recibe el texto limpio.
+function sheetSafe(value: string): string {
+  return /^[=+\-@]/.test(value) ? `'${value}` : value;
+}
+
 export async function appendOrderToSheet(order: OrderRow): Promise<void> {
   const auth = getAuth();
   const sheets = google.sheets({ version: "v4", auth });
@@ -429,9 +437,9 @@ export async function appendOrderToSheet(order: OrderRow): Promise<void> {
     order.createdAt,
     order.status,
     order.stripeSessionId,
-    order.customerName,
-    order.email,
-    order.phone,
+    sheetSafe(order.customerName),
+    sheetSafe(order.email),
+    sheetSafe(order.phone),
     order.productId,
     order.productName,
     order.quantity,
@@ -440,11 +448,11 @@ export async function appendOrderToSheet(order: OrderRow): Promise<void> {
     order.finalPrice,
     order.depositPaid,
     order.pendingAmount,
-    order.notes,
-    order.deliveryAddress,
-    order.deliveryDetails,
-    order.postalCode,
-    order.deliveryZone,
+    sheetSafe(order.notes),
+    sheetSafe(order.deliveryAddress),
+    sheetSafe(order.deliveryDetails),
+    sheetSafe(order.postalCode),
+    sheetSafe(order.deliveryZone),
     order.deliveryMethod,
     // Legal acceptance — columns U, V, W
     order.privacyAccepted ? "TRUE" : "FALSE",
@@ -483,10 +491,10 @@ export async function appendWaitlistToSheet(entry: WaitlistRow): Promise<void> {
 
   const row = [
     entry.createdAt,
-    entry.name,
-    entry.email,
-    entry.phone,
-    entry.message,
+    sheetSafe(entry.name),
+    sheetSafe(entry.email),
+    sheetSafe(entry.phone),
+    sheetSafe(entry.message),
   ];
 
   await sheets.spreadsheets.values.append({
