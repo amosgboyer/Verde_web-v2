@@ -136,7 +136,7 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
                   }}
                 >
                   <div
-                    className="absolute top-[14px] right-[-24px] text-[0.62rem] font-medium tracking-[0.08em] uppercase px-8 py-1"
+                    className="absolute top-[26px] right-[-44px] w-[160px] text-center text-[0.62rem] font-medium tracking-[0.08em] uppercase py-1"
                     style={{
                       background: "var(--gold, #c8960a)",
                       color: "var(--dark, #1a1a0e)",
@@ -201,7 +201,7 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
               }}
             >
               <div
-                className="absolute top-[14px] right-[-24px] text-[0.62rem] font-medium tracking-[0.08em] uppercase px-8 py-1"
+                className="absolute top-[26px] right-[-44px] w-[160px] text-center text-[0.62rem] font-medium tracking-[0.08em] uppercase py-1"
                 style={{
                   background: "var(--gold, #c8960a)",
                   color: "var(--dark, #1a1a0e)",
@@ -313,7 +313,7 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
               {/* Ribbon Popular */}
               {pack.ribbon && (
                 <div
-                  className="absolute top-[14px] right-[-24px] text-[0.62rem] font-medium tracking-[0.08em] uppercase px-8 py-1"
+                  className="absolute top-[26px] right-[-44px] w-[160px] text-center text-[0.62rem] font-medium tracking-[0.08em] uppercase py-1"
                   style={{
                     background: "var(--gold, #c8960a)",
                     color: "var(--dark, #1a1a0e)",
