@@ -27,11 +27,24 @@ const INICIO_SEG =
   (VENTANA_LUNES.horaInicio.h * 60 + VENTANA_LUNES.horaInicio.m) * 60;
 const FIN_SEG = INICIO_SEG + VENTANA_LUNES.duracionMin * 60;
 
+// Lunes en los que NO se lanza la ventana (fecha en Madrid, YYYY-MM-DD). Sirve
+// para saltar un día puntual sin desactivar la promo entera; se reactiva sola
+// el siguiente lunes. 2026-09-07: pausado por Amos (el banner se solapaba con
+// el nav — pendiente de arreglar el apilado antes de reactivar).
+const FECHAS_SIN_VENTANA: string[] = ["2026-09-07"];
+
 // Partes de fecha/hora en Madrid, sin depender del huso del que ejecuta.
-function partesMadrid(now: Date): { diaSemana: number; segundosDelDia: number } {
+function partesMadrid(now: Date): {
+  diaSemana: number;
+  segundosDelDia: number;
+  fechaISO: string;
+} {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Madrid",
     weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -45,6 +58,7 @@ function partesMadrid(now: Date): { diaSemana: number; segundosDelDia: number } 
     diaSemana: dias[get("weekday")] ?? -1,
     segundosDelDia:
       Number(get("hour")) * 3600 + Number(get("minute")) * 60 + Number(get("second")),
+    fechaISO: `${get("year")}-${get("month")}-${get("day")}`,
   };
 }
 
@@ -56,8 +70,9 @@ export interface EstadoVentana {
 
 /** ¿Está abierta la ventana AHORA (hora de Madrid)? Sin gracia: esto pinta UI. */
 export function estadoVentana(now: Date = new Date()): EstadoVentana {
-  const { diaSemana, segundosDelDia } = partesMadrid(now);
+  const { diaSemana, segundosDelDia, fechaISO } = partesMadrid(now);
   const live =
+    !FECHAS_SIN_VENTANA.includes(fechaISO) &&
     diaSemana === VENTANA_LUNES.diaSemana &&
     segundosDelDia >= INICIO_SEG &&
     segundosDelDia < FIN_SEG;
@@ -82,8 +97,9 @@ export function ventanaAplicaAlPago(
   now: Date = new Date()
 ): boolean {
   if (!esMiercolesOJueves(reservationDate)) return false;
-  const { diaSemana, segundosDelDia } = partesMadrid(now);
+  const { diaSemana, segundosDelDia, fechaISO } = partesMadrid(now);
   return (
+    !FECHAS_SIN_VENTANA.includes(fechaISO) &&
     diaSemana === VENTANA_LUNES.diaSemana &&
     segundosDelDia >= INICIO_SEG &&
     segundosDelDia < FIN_SEG + VENTANA_LUNES.graciaSegundos
