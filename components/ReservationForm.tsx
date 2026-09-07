@@ -1333,26 +1333,6 @@ export default function ReservationForm({
               </div>
             )}
 
-            {/* Aviso de alérgenos + contaminación cruzada (arriba, antes de la carta) */}
-            <div
-              className="mb-6 flex items-start gap-3 rounded-xl border px-4 py-3"
-              style={{
-                background: "rgba(200,90,42,0.08)",
-                borderColor: "rgba(200,90,42,0.3)",
-              }}
-            >
-              <span className="text-lg leading-none" aria-hidden>
-                ⚠️
-              </span>
-              <p className="text-[13px] leading-snug text-negro/70">
-                <span className="font-bold text-tierra">
-                  Puede contener trazas de cacahuete y frutos secos.
-                </span>{" "}
-                Toca cada plato para ver sus alérgenos. Información orientativa;
-                ante una alergia grave, escríbenos antes de pedir.
-              </p>
-            </div>
-
             {(() => {
               // Variantes de tamaño: resolver opciones reales y ocultar las que
               // se muestran como selector (p.ej. la media ración) para que no
@@ -1460,6 +1440,26 @@ export default function ReservationForm({
                 </div>
               );
             })()}
+
+            {/* Aviso de alérgenos + contaminación cruzada (abajo, tras la carta) */}
+            <div
+              className="mt-8 flex items-start gap-3 rounded-xl border px-4 py-3"
+              style={{
+                background: "rgba(200,90,42,0.08)",
+                borderColor: "rgba(200,90,42,0.3)",
+              }}
+            >
+              <span className="text-lg leading-none" aria-hidden>
+                ⚠️
+              </span>
+              <p className="text-[13px] leading-snug text-negro/70">
+                <span className="font-bold text-tierra">
+                  Puede contener trazas de cacahuete y frutos secos.
+                </span>{" "}
+                Toca cada plato para ver sus alérgenos. Información orientativa;
+                ante una alergia grave, escríbenos antes de pedir.
+              </p>
+            </div>
 
             {/* ── Tu selección ──────────────────────────────────────────────
                 Única lista donde está TODO lo del carrito. Hace falta porque
