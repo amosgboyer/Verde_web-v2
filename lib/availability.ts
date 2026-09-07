@@ -51,6 +51,16 @@ const DEFAULT_MAX_ORDERS_PER_SLOT = 2;
 // especial — y ya no hay que abrir filas cada mes.
 const DEFAULT_OPEN_DAYS_AHEAD = 30;
 
+// Días de cierre semanal fijo de Verde (getUTCDay: 0=domingo, 1=lunes,
+// 2=martes…). Un día de estos se ofrece CERRADO por defecto — no hay que
+// marcarlo en la hoja cada semana. La fila explícita en Availability sigue
+// mandando: un martes con isOpen=TRUE en la hoja abriría igual (excepción).
+const DIAS_CIERRE_SEMANAL: number[] = [2]; // martes
+function esDiaCierreSemanal(iso: string): boolean {
+  // T12:00:00Z fija el día de forma estable, sin depender del huso local.
+  return DIAS_CIERRE_SEMANAL.includes(new Date(iso + "T12:00:00Z").getUTCDay());
+}
+
 export function buildTimeSlots(
   startTime: string,
   endTime: string,
@@ -108,12 +118,13 @@ export async function getAvailabilityDays(): Promise<DayAvailability[]> {
     d.setDate(d.getDate() + i);
     const iso = d.toISOString().slice(0, 10);
     if (!fechasConFila.has(iso)) {
+      const cerradoSemanal = esDiaCierreSemanal(iso);
       allDays.push({
         date: iso,
-        isOpen: true,
+        isOpen: !cerradoSemanal, // los martes (cierre fijo) nacen cerrados
         maxOrdersPerSlot: 0, // 0 → cae al cupo por defecto
         manuallySoldOut: false,
-        note: "",
+        note: cerradoSemanal ? "Cerrado (martes)" : "",
       });
     }
   }
