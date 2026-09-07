@@ -554,9 +554,10 @@ export function getPacks(): Product[] {
 // y otra de packs. Estos son los platos que se empujan arriba, EN ESTE ORDEN.
 // Para cambiar las novedades, tocar esta lista; vaciarla oculta la zona entera.
 export const DESTACADOS_IDS: string[] = [
-  "sango-de-pescado", // nuevo (sep 2026) — la fila vive en el Sheet
-  "la-chocletiza", // nuevo (sep 2026) — releva al colonche en el escaparate;
-  // el colonche sigue en la carta (sección Verde), solo sale de Novedades.
+  // La Chocletiza abre el escaparate (sep 2026); relevó al colonche, que sigue
+  // en la carta (sección Verde) pero fuera de Novedades.
+  "la-chocletiza",
+  "sango-de-pescado",
   "ceviche-jipijapa",
 ];
 
