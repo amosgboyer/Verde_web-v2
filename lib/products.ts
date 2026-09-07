@@ -555,7 +555,8 @@ export function getPacks(): Product[] {
 // Para cambiar las novedades, tocar esta lista; vaciarla oculta la zona entera.
 export const DESTACADOS_IDS: string[] = [
   "sango-de-pescado", // nuevo (sep 2026) — la fila vive en el Sheet
-  "colonche-de-chicharron",
+  "la-chocletiza", // nuevo (sep 2026) — releva al colonche en el escaparate;
+  // el colonche sigue en la carta (sección Verde), solo sale de Novedades.
   "ceviche-jipijapa",
 ];
 
