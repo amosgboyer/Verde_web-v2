@@ -23,6 +23,9 @@ interface ProductCardProps {
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
   offerBadge?: string;
+  /** Resalta la card con el dorado del menú (borde + brillo) para llamar la
+   *  atención sobre un plato concreto. */
+  destacado?: boolean;
   sizeOptions?: SizeOption[];
   quantityOf?: (productId: string) => number;
   addons?: { label: string; product: Product }[];
@@ -37,7 +40,7 @@ interface ProductCardProps {
 
 export default function ProductCard({
   product, quantity, maxQuantity, onAdd, onIncrement, onDecrement, offerBadge,
-  sizeOptions, quantityOf, addons, image,
+  destacado, sizeOptions, quantityOf, addons, image,
   choiceLabel, choiceOptions, choiceValue, onChoiceChange,
 }: ProductCardProps) {
   const hasSizes = !!sizeOptions && sizeOptions.length > 1;
@@ -62,12 +65,17 @@ export default function ProductCard({
         // la card entera apagaría también el velo y la foto tras las letras.
       )}
       style={{
-        border: offerBadge
+        // Dorado del menú: gana a los demás bordes para que el plato destaque
+        // siempre (aunque esté en el carrito o tenga oferta).
+        border: destacado
+          ? "2px solid var(--gold, #c8960a)"
+          : offerBadge
           ? "1.5px solid var(--terra, #c85a2a)"
           : inCart
           ? "1.5px solid var(--g2, #4a7c2f)"
           : "1px solid var(--border, rgba(44,90,27,0.13))",
         background: "#e8ddc4",
+        boxShadow: destacado ? "0 6px 26px rgba(200,150,10,0.45)" : undefined,
       }}
       onClick={() => setOpen((o) => !o)}
       tabIndex={0}
