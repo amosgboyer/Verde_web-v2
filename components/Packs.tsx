@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Product } from "@/lib/products";
-import { getPacks, PRODUCT_CHOICES, mismoId } from "@/lib/products";
+import { getPacks, PRODUCT_CHOICES, mismoId, esPlatoDorado } from "@/lib/products";
 
 // Nombre, descripción y PRECIO salen de lib/products.ts — que es lo que cobra
 // el checkout. Antes estaban copiados aquí a mano y un cambio de precio en el
@@ -130,10 +130,20 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
                 <article
                   key={plato.id}
                   className="relative rounded-[14px] p-4 sm:p-[1.6rem] overflow-hidden flex flex-col items-center text-center"
-                  style={{
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(200,150,10,0.45)",
-                  }}
+                  style={
+                    esPlatoDorado(plato.id)
+                      ? {
+                          // Mismo dorado intenso que la card del Menú de la Semana.
+                          background:
+                            "linear-gradient(150deg, rgba(200,150,10,0.28), rgba(200,90,42,0.22))",
+                          border: "1.5px solid var(--gold, #c8960a)",
+                          boxShadow: "0 8px 44px rgba(200,150,10,0.35)",
+                        }
+                      : {
+                          background: "rgba(255,255,255,0.05)",
+                          border: "1px solid rgba(200,150,10,0.45)",
+                        }
+                  }
                 >
                   <div
                     className="absolute top-[26px] right-[-44px] w-[160px] text-center text-[0.62rem] font-medium tracking-[0.08em] uppercase py-1"

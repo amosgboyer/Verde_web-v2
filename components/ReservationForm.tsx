@@ -6,7 +6,6 @@ import {
   imageForProduct,
   normalizeCategory,
   mismoId,
-  esPlatoDorado,
   PRODUCT_CHOICES,
 } from "@/lib/products";
 import { platoDeclaraAlergeno, platoSinDetallar } from "@/lib/allergens";
@@ -1442,7 +1441,6 @@ export default function ReservationForm({
                               onChoiceChange={(v) =>
                                 setChoices((prev) => ({ ...prev, [product.id]: v }))
                               }
-                              destacado={esPlatoDorado(product.id)}
                               offerBadge={
                                 weekendOffer &&
                                 productMatchesOffer(weekendOffer, {
