@@ -54,11 +54,18 @@ const DEFAULT_OPEN_DAYS_AHEAD = 30;
 // Días de cierre semanal fijo de Verde (getUTCDay: 0=domingo, 1=lunes,
 // 2=martes…). Un día de estos se ofrece CERRADO por defecto — no hay que
 // marcarlo en la hoja cada semana. La fila explícita en Availability sigue
-// mandando: un martes con isOpen=TRUE en la hoja abriría igual (excepción).
-const DIAS_CIERRE_SEMANAL: number[] = [2]; // martes
+// mandando: un lunes/martes con isOpen=TRUE en la hoja abriría igual (excepción).
+const DIAS_CIERRE_SEMANAL: number[] = [1, 2]; // lunes y martes
+const NOMBRE_DIA: Record<number, string> = {
+  0: "domingo", 1: "lunes", 2: "martes", 3: "miércoles",
+  4: "jueves", 5: "viernes", 6: "sábado",
+};
+// T12:00:00Z fija el día de forma estable, sin depender del huso local.
+function diaSemanaDe(iso: string): number {
+  return new Date(iso + "T12:00:00Z").getUTCDay();
+}
 function esDiaCierreSemanal(iso: string): boolean {
-  // T12:00:00Z fija el día de forma estable, sin depender del huso local.
-  return DIAS_CIERRE_SEMANAL.includes(new Date(iso + "T12:00:00Z").getUTCDay());
+  return DIAS_CIERRE_SEMANAL.includes(diaSemanaDe(iso));
 }
 
 export function buildTimeSlots(
@@ -121,10 +128,10 @@ export async function getAvailabilityDays(): Promise<DayAvailability[]> {
       const cerradoSemanal = esDiaCierreSemanal(iso);
       allDays.push({
         date: iso,
-        isOpen: !cerradoSemanal, // los martes (cierre fijo) nacen cerrados
+        isOpen: !cerradoSemanal, // lunes y martes (cierre fijo) nacen cerrados
         maxOrdersPerSlot: 0, // 0 → cae al cupo por defecto
         manuallySoldOut: false,
-        note: cerradoSemanal ? "Cerrado (martes)" : "",
+        note: cerradoSemanal ? `Cerrado (${NOMBRE_DIA[diaSemanaDe(iso)]})` : "",
       });
     }
   }
