@@ -473,7 +473,7 @@ export function CustomerReservationEmail({
                   </p>
                   <p style={{ margin: "6px 0 0 0", fontSize: "14px" }}>
                     <a
-                      href="https://wa.me/34605442809"
+                      href="https://www.verdemadrid.com/wa"
                       style={{
                         color: V.platano,
                         fontWeight: "bold",
