@@ -1,51 +1,46 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { sendConfirmationToCustomer } from "@/lib/email";
 
 // GET /api/test-email
-// Envía un CustomerReservationEmail con datos ficticios.
-//
-// En desarrollo: va a VERDE_INTERNAL_EMAIL sin más.
-// En producción: SOLO si se pasa ?key=<TOKEN_DIAG> correcto — es una prueba de
-// entregabilidad temporal (verificar que el correo nuevo, con el enlace de
-// WhatsApp por dominio propio, llega a bandeja y no a spam). Se puede indicar
-// destinatario con ?to=. QUITAR este acceso tras la prueba.
-const TOKEN_DIAG = "diag-JuARTR9VUSxdBZOaWTLA7o_Me2qKYNwp";
-
-export async function GET(req: NextRequest) {
-  const isDev = process.env.NODE_ENV === "development";
-  const key = req.nextUrl.searchParams.get("key");
-  if (!isDev && key !== TOKEN_DIAG) {
+// Sends a CustomerReservationEmail with fake data to VERDE_INTERNAL_EMAIL.
+// Only for development / staging. Remove or protect in production.
+export async function GET() {
+  // En producción esta ruta NO existe. Es pública y cada visita ENVÍA un correo
+  // real: dejarla viva permite a cualquiera llenar el buzón interno y quemar la
+  // cuota de Resend. Solo se puede usar en desarrollo.
+  if (process.env.NODE_ENV !== "development") {
     return new NextResponse(null, { status: 404 });
   }
 
-  const to = req.nextUrl.searchParams.get("to") || process.env.VERDE_INTERNAL_EMAIL;
+  const to = process.env.VERDE_INTERNAL_EMAIL;
 
   if (!to) {
     return NextResponse.json(
-      { success: false, error: "Falta destinatario (VERDE_INTERNAL_EMAIL o ?to=)" },
+      { success: false, error: "Falta VERDE_INTERNAL_EMAIL en variables de entorno" },
       { status: 500 }
     );
   }
 
   try {
     await sendConfirmationToCustomer({
+      // Redirect to internal email so no real customer gets a test email
       email:           to,
-      customerName:    "Prueba Entregabilidad",
+      customerName:    "Sara Rodríguez",
       phone:           "+34 600 000 000",
       items: [
-        { productName: "Bolón Mixto de la Casa", quantity: 1, finalPrice: 11 },
-        { productName: "La Chocletiza",          quantity: 1, finalPrice: 9.9 },
+        { productName: "Bolón clásico", quantity: 2, finalPrice: 8 },
+        { productName: "Combo Verde",   quantity: 1, finalPrice: 14 },
       ],
-      reservationDate: "miércoles 17 de septiembre de 2026",
-      reservationTime: "13:00",
-      depositPaid:     20.9,
-      pendingAmount:   0,
+      reservationDate: "sábado 17 de mayo de 2025",
+      reservationTime: "10:00",
+      depositPaid:     3,
+      pendingAmount:   27,
       deliveryMethod:  "delivery",
-      deliveryAddress: "Calle de Alberto Aguilera 12",
-      deliveryDetails: "2ºA",
-      postalCode:      "28015",
-      deliveryZone:    "Z1 · Chamberí",
-      notes:           "Correo de prueba de entregabilidad.",
+      deliveryAddress: "Calle Gran Vía 12, 3º A",
+      deliveryDetails: "Timbre apellido Rodríguez",
+      postalCode:      "28013",
+      deliveryZone:    "Centro",
+      notes:           "Sin cebolla por favor.",
     });
 
     return NextResponse.json({ success: true, sentTo: to });
