@@ -316,6 +316,10 @@ export interface AddOrderContext {
   reservationDate: string;
   reservationTime: string;
   deliveryMethod: string;
+  deliveryAddress: string;
+  deliveryDetails: string;
+  postalCode: string;
+  deliveryZone: string;
 }
 
 const EMPTY_ADD_CONTEXT: AddOrderContext = {
@@ -328,6 +332,10 @@ const EMPTY_ADD_CONTEXT: AddOrderContext = {
   reservationDate: "",
   reservationTime: "",
   deliveryMethod: "",
+  deliveryAddress: "",
+  deliveryDetails: "",
+  postalCode: "",
+  deliveryZone: "",
 };
 
 // Devuelve el contexto de un pedido para poder ampliarlo. Acepta:
@@ -381,7 +389,64 @@ export async function findAddOrderContext(opts: {
     reservationDate: normalizeDate(match[9] ?? ""),
     reservationTime: normalizeTime(match[10] ?? ""),
     deliveryMethod: (match[19] ?? "").trim() || "delivery",
+    deliveryAddress: (match[15] ?? "").trim(),
+    deliveryDetails: (match[16] ?? "").trim(),
+    postalCode: (match[17] ?? "").trim(),
+    deliveryZone: (match[18] ?? "").trim(),
   };
+}
+
+// ─── Editar la dirección de un pedido ya existente ────────────────────────────
+// Localiza TODAS las filas del pedido (col C = stripeSessionId) y reescribe las
+// celdas de dirección/detalles/CP/zona (P–S). Si se pasa `newDeliveryFee`,
+// actualiza además el importe (L,M) de la línea `envio-delivery` para que la
+// suma de Orders cuadre con lo cobrado. El apóstrofe evita que un texto que
+// empiece por = + - @ se interprete como fórmula (mismo criterio que appendOrder).
+export async function updateOrderAddress(
+  sessionId: string,
+  fields: {
+    deliveryAddress: string;
+    deliveryDetails: string;
+    postalCode: string;
+    deliveryZone: string;
+    newDeliveryFee?: number;
+  }
+): Promise<{ updatedRows: number }> {
+  const auth = getAuth();
+  const sheets = google.sheets({ version: "v4", auth });
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getSpreadsheetId(),
+    range: "Orders!A2:T",
+  });
+  const rows = (res.data.values ?? []) as string[][];
+  const safe = (v: string) => (/^[=+\-@]/.test(v) ? `'${v}` : v);
+  const sid = sessionId.trim();
+  const data: { range: string; values: string[][] }[] = [];
+  rows.forEach((r, i) => {
+    if ((r[2] ?? "").trim() !== sid) return;
+    const rowNum = i + 2; // A2:T empieza en la fila 2
+    data.push({
+      range: `Orders!P${rowNum}:S${rowNum}`,
+      values: [[
+        safe(fields.deliveryAddress),
+        safe(fields.deliveryDetails),
+        safe(fields.postalCode),
+        safe(fields.deliveryZone),
+      ]],
+    });
+    if (fields.newDeliveryFee != null && (r[6] ?? "").trim() === "envio-delivery") {
+      data.push({
+        range: `Orders!L${rowNum}:M${rowNum}`,
+        values: [[String(fields.newDeliveryFee), String(fields.newDeliveryFee)]],
+      });
+    }
+  });
+  if (data.length === 0) return { updatedRows: 0 };
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId: getSpreadsheetId(),
+    requestBody: { valueInputOption: "RAW", data },
+  });
+  return { updatedRows: data.length };
 }
 
 // ─── Append Order ─────────────────────────────────────────────────────────────
