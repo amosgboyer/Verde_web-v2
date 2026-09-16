@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { appendOrderToSheet, findOrderByStripeSessionId, getProductsRows } from "@/lib/google-sheets";
+import { appendOrderToSheet, findOrderByStripeSessionId, getProductsRows, updateOrderAddress } from "@/lib/google-sheets";
 import {
   sendConfirmationToCustomer,
   sendInternalOrderNotification,
@@ -50,6 +50,32 @@ export async function POST(req: NextRequest) {
     if (!meta) {
       console.error("[stripe-webhook] Sesión sin metadata:", session.id);
       return NextResponse.json({ error: "Metadata vacía." }, { status: 400 });
+    }
+
+    // ── Cambio de dirección (no es un pedido nuevo) ──────────────────────────
+    // Se pagó la diferencia de envío; aplicar la nueva dirección al pedido
+    // original editando sus filas. Idempotente (escribe valores fijos), así que
+    // un reintento de Stripe no causa daño.
+    if (meta.isAddressChange === "true") {
+      try {
+        const { updatedRows } = await updateOrderAddress(meta.parentSessionId ?? "", {
+          deliveryAddress: meta.newAddress ?? "",
+          deliveryDetails: meta.newDetails ?? "",
+          postalCode: meta.newPostalCode ?? "",
+          deliveryZone: meta.newZoneLabel ?? "",
+          newDeliveryFee: Number(meta.newDeliveryFee ?? "0") || undefined,
+        });
+        console.log(
+          `[stripe-webhook] Cambio de dirección aplicado a ${meta.parentSessionId} (${updatedRows} celdas)`
+        );
+      } catch (err) {
+        console.error("[stripe-webhook] Error aplicando cambio de dirección:", session.id, err);
+        return NextResponse.json(
+          { error: "Error al aplicar el cambio de dirección. Requiere revisión manual." },
+          { status: 500 }
+        );
+      }
+      return NextResponse.json({ received: true });
     }
 
     // Dedup: skip if already processed
