@@ -422,6 +422,26 @@ export function CustomerReservationEmail({
                             <p
                               style={{
                                 margin: "12px 0 0 0",
+                                fontSize: "13px",
+                                color: "#555",
+                                lineHeight: "1.5",
+                              }}
+                            >
+                              ¿Te equivocaste de dirección?{" "}
+                              <a
+                                href={`https://www.verdemadrid.com/editar?codigo=${orderCode}`}
+                                style={{
+                                  color: V.platano,
+                                  fontWeight: "bold",
+                                  textDecoration: "none",
+                                }}
+                              >
+                                Cambiar la dirección de entrega
+                              </a>
+                            </p>
+                            <p
+                              style={{
+                                margin: "12px 0 0 0",
                                 fontSize: "12px",
                                 color: "#888",
                               }}

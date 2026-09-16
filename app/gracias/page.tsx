@@ -145,6 +145,15 @@ export default async function GraciasPage({ searchParams }: GraciasPageProps) {
             >
               ➕ Añadir a mi pedido
             </a>
+            <p className="text-crema/45 text-xs leading-relaxed mt-5">
+              ¿Te equivocaste de dirección?{" "}
+              <a
+                href={`/editar?codigo=${orderCode}`}
+                className="text-oro underline underline-offset-2 hover:opacity-90"
+              >
+                Cambiar la dirección de entrega
+              </a>
+            </p>
           </div>
         )}
 
