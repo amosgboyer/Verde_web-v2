@@ -173,6 +173,9 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
                     >
                       {fmtPrecio(plato.depositAmount || plato.finalPrice)}
                     </span>
+                    <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.55)" }}>
+                      IVA incluido
+                    </span>
                     {!readOnly && (
                       <button
                         type="button"
@@ -279,6 +282,9 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
                 >
                   {fmtPrecio(menuSemana.depositAmount || menuSemana.finalPrice)}
                 </span>
+                <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.55)" }}>
+                  IVA incluido
+                </span>
                 {!readOnly && (
                   <button
                     type="button"
@@ -374,6 +380,9 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
                     {pack.saving}
                   </span>
                 </div>
+                <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.55)" }}>
+                  IVA incluido
+                </span>
                 {!readOnly && (
                   <button
                     type="button"

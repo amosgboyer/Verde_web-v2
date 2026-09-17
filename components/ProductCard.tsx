@@ -344,8 +344,11 @@ export default function ProductCard({
 
         {/* Precio + acción */}
         <div className="flex items-center justify-between gap-2 pt-0.5">
-          <span className="font-extrabold tabular-nums" style={{ fontSize: "1.05rem" }}>
-            {fmtPrice(price)} €
+          <span className="flex flex-col leading-tight">
+            <span className="font-extrabold tabular-nums" style={{ fontSize: "1.05rem" }}>
+              {fmtPrice(price)} €
+            </span>
+            <span style={{ fontSize: "0.6rem", opacity: 0.6 }}>IVA incluido</span>
           </span>
           {active.available ? (
             inCart ? (
