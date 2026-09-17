@@ -11,6 +11,19 @@ export interface Product {
   image?: string;           // ruta a /public o URL externa
   category?: string;
   isPack?: boolean;         // true = combo/pack con precio propio (no se muestra en la carta)
+  // Tipo de IVA que YA incluye el precio (informativo; no cambia el importe).
+  // 0.10 para toda la comida actual. Las bebidas alcohólicas y los refrescos
+  // azucarados irán al 0.21 cuando se añadan. Opcional: la carta real viene del
+  // Sheet (sin columna de IVA), así que se resuelve con `vatRateOf` (default 10%).
+  vatRate?: number;
+}
+
+// IVA que incluye el precio de un producto. Toda la comida actual va al 10 %;
+// un producto puede fijar su propio `vatRate` (p. ej. 0.21 para alcohol o
+// refrescos azucarados) y entonces manda ese.
+export const DEFAULT_VAT_RATE = 0.10;
+export function vatRateOf(p: { vatRate?: number }): number {
+  return p.vatRate ?? DEFAULT_VAT_RATE;
 }
 
 export const PRODUCTS: Product[] = [

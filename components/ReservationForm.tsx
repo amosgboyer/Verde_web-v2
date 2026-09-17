@@ -6,8 +6,11 @@ import {
   imageForProduct,
   normalizeCategory,
   mismoId,
+  vatRateOf,
+  DEFAULT_VAT_RATE,
   PRODUCT_CHOICES,
 } from "@/lib/products";
+import { vatBreakdown, formatCents, ratePercent } from "@/lib/vat";
 import { platoDeclaraAlergeno, platoSinDetallar } from "@/lib/allergens";
 import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
@@ -883,6 +886,16 @@ export default function ReservationForm({
   const effectiveDeliveryFee =
     fields.deliveryMethod === "delivery" && delivery?.deliverable ? delivery.fee : 0;
   const grandTotal = totalAfterDiscount + effectiveDeliveryFee;
+
+  // IVA informativo: NO cambia el total. El precio ya lo incluye; aquí solo se
+  // desglosa. Hoy toda la carta va al mismo tipo, así que se calcula sobre el
+  // total realmente cobrado (base+vat === total, al céntimo). Si algún día hay
+  // varios tipos en el carrito, se listará una línea por tipo.
+  const tiposIva = new Set(cartProducts.map((p) => vatRateOf(p)));
+  const tipoIva = tiposIva.size === 1 ? [...tiposIva][0] : DEFAULT_VAT_RATE;
+  const ivaGroups = vatBreakdown([
+    { gross: Math.round(grandTotal * 100), rate: tipoIva },
+  ]).groups;
 
   // Carrito flotante — productos + envío
   useEffect(() => {
@@ -2235,6 +2248,12 @@ export default function ReservationForm({
                   <span>Total a pagar hoy</span>
                   <span>{grandTotal.toFixed(2).replace(".", ",")} €</span>
                 </div>
+                {/* IVA informativo: ya incluido en el total, no lo modifica */}
+                {ivaGroups.map((g) => (
+                  <div key={g.rate} className="text-[11px] text-negro/40 leading-snug">
+                    Incluye {formatCents(g.vat)} € de IVA ({ratePercent(g.rate)} %)
+                  </div>
+                ))}
               </div>
               </div>
 
