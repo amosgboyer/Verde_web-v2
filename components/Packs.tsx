@@ -167,15 +167,17 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
                   </p>
 
                   <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
-                    <span
-                      className="font-mono font-bold text-[1.3rem] sm:text-[1.5rem]"
-                      style={{ color: "var(--gold, #c8960a)" }}
-                    >
-                      {fmtPrecio(plato.depositAmount || plato.finalPrice)}
-                    </span>
-                    <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.55)" }}>
-                      IVA incluido
-                    </span>
+                    <div className="flex flex-col items-center leading-tight">
+                      <span
+                        className="font-mono font-bold text-[1.3rem] sm:text-[1.5rem]"
+                        style={{ color: "var(--gold, #c8960a)" }}
+                      >
+                        {fmtPrecio(plato.depositAmount || plato.finalPrice)}
+                      </span>
+                      <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.55)" }}>
+                        IVA incluido
+                      </span>
+                    </div>
                     {!readOnly && (
                       <button
                         type="button"
@@ -276,15 +278,17 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
               )}
 
               <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
-                <span
-                  className="font-mono font-bold text-[1.4rem] sm:text-[1.6rem]"
-                  style={{ color: "var(--gold, #c8960a)" }}
-                >
-                  {fmtPrecio(menuSemana.depositAmount || menuSemana.finalPrice)}
-                </span>
-                <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.55)" }}>
-                  IVA incluido
-                </span>
+                <div className="flex flex-col items-center leading-tight">
+                  <span
+                    className="font-mono font-bold text-[1.4rem] sm:text-[1.6rem]"
+                    style={{ color: "var(--gold, #c8960a)" }}
+                  >
+                    {fmtPrecio(menuSemana.depositAmount || menuSemana.finalPrice)}
+                  </span>
+                  <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.55)" }}>
+                    IVA incluido
+                  </span>
+                </div>
                 {!readOnly && (
                   <button
                     type="button"
@@ -357,32 +361,34 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
               </p>
 
               <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
-                <div className="flex items-center justify-center gap-2">
-                  <span
-                    className="font-mono font-bold text-[1.3rem] sm:text-[1.5rem]"
-                    style={{
-                      color: pack.featured
-                        ? "white"
-                        : "var(--g3, #7ab356)",
-                    }}
-                  >
-                    {pack.price}
-                  </span>
-                  <span
-                    className="text-[0.7rem] px-2 py-0.5 rounded-full"
-                    style={{
-                      background: pack.featured
-                        ? "rgba(255,255,255,0.2)"
-                        : "rgba(74,124,47,0.25)",
-                      color: pack.featured ? "white" : "var(--g3, #7ab356)",
-                    }}
-                  >
-                    {pack.saving}
+                <div className="flex flex-col items-center leading-tight">
+                  <div className="flex items-center justify-center gap-2">
+                    <span
+                      className="font-mono font-bold text-[1.3rem] sm:text-[1.5rem]"
+                      style={{
+                        color: pack.featured
+                          ? "white"
+                          : "var(--g3, #7ab356)",
+                      }}
+                    >
+                      {pack.price}
+                    </span>
+                    <span
+                      className="text-[0.7rem] px-2 py-0.5 rounded-full"
+                      style={{
+                        background: pack.featured
+                          ? "rgba(255,255,255,0.2)"
+                          : "rgba(74,124,47,0.25)",
+                        color: pack.featured ? "white" : "var(--g3, #7ab356)",
+                      }}
+                    >
+                      {pack.saving}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.55)", marginTop: "2px" }}>
+                    IVA incluido
                   </span>
                 </div>
-                <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.55)" }}>
-                  IVA incluido
-                </span>
                 {!readOnly && (
                   <button
                     type="button"
