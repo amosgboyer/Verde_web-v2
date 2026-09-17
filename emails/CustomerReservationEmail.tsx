@@ -8,6 +8,10 @@ import {
 } from "@react-email/components";
 import React from "react";
 import { PICKUP_ADDRESS } from "../lib/store-config";
+import { vatBreakdown, formatCents, ratePercent } from "../lib/vat";
+
+// IVA que ya incluye el total (informativo). Toda la carta actual va al 10 %.
+const EMAIL_VAT_RATE = 0.10;
 
 // ─── Shared types (mirror of lib/email OrderItem, no circular import) ───────
 interface OrderItem {
@@ -359,8 +363,39 @@ export function CustomerReservationEmail({
                       {pendingAmount > 0 && (
                         <Row label="Pendiente" value={`${pendingAmount} €`} />
                       )}
+                      {/* Desglose de IVA — informativo, ya incluido en el total */}
+                      {(() => {
+                        const iva = vatBreakdown([
+                          { gross: Math.round(depositPaid * 100), rate: EMAIL_VAT_RATE },
+                        ]);
+                        return (
+                          <>
+                            <Row
+                              label="Base imponible"
+                              value={`${formatCents(iva.baseTotal)} €`}
+                            />
+                            {iva.groups.map((g) => (
+                              <Row
+                                key={g.rate}
+                                label={`IVA (${ratePercent(g.rate)} %)`}
+                                value={`${formatCents(g.vat)} €`}
+                              />
+                            ))}
+                          </>
+                        );
+                      })()}
                     </tbody>
                   </table>
+                  <p
+                    style={{
+                      margin: "8px 0 0 0",
+                      fontSize: "11px",
+                      color: V.gris,
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    Este es un resumen de tu pedido, no una factura.
+                  </p>
 
                 </td>
               </tr>

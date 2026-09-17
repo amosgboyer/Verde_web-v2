@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { getProductById, estaAgotadoTemporal } from "@/lib/products";
+import { getProductById, estaAgotadoTemporal, DEFAULT_VAT_RATE } from "@/lib/products";
+import { vatBreakdown } from "@/lib/vat";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { isSlotAvailable } from "@/lib/availability";
 import { reservationSchema } from "@/lib/validators";
@@ -261,6 +262,20 @@ export async function POST(req: NextRequest) {
     const deliveryFee = isPickup ? 0 : feeForZone(serverZone);
     const chargeTotal = subtotalAfterDiscount + deliveryFee;
 
+    // Desglose de IVA (informativo, para conciliación contable). NO cambia el
+    // importe cobrado: el precio ya incluye IVA; aquí solo se separa base+cuota
+    // sobre el total realmente cobrado. Hoy toda la carta va al tipo por defecto.
+    const iva = vatBreakdown([
+      { gross: Math.round(chargeTotal * 100), rate: DEFAULT_VAT_RATE },
+    ]);
+    const vatBreakdownStr = JSON.stringify(
+      iva.groups.map((g) => ({
+        rate: g.rate,
+        base: (g.base / 100).toFixed(2),
+        vat: (g.vat / 100).toFixed(2),
+      }))
+    );
+
     console.log(
       `[checkout] subtotal=${productsSubtotal} ` +
       `promoDiscount=${discount.discountAmount} ` +
@@ -342,6 +357,10 @@ export async function POST(req: NextRequest) {
         // con /^Z(\d)/ — el precio ya no identifica la zona con las tarifas nuevas.
         deliveryZone:
           isPickup || !serverZone ? "" : zoneLabel(serverZone, parsed.deliveryZone),
+        // IVA informativo para conciliación contable (no altera el cobro)
+        base_total: (iva.baseTotal / 100).toFixed(2),
+        vat_total: (iva.vatTotal / 100).toFixed(2),
+        vat_breakdown: vatBreakdownStr,
         totalItems: String(totalItems),
         totalFinal: String(productsSubtotal),
         totalDeposit: String(chargeTotal), // monto real cobrado (productos − promo + envío)

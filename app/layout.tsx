@@ -190,6 +190,8 @@ export default function RootLayout({
               color: "rgba(255,255,255,0.2)",
             }}>
             © {new Date().getFullYear()} Verde Madrid · Todos los derechos reservados
+            <span style={{ margin: "0 6px" }}>·</span>
+            Precios con IVA incluido
           </div>
         </footer>
 

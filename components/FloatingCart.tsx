@@ -48,6 +48,9 @@ export default function FloatingCart({ onOpen }: { onOpen?: () => void }) {
         <div className="font-mono font-bold text-base" style={{ color: "#f2ead8" }}>
           {fmt(cart.total)}
         </div>
+        <div className="text-[9px]" style={{ color: "rgba(245,240,232,0.45)" }}>
+          IVA incluido
+        </div>
       </div>
       <span
         className="text-[10px] font-semibold uppercase tracking-[0.12em]"
