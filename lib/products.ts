@@ -276,9 +276,6 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   "inca-kola": "/productos/inca-kola.jpg",
   "ceviche-jipijapa": "/productos/ceviche-jipijapa.jpg",
   "colonche-de-chicharron": "/productos/colonche-de-chicharron.jpg",
-  "chicharron-con-guacamole": "/productos/chicharron-con-guacamole.jpg",
-  "sango-de-pescado": "/productos/sango-de-pescado.jpg",
-  "sango-media-racion": "/productos/sango-de-pescado.jpg",
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
@@ -367,22 +364,6 @@ export function getBebidas(): Product[] {
 // mismo id, manda el Sheet y este deja de usarse (no se duplica).
 export const EXTRA_PLATOS: Product[] = [
   {
-    id: "chicharron-con-guacamole",
-    name: "Chicharrón con Guacamole",
-    description:
-      "Panceta fresca crujiente, guacamole de la casa, patacón, ají manaba y lima.",
-    finalPrice: 14,
-    depositAmount: 14,
-    available: true,
-    // "Consultar" a propósito: tres subrecetas (guacamole, ají manaba y ajís
-    // encurtidos) no están desglosadas y el ají manabita lleva maní a menudo.
-    // Así la web dice al alérgico que pregunte, en vez de callar y dar a
-    // entender que no hay nada. Sustituir por el valor real al confirmarlo.
-    allergens: ["Consultar"],
-    category: "otros",
-    image: "/productos/chicharron-con-guacamole.jpg",
-  },
-  {
     id: "colonche-de-chicharron",
     name: "Colonche de Chicharrón",
     description:
@@ -470,7 +451,6 @@ const AGOTADOS_TEMPORALES: { id: string; hasta: string }[] = [
   // Pedido de Amos (31-08): siguen agotados hasta la semana que viene.
   // Vuelven solos el martes 02-09 a las 00:00.
   { id: "patacón-con-rabo-de-toto", hasta: "2026-09-01" },
-  { id: "chicharron-con-guacamole", hasta: "2026-09-01" },
 ];
 
 /**
@@ -570,7 +550,6 @@ export const DESTACADOS_IDS: string[] = [
   // La Chocletiza abre el escaparate (sep 2026); relevó al colonche, que sigue
   // en la carta (sección Verde) pero fuera de Novedades.
   "la-chocletiza",
-  "sango-de-pescado",
   "ceviche-jipijapa",
 ];
 

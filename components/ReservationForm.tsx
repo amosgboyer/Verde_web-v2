@@ -236,13 +236,6 @@ const SIZE_VARIANT_GROUPS: { baseId: string; options: { label: string; id: strin
       { label: "Media", id: "tigrillo-media-racion" },
     ],
   },
-  {
-    baseId: "sango-de-pescado",
-    options: [
-      { label: "Entera", id: "sango-de-pescado" },
-      { label: "Media", id: "sango-media-racion" },
-    ],
-  },
 ];
 
 // ─── Extras de plato ─────────────────────────────────────────────────────────
