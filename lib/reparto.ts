@@ -207,8 +207,8 @@ export async function getRepartoEvento(): Promise<RepartoEvento> {
   }
   return {
     fecha: map["reparto_fecha"] || "Lunes 5 de octubre",
-    hora: map["reparto_hora"] || "",
-    lugar: map["reparto_lugar"] || "",
+    hora: map["reparto_hora"] || "19:00 h",
+    lugar: map["reparto_lugar"] || "Mercado de Barceló (C/ Barceló, 6)",
     abierto: (map["reparto_abierto"] ?? "TRUE").toUpperCase() !== "FALSE",
   };
 }

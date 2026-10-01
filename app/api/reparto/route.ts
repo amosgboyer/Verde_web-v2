@@ -25,8 +25,8 @@ const NO_CACHE = { "Cache-Control": "no-store" };
 
 const FALLBACK_EVENTO: RepartoEvento = {
   fecha: "Lunes 5 de octubre",
-  hora: "",
-  lugar: "",
+  hora: "19:00 h",
+  lugar: "Mercado de Barceló (C/ Barceló, 6)",
   abierto: true,
 };
 

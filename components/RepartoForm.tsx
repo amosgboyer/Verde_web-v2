@@ -74,7 +74,7 @@ export default function RepartoForm() {
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [trampa, setTrampa] = useState("");
-  const [evento, setEvento] = useState<Evento>({ fecha: "Lunes 5 de octubre", hora: "", lugar: "", abierto: true });
+  const [evento, setEvento] = useState<Evento>({ fecha: "Lunes 5 de octubre", hora: "19:00 h", lugar: "Mercado de Barceló (C/ Barceló, 6)", abierto: true });
   const [gente, setGente] = useState<Persona[] | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const primeraCarga = useRef(true);
