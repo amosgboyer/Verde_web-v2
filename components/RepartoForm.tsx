@@ -179,6 +179,8 @@ export default function RepartoForm() {
   // ─── Recuento de lo que llega ──────────────────────────────────────────────
   const recuento: Record<string, number> = {};
   (gente ?? []).forEach((g) => g.trae.forEach((t) => t !== NADA && (recuento[t] = (recuento[t] ?? 0) + 1)));
+  // "Lunes 5 de octubre" → "lunes 5"
+  const diaCorto = (evento.fecha.match(/^\s*(\p{L}+\s+\d{1,2})/u)?.[1] ?? evento.fecha).toLowerCase();
   const fechaCorta = (() => {
     const m = evento.fecha.match(/(\d{1,2})\s+de\s+(\p{L}{3})/iu);
     return m ? `Lun · ${m[1]} ${m[2].toLowerCase()}` : "Lunes";
@@ -209,7 +211,7 @@ export default function RepartoForm() {
         {/* ── Conversación ── */}
         <div className="min-w-0">
           <h1 className="font-display text-[clamp(1.9rem,5vw,2.8rem)] leading-[1.05] text-g1 [text-wrap:balance]">
-            Este lunes salimos a llevar comida y abrigo a quien duerme en la calle. ¿Te vienes?
+            Este {evento.fecha.toLowerCase()} salimos a llevar comida y abrigo a quien duerme en la calle. ¿Te vienes?
           </h1>
           <p className="mb-7 mt-3 max-w-[46ch] text-gray">
             Cinco preguntas cortas, una cada vez. Mientras respondes se va escribiendo tu etiqueta. Abajo ves qué trae ya
@@ -228,7 +230,7 @@ export default function RepartoForm() {
             <div className={`${styles.stage} rounded-2xl border border-cream3 bg-[var(--white)] p-6`}>
               <p className="font-mono text-[0.7rem] uppercase tracking-[0.12em] text-gray">Inscripción guardada</p>
               <h2 className="mt-1 font-display text-[1.8rem] leading-tight text-g1">
-                Gracias, {nombrePila(d.nombre)}. Nos vemos el lunes.
+                Gracias, {nombrePila(d.nombre)}. Nos vemos el {diaCorto}.
               </h2>
               <p className="mt-1 text-gray">Te escribiremos por WhatsApp con la ruta.</p>
               <dl className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 gap-y-1.5">
@@ -393,7 +395,7 @@ export default function RepartoForm() {
             <div className={styles.stamp} aria-hidden="true">APUNTADO</div>
           </div>
           <p className="mt-4 text-center text-[0.82rem] text-gray">
-            {modo === "pase" ? "Esta es tu etiqueta para el lunes." : "Se rellena sola mientras contestas."}
+            {modo === "pase" ? `Esta es tu etiqueta para el ${diaCorto}.` : "Se rellena sola mientras contestas."}
           </p>
         </aside>
       </div>
