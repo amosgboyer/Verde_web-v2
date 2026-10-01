@@ -81,6 +81,27 @@ export default function PoliticaPrivacidadPage() {
 
           <div>
             <h2 className="text-negro text-xs font-semibold uppercase tracking-[0.2em] mb-3">
+              Reparto solidario
+            </h2>
+            <p className="mb-3">
+              Si te apuntas a salir a repartir desde verdemadrid.com/reparto, guardamos tu nombre,
+              tu teléfono, lo que vas a traer, los idiomas que hablas y la nota que nos dejes. Los
+              usamos solo para organizar el reparto y escribirte por WhatsApp sobre él, con tu
+              consentimiento, que marcas al apuntarte.
+            </p>
+            <p className="mb-3">
+              Tu teléfono solo lo ve el equipo de VERDE. En la lista pública de la página aparece
+              únicamente tu nombre de pila (o &ldquo;Alguien&rdquo;, si así lo eliges) y lo que traes. Si en
+              la nota escribes un teléfono, un email o un enlace, lo ocultamos antes de mostrarla.
+            </p>
+            <p>
+              Borramos estos datos en el mes siguiente al reparto. Puedes pedirnos que los borremos
+              antes escribiendo al email de contacto de abajo.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-negro text-xs font-semibold uppercase tracking-[0.2em] mb-3">
               Responsable
             </h2>
             <p>VERDE · verdemadrid.com</p>
