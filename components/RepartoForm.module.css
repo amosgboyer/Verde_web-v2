@@ -1,0 +1,120 @@
+/* Etiqueta de bolsa de kraft que se rellena mientras la persona contesta. */
+.tag {
+  position: relative;
+  background-color: #d6b98a;
+  background-image: repeating-linear-gradient(0deg, transparent 0 3px, rgba(0, 0, 0, 0.025) 3px 4px);
+  color: #3a2912;
+  border-radius: 6px 6px 12px 12px;
+  padding: 40px 22px 24px;
+  transform: rotate(-1.2deg);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08), 0 14px 28px -16px rgba(28, 58, 16, 0.55);
+}
+.tag::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: var(--cream);
+  box-shadow: inset 0 0 0 3px #a98a5a;
+}
+.head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-space), monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  border-bottom: 1px solid #a98a5a;
+  padding-bottom: 8px;
+}
+.who {
+  font-family: var(--font-caveat), cursive;
+  font-weight: 700;
+  font-size: 2.7rem;
+  line-height: 1;
+  margin: 16px 0 12px;
+  min-height: 1em;
+  overflow-wrap: anywhere;
+}
+.rows {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 14px;
+  margin: 0;
+}
+.rows dt {
+  font-family: var(--font-space), monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  padding-top: 4px;
+}
+.rows dd {
+  margin: 0;
+  font-family: var(--font-caveat), cursive;
+  font-weight: 600;
+  font-size: 1.4rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.empty {
+  opacity: 0.35;
+}
+.stamp {
+  position: absolute;
+  right: 14px;
+  bottom: 18px;
+  border: 3px solid #b3401f;
+  color: #b3401f;
+  font-family: var(--font-space), monospace;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transform: rotate(-11deg) scale(1.3);
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+}
+.done .stamp {
+  opacity: 0.9;
+  transform: rotate(-11deg) scale(1);
+}
+
+.stage {
+  animation: rise 0.28s ease-out;
+}
+@keyframes rise {
+  from {
+    transform: translateY(6px);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage {
+    animation: none;
+  }
+  .stamp {
+    transition: none;
+  }
+}
+
+/* Campo trampa para bots: fuera de la vista y del lector de pantalla. */
+.trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
