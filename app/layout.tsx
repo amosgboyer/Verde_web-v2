@@ -113,7 +113,7 @@ export default function RootLayout({
         >
           <a href="/" className="flex items-center gap-3 opacity-90 hover:opacity-100 transition-opacity">
             <Image src="/iconVerde.png" alt="Verde" width={34} height={34} className="object-contain" />
-            <span className="text-[0.68rem] tracking-[0.16em] uppercase text-gray">
+            <span className="text-[0.68rem] tracking-[0.16em] uppercase text-gray max-[420px]:hidden">
               Madrid · Dark Kitchen
             </span>
           </a>
@@ -124,6 +124,12 @@ export default function RootLayout({
               className="text-[0.78rem] text-gray px-3 py-1.5 rounded-md border-none bg-transparent cursor-pointer hover:text-g1 transition-colors hidden sm:block"
             >
               Menú
+            </a>
+            <a
+              href="/reparto"
+              className="text-[0.78rem] text-g1 font-medium px-3 py-1.5 rounded-full border border-g1/25 hover:bg-g1 hover:text-cream transition-colors whitespace-nowrap"
+            >
+              Reparto<span className="hidden sm:inline"> solidario</span>
             </a>
             <NavCart />
           </div>
