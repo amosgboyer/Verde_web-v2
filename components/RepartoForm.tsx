@@ -96,7 +96,7 @@ export default function RepartoForm() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        // En el móvil solo guardamos lo que sale en la etiqueta: nunca el teléfono.
+        // En el móvil solo guardamos lo que trae y su nombre: nunca el teléfono.
         const prev = JSON.parse(raw) as Partial<Datos>;
         setD({ ...VACIO, ...prev, telefono: "", acepta: false });
         setModo("pase");
@@ -181,10 +181,6 @@ export default function RepartoForm() {
   (gente ?? []).forEach((g) => g.trae.forEach((t) => t !== NADA && (recuento[t] = (recuento[t] ?? 0) + 1)));
   // "Lunes 5 de octubre" → "lunes 5"
   const diaCorto = (evento.fecha.match(/^\s*(\p{L}+\s+\d{1,2})/u)?.[1] ?? evento.fecha).toLowerCase();
-  const fechaCorta = (() => {
-    const m = evento.fecha.match(/(\d{1,2})\s+de\s+(\p{L}{3})/iu);
-    return m ? `Lun · ${m[1]} ${m[2].toLowerCase()}` : "Lunes";
-  })();
 
   const chip = (on: boolean) =>
     `rounded-full border px-4 py-2 text-[0.95rem] leading-tight text-left transition-colors focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-gold ${
@@ -207,15 +203,15 @@ export default function RepartoForm() {
         </p>
       </div>
 
-      <div className="mt-8 grid items-start gap-8 md:grid-cols-[minmax(0,1.25fr)_minmax(0,0.9fr)] md:gap-12">
+      <div className="mt-8 max-w-[680px]">
         {/* ── Conversación ── */}
         <div className="min-w-0">
           <h1 className="font-display text-[clamp(1.9rem,5vw,2.8rem)] leading-[1.05] text-g1 [text-wrap:balance]">
             Este {evento.fecha.toLowerCase()} salimos a llevar comida y abrigo a quien duerme en la calle. ¿Te vienes?
           </h1>
           <p className="mb-7 mt-3 max-w-[46ch] text-gray">
-            Cinco preguntas cortas, una cada vez. Mientras respondes se va escribiendo tu etiqueta. Abajo ves qué trae ya
-            cada persona, para no repetir y cubrir lo que falta.
+            Cinco preguntas cortas, una cada vez. Abajo ves qué trae ya cada persona, para no repetir y cubrir lo que
+            falta.
           </p>
 
           {!evento.abierto && modo === "flujo" ? (
@@ -240,6 +236,8 @@ export default function RepartoForm() {
                 <dd>{evento.hora || "Te la confirmamos por WhatsApp"}</dd>
                 <dt className="pt-1 font-mono text-[0.7rem] uppercase tracking-[0.1em] text-gray">Dónde</dt>
                 <dd>{evento.lugar || "Te lo confirmamos por WhatsApp"}</dd>
+                <dt className="pt-1 font-mono text-[0.7rem] uppercase tracking-[0.1em] text-gray">Traes</dt>
+                <dd>{lista(d.trae)}{d.otro ? ` · ${d.otro}` : ""}</dd>
               </dl>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <button type="button" className={btnGhost} onClick={() => { setPaso(d.telefono ? 2 : 1); setModo("flujo"); }}>
@@ -376,28 +374,6 @@ export default function RepartoForm() {
           )}
         </div>
 
-        {/* ── Etiqueta ── */}
-        <aside className="-order-1 md:sticky md:top-[80px] md:order-none" aria-label="Tu etiqueta">
-          <div className={`${styles.tag} ${modo === "pase" ? styles.done : ""}`}>
-            <div className={styles.head}>
-              <span>Sale a repartir</span>
-              <span>{fechaCorta}</span>
-            </div>
-            <div className={`${styles.who} ${d.nombre ? "" : styles.empty}`}>{d.nombre || "tu nombre"}</div>
-            <dl className={styles.rows}>
-              <dt>Trae</dt>
-              <dd className={d.trae.length ? "" : styles.empty}>{lista(d.trae) || "…"}</dd>
-              <dt>Además</dt>
-              <dd className={d.otro ? "" : styles.empty}>{d.otro || "…"}</dd>
-              <dt>Habla</dt>
-              <dd className={d.idiomas.length ? "" : styles.empty}>{lista(d.idiomas) || "…"}</dd>
-            </dl>
-            <div className={styles.stamp} aria-hidden="true">APUNTADO</div>
-          </div>
-          <p className="mt-4 text-center text-[0.82rem] text-gray">
-            {modo === "pase" ? `Esta es tu etiqueta para el ${diaCorto}.` : "Se rellena sola mientras contestas."}
-          </p>
-        </aside>
       </div>
 
       {/* ── Quién va y qué trae ── */}
