@@ -43,7 +43,7 @@ const PASOS: Paso[] = [
   { id: "nombre", k: "Te llamas", q: "Para empezar, ¿cómo te llamamos?", hint: "Nombre y apellido, o como te conozca la gente." },
   { id: "telefono", k: "Teléfono", q: "¿A qué número te escribimos?", hint: "Por WhatsApp te mandamos la ruta y cualquier cambio de última hora." },
   { id: "trae", k: "Trae", q: "¿Qué puedes traer?", hint: "Elige todo lo que quieras. Si no puedes traer nada, también vale: lo importante es venir." },
-  { id: "otro", k: "Además", q: "¿Algo más, o cuánto traes?", hint: "Opcional. Ej. «10 bocadillos», «2 mantas», «ropa de hombre talla L».", optional: true },
+  { id: "otro", k: "Además", q: "¿Algo más, o cuánto traes?", hint: "Opcional. Ej. «10 bocadillos», «2 mantas», «ropa de hombre talla L». Esto lo ven las demás personas apuntadas: no pongas teléfonos ni direcciones.", optional: true },
   { id: "idiomas", k: "Hablas", q: "¿Qué idiomas hablas?", hint: "Opcional. En la calle ayuda mucho poder hablar con la gente en su idioma.", optional: true },
   { id: "final", k: "", q: "Último paso" },
 ];
@@ -96,8 +96,9 @@ export default function RepartoForm() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const prev = JSON.parse(raw) as Datos;
-        setD({ ...VACIO, ...prev, acepta: true });
+        // En el móvil solo guardamos lo que sale en la etiqueta: nunca el teléfono.
+        const prev = JSON.parse(raw) as Partial<Datos>;
+        setD({ ...VACIO, ...prev, telefono: "", acepta: false });
         setModo("pase");
       }
     } catch {
@@ -149,7 +150,8 @@ export default function RepartoForm() {
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "No hemos podido guardarlo.");
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...d, acepta: false }));
+        const { telefono: _t, acepta: _a, ...sinContacto } = d;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sinContacto));
       } catch {
         /* no pasa nada */
       }
@@ -228,7 +230,7 @@ export default function RepartoForm() {
               <h2 className="mt-1 font-display text-[1.8rem] leading-tight text-g1">
                 Gracias, {nombrePila(d.nombre)}. Nos vemos el lunes.
               </h2>
-              <p className="mt-1 text-gray">Te escribiremos al {d.telefono} con la ruta.</p>
+              <p className="mt-1 text-gray">Te escribiremos por WhatsApp con la ruta.</p>
               <dl className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 gap-y-1.5">
                 <dt className="pt-1 font-mono text-[0.7rem] uppercase tracking-[0.1em] text-gray">Día</dt>
                 <dd>{evento.fecha}</dd>
@@ -238,7 +240,7 @@ export default function RepartoForm() {
                 <dd>{evento.lugar || "Te lo confirmamos por WhatsApp"}</dd>
               </dl>
               <div className="mt-5 flex flex-wrap items-center gap-3">
-                <button type="button" className={btnGhost} onClick={() => { setPaso(2); setModo("flujo"); }}>
+                <button type="button" className={btnGhost} onClick={() => { setPaso(d.telefono ? 2 : 1); setModo("flujo"); }}>
                   Cambiar lo que traigo
                 </button>
                 <button type="button" className="px-1 text-sm text-gray underline underline-offset-4" onClick={empezarDeNuevo}>

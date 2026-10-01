@@ -43,7 +43,7 @@ export const repartoSchema = z.object({
     errorMap: () => ({ message: "Marca la casilla de datos para apuntarte." }),
   }),
   // Campo trampa para bots: un humano nunca lo ve ni lo rellena.
-  web: z.string().max(0).optional().default(""),
+  web: z.string().max(500).optional().default(""),
 });
 
 export type RepartoInput = z.infer<typeof repartoSchema>;
@@ -117,67 +117,80 @@ async function readRows(): Promise<string[][]> {
 }
 
 const digits = (s: string) => (s.match(/\d/g) ?? []).join("").slice(-9);
-const firstName = (s: string) => (s.trim().split(/\s+/)[0] ?? "").slice(0, 24);
 const splitList = (s: string | undefined) =>
   (s ?? "").split(",").map((x) => x.trim()).filter(Boolean);
 
 /**
- * Guarda la inscripción. Si ese teléfono ya estaba apuntado, actualiza su
- * fila en vez de duplicarla (así la gente puede corregir lo que trae).
+ * Quita de un texto libre cualquier cosa que parezca un dato de contacto
+ * (teléfonos, emails, enlaces) antes de enseñarlo en público.
  */
-export async function saveReparto(input: RepartoInput): Promise<{ updated: boolean }> {
+export function ocultarContacto(texto: string): string {
+  return texto
+    .replace(/https?:\/\/\S+|www\.\S+/gi, "[…]")
+    .replace(/[^\s@]+@[^\s@]+/g, "[…]")
+    .replace(/\+?\d[\d\s.\-()/]{4,}\d/g, (m) => ((m.match(/\d/g) ?? []).length >= 6 ? "[…]" : m))
+    .trim();
+}
+
+/** Nombre de pila apto para la lista pública, o "Alguien". */
+export function nombrePublico(nombre: string, mostrar: boolean): string {
+  if (!mostrar) return "Alguien";
+  const pila = (nombre.replace(/^'/, "").trim().split(/\s+/)[0] ?? "").slice(0, 24);
+  // Si alguien escribe un número o un email como nombre, no lo enseñamos.
+  if (!pila || /[\d@]/.test(pila)) return "Alguien";
+  return pila;
+}
+
+/**
+ * Guarda la inscripción como fila nueva. Nunca sobrescribe filas existentes:
+ * así nadie puede cambiar (ni averiguar) la inscripción de otra persona
+ * sabiendo su teléfono. Si alguien se apunta dos veces, en la lista pública
+ * cuenta solo su última fila; en la hoja quedan ambas.
+ */
+export async function saveReparto(input: RepartoInput): Promise<void> {
   await ensureTab();
   const sheets = sheetsClient();
   const now = new Date().toISOString();
-  const rows = await readRows();
-  const idx = rows.findIndex((r) => digits(r[2] ?? "") === digits(input.telefono));
 
-  // Prefijo ' para que Sheets no convierta el teléfono en número ni lea fórmulas.
-  const safe = (s: string) => (/^[=+\-@]/.test(s) ? `'${s}` : s);
+  // "RAW": Sheets guarda cada valor tal cual, como texto. No convierte el
+  // teléfono en número ni ejecuta nada que empiece por "=".
   const row = [
-    idx >= 0 ? rows[idx][0] ?? now : now,
-    safe(input.nombre),
-    `'${input.telefono}`,
+    now,
+    input.nombre,
+    input.telefono,
     input.trae.join(", "),
-    safe(input.otro ?? ""),
+    input.otro ?? "",
     (input.idiomas ?? []).join(", "),
     input.publico ? "SÍ" : "NO",
     now,
   ];
 
-  if (idx >= 0) {
-    const sheetRow = idx + 2; // A2 = índice 0
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: spreadsheetId(),
-      range: `${TAB}!A${sheetRow}:H${sheetRow}`,
-      valueInputOption: "USER_ENTERED",
-      requestBody: { values: [row] },
-    });
-    return { updated: true };
-  }
-
   await sheets.spreadsheets.values.append({
     spreadsheetId: spreadsheetId(),
     range: `${TAB}!A:H`,
-    valueInputOption: "USER_ENTERED",
+    valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: { values: [row] },
   });
-  return { updated: false };
 }
 
-/** Lo que se puede enseñar en público: nunca teléfonos ni apellidos. */
+/**
+ * Lo único que sale de la hoja hacia la web: nombre de pila (o "Alguien"),
+ * lo que trae y la nota sin datos de contacto. El teléfono se usa solo aquí
+ * dentro para quitar duplicados y nunca se devuelve.
+ */
 export async function getRepartoPublico(): Promise<RepartoPublico[]> {
   const rows = await readRows();
-  return rows
-    .filter((r) => (r[1] ?? "").trim() || (r[2] ?? "").trim())
-    .map((r) => ({
-      nombre: (r[6] ?? "").toUpperCase().startsWith("S")
-        ? firstName((r[1] ?? "").replace(/^'/, "")) || "Alguien"
-        : "Alguien",
-      trae: splitList(r[3]),
-      otro: (r[4] ?? "").replace(/^'/, "").slice(0, 200),
-    }));
+  const ultimaPorTelefono = new Map<string, string[]>();
+  rows.forEach((r, i) => {
+    if (!(r[1] ?? "").trim() && !(r[2] ?? "").trim()) return;
+    ultimaPorTelefono.set(digits(r[2] ?? "") || `fila-${i}`, r);
+  });
+  return Array.from(ultimaPorTelefono.values()).map((r) => ({
+    nombre: nombrePublico(r[1] ?? "", (r[6] ?? "").toUpperCase().startsWith("S")),
+    trae: splitList(r[3]).filter((t) => (ITEMS as readonly string[]).includes(t)),
+    otro: ocultarContacto((r[4] ?? "").replace(/^'/, "")).slice(0, 200),
+  }));
 }
 
 /** Datos del día desde la pestaña Settings, con valores por defecto. */
