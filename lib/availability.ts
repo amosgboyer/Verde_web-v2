@@ -56,6 +56,12 @@ const DEFAULT_OPEN_DAYS_AHEAD = 30;
 // marcarlo en la hoja cada semana. La fila explícita en Availability sigue
 // mandando: un lunes/martes con isOpen=TRUE en la hoja abriría igual (excepción).
 const DIAS_CIERRE_SEMANAL: number[] = [1, 2]; // lunes y martes
+
+// Cierre anticipado por día de la semana (getUTCDay: 0=domingo…): hora del
+// ÚLTIMO pedido de ese día, distinta del endTime global de Settings. El resto de
+// días usa el endTime global. Domingo: última franja a las 13:00 (cierra después).
+const ENDTIME_POR_DIA: Record<number, string> = { 0: "13:00" };
+
 const NOMBRE_DIA: Record<number, string> = {
   0: "domingo", 1: "lunes", 2: "martes", 3: "miércoles",
   4: "jueves", 5: "viernes", 6: "sábado",
@@ -152,7 +158,14 @@ export async function getAvailabilityDays(): Promise<DayAvailability[]> {
       return { date: dayDate, status: "sold_out", note: day.note, slots: [] };
     }
 
-    const slots: TimeSlot[] = timeSlots.map((time) => {
+    // Cierre anticipado por día de la semana (p. ej. domingo hasta 13:00). Si el
+    // día tiene endTime propio, se recalculan sus franjas; si no, usa el global.
+    const endDia = ENDTIME_POR_DIA[diaSemanaDe(dayDate)];
+    const slotsDelDia = endDia
+      ? buildTimeSlots(settings.reservationStartTime, endDia, settings.slotIntervalMinutes)
+      : timeSlots;
+
+    const slots: TimeSlot[] = slotsDelDia.map((time) => {
       const normTime = normalizeTime(time);
 
       const override = overrides.find(
