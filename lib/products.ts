@@ -451,6 +451,8 @@ const AGOTADOS_TEMPORALES: { id: string; hasta: string }[] = [
   // Pedido de Amos (31-08): siguen agotados hasta la semana que viene.
   // Vuelven solos el martes 02-09 a las 00:00.
   { id: "patacón-con-rabo-de-toto", hasta: "2026-09-01" },
+  // Pedido de Amos (02-10): sold out hasta el martes; vuelve solo el miércoles 07.
+  { id: "ceviche-jipijapa", hasta: "2026-10-06" },
 ];
 
 /**
