@@ -125,12 +125,6 @@ export default function RootLayout({
             >
               Menú
             </a>
-            <a
-              href="/reparto"
-              className="text-[0.78rem] text-g1 font-medium px-3 py-1.5 rounded-full border border-g1/25 hover:bg-g1 hover:text-cream transition-colors whitespace-nowrap"
-            >
-              Reparto<span className="hidden sm:inline"> solidario</span>
-            </a>
             <NavCart />
           </div>
         </nav>

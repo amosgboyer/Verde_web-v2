@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
         destination: "https://wa.me/34605442809",
         permanent: false,
       },
+      // Reparto solidario retirado del sitio (oct-2026). La URL antigua deja de
+      // mostrar la página y lleva a la home. El código del reparto queda latente
+      // por si se reactiva; quitar este redirect y el enlace del nav lo restaura.
+      {
+        source: "/reparto",
+        destination: "/",
+        permanent: false,
+      },
     ];
   },
 };
