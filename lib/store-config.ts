@@ -7,11 +7,17 @@ export interface StoreConfig {
 }
 
 // ─── Recogida en local ──────────────────────────────────────────────────────
-// Dirección que se muestra al cliente cuando elige "Recogida" (para ir a por su
-// pedido). Se enseña en el formulario, en el resumen y en el email de confirmación.
-export const PICKUP_ADDRESS = "Calle de la Araucaria 19, 28039 Madrid";
+// Pon `true` para volver a ofrecer "Recogida" en el checkout. Con `false` solo
+// hay entrega a domicilio (el servidor también rechaza pedidos de recogida).
+export const PICKUP_ENABLED = false;
+
+// Dirección del local. Se enseña en el formulario/resumen/email cuando hay
+// recogida, y en el pie de la web.
+export const STORE_ADDRESS_LINE1 = "Mercado de Barceló, local 301";
+export const STORE_ADDRESS_LINE2 = "Calle de Barceló 6, 28004 Madrid";
+export const PICKUP_ADDRESS = `${STORE_ADDRESS_LINE1}, ${STORE_ADDRESS_LINE2}`;
 export const PICKUP_MAPS_URL =
-  "https://maps.google.com/?q=Calle+de+la+Araucaria+19+28039+Madrid";
+  "https://maps.google.com/?q=Mercado+de+Barcel%C3%B3+Calle+de+Barcel%C3%B3+6+28004+Madrid";
 
 // ─── SOLD OUT general ───────────────────────────────────────────────────────
 // Pon `true` para cerrar TODO (sold out del mes): no se puede reservar, el

@@ -54,7 +54,7 @@ const businessJsonLd = {
   "@id": "https://www.verdemadrid.com/#restaurant",
   name: "Verde Madrid",
   description:
-    "Cocina ecuatoriana bajo pedido en Madrid: bolones, tigrillos y corviches. Entrega a domicilio y recogida.",
+    "Cocina ecuatoriana bajo pedido en Madrid: bolones, tigrillos y corviches. Entrega a domicilio.",
   url: "https://www.verdemadrid.com",
   telephone: "+34605442809",
   servesCuisine: "Ecuatoriana",
@@ -62,10 +62,10 @@ const businessJsonLd = {
   image: "https://www.verdemadrid.com/iconVerde.png",
   address: {
     "@type": "PostalAddress",
-    streetAddress: "Calle de la Araucaria 19",
+    streetAddress: "Mercado de Barceló, local 301, Calle de Barceló 6",
     addressLocality: "Madrid",
     addressRegion: "Madrid",
-    postalCode: "28039",
+    postalCode: "28004",
     addressCountry: "ES",
   },
   areaServed: "Madrid",
@@ -163,8 +163,8 @@ export default function RootLayout({
                     className="text-g3 hover:text-g4 transition-colors">
                     WhatsApp · +34 605 442 809
                   </a><br />
-                  Calle de la Araucaria 19<br />
-                  Tetuán, 28039 Madrid
+                  Mercado de Barceló, local 301<br />
+                  Calle de Barceló 6, 28004 Madrid
                 </p>
               </div>
               <div>

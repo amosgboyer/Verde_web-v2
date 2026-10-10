@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { quoteDeliveryByPostalCode } from "@/lib/delivery";
-import { PICKUP_ADDRESS } from "@/lib/store-config";
+import { PICKUP_ADDRESS, PICKUP_ENABLED } from "@/lib/store-config";
 
 const WHATSAPP_URL =
   "https://wa.me/34605442809?text=" +
@@ -35,7 +35,9 @@ export default function ZoneMap() {
       setResult({
         type: "blocked",
         msg: "Aún no llegamos a tu zona 🙏",
-        sub: `Repartimos hasta 12 km de nuestra cocina. Puedes recoger tu pedido en ${PICKUP_ADDRESS} o escribirnos por WhatsApp y lo vemos.`,
+        sub: PICKUP_ENABLED
+          ? `Repartimos hasta 12 km de nuestra cocina. Puedes recoger tu pedido en ${PICKUP_ADDRESS} o escribirnos por WhatsApp y lo vemos.`
+          : "Repartimos hasta 12 km de nuestra cocina. Escríbenos por WhatsApp y lo vemos.",
         showWhatsApp: true,
       });
       window.dispatchEvent(

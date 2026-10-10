@@ -13,7 +13,7 @@ import {
   zoneForPostalCode,
   zoneLabel,
 } from "@/lib/delivery";
-import { SOLD_OUT } from "@/lib/store-config";
+import { SOLD_OUT, PICKUP_ENABLED } from "@/lib/store-config";
 import { getLaunchPhase, isAccessCodeValid } from "@/lib/launch";
 import { getDirectoStatus, todayMadrid } from "@/lib/directo";
 import { ventanaAplicaAlPago, promocionVentana } from "@/lib/ventana-lunes";
@@ -86,6 +86,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Recogida desactivada (lib/store-config.ts): se rechaza aunque llegue de
+    // una pestaña vieja o de un formulario guardado.
+    if (parsed.deliveryMethod === "pickup" && !PICKUP_ENABLED) {
+      return NextResponse.json(
+        { error: "Ahora mismo no tenemos recogida en local. Elige entrega a domicilio." },
+        { status: 400 }
+      );
+    }
+
     // Validate delivery fields when method is "delivery"
     // La zona se recalcula en servidor desde el código postal (tabla CP → zona
     // de lib/delivery.ts) — nunca se confía en la que manda el cliente. CP no
@@ -110,7 +119,9 @@ export async function POST(req: NextRequest) {
           {
             error:
               "Ahora mismo no llegamos a ese código postal (repartimos hasta 12 km de la cocina). " +
-              "Puedes elegir recogida en local o escribirnos por WhatsApp y lo vemos.",
+              (PICKUP_ENABLED
+                ? "Puedes elegir recogida en local o escribirnos por WhatsApp y lo vemos."
+                : "Escríbenos por WhatsApp y lo vemos."),
           },
           { status: 403 }
         );

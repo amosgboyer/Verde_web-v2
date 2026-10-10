@@ -13,7 +13,7 @@ import {
 import { vatBreakdown, formatCents, ratePercent } from "@/lib/vat";
 import { platoDeclaraAlergeno, platoSinDetallar } from "@/lib/allergens";
 import type { StoreConfig } from "@/lib/store-config";
-import { PICKUP_ADDRESS, PICKUP_MAPS_URL } from "@/lib/store-config";
+import { PICKUP_ADDRESS, PICKUP_ENABLED, PICKUP_MAPS_URL } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
 import type { WeekendOffer } from "@/lib/offers";
 import {
@@ -511,7 +511,7 @@ export default function ReservationForm({
         deliveryDetails: saved.deliveryDetails || prev.deliveryDetails,
         postalCode: saved.postalCode || prev.postalCode,
         deliveryZone: saved.deliveryZone || prev.deliveryZone,
-        deliveryMethod: saved.deliveryMethod || prev.deliveryMethod,
+        deliveryMethod: PICKUP_ENABLED ? saved.deliveryMethod || prev.deliveryMethod : "delivery",
       }));
     } catch {
       // ignore malformed stored data
@@ -598,7 +598,9 @@ export default function ReservationForm({
       setDelivery(d);
       setDeliveryError(
         "Ahora mismo no llegamos a tu código postal (repartimos hasta 12 km de la cocina). " +
-          "Puedes elegir recogida en local o escribirnos por WhatsApp."
+          (PICKUP_ENABLED
+            ? "Puedes elegir recogida en local o escribirnos por WhatsApp."
+            : "Escríbenos por WhatsApp y lo vemos.")
       );
       return d;
     }
@@ -988,7 +990,7 @@ export default function ReservationForm({
         return;
       }
       if (!delivery.deliverable) {
-        setError("Aún no llegamos a tu zona. Elige recogida en local o prueba otra dirección.");
+        setError(PICKUP_ENABLED ? "Aún no llegamos a tu zona. Elige recogida en local o prueba otra dirección." : "Aún no llegamos a tu zona. Prueba otra dirección o escríbenos por WhatsApp.");
         goToStep(5);
         return;
       }
@@ -1910,7 +1912,8 @@ export default function ReservationForm({
               }
               onEdit={() => goToStep(5)}
             >
-              {/* Método */}
+              {/* Método (oculto si la recogida está desactivada) */}
+              {PICKUP_ENABLED && (
               <div className="mb-6">
                 <p className={clsx(labelClass, "mb-3")}>Método de entrega</p>
                 <div className="flex border border-negro/15 w-fit">
@@ -1944,6 +1947,7 @@ export default function ReservationForm({
                   </button>
                 </div>
               </div>
+              )}
 
               {fields.deliveryMethod === "pickup" && (
                 <div className="mb-2 border border-verde-bosque/25 bg-verde-bosque/[0.05] p-5">
