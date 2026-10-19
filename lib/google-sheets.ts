@@ -419,6 +419,10 @@ export interface OrderRow {
   discountAmount: number;
   subtotalBeforeDiscount: number;
   totalAfterDiscount: number;
+  // Origen del cliente (columnas AD–AF). Opcional: vacío si no se conoce.
+  utmSource?: string;
+  utmCampaign?: string;
+  referrer?: string;
 }
 
 export async function appendOrderToSheet(order: OrderRow): Promise<void> {
@@ -457,11 +461,16 @@ export async function appendOrderToSheet(order: OrderRow): Promise<void> {
     order.discountAmount,
     order.subtotalBeforeDiscount,
     order.totalAfterDiscount,
+    // Origen — columnas AD, AE, AF. SIEMPRE al final: el terminal lee por posición cuando
+    // la hoja pierde la cabecera, así que nunca se inserta nada antes de estas.
+    order.utmSource ?? "",
+    order.utmCampaign ?? "",
+    order.referrer ?? "",
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: getSpreadsheetId(),
-    range: "Orders!A:AC",
+    range: "Orders!A:AF",
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [row] },
   });

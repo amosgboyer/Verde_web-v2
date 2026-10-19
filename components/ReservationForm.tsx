@@ -11,6 +11,7 @@ import {
   PRODUCT_CHOICES,
 } from "@/lib/products";
 import { vatBreakdown, formatCents, ratePercent } from "@/lib/vat";
+import { leerOrigen } from "@/lib/origen";
 import { platoDeclaraAlergeno, platoSinDetallar } from "@/lib/allergens";
 import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_ENABLED, PICKUP_MAPS_URL } from "@/lib/store-config";
@@ -1041,6 +1042,7 @@ export default function ReservationForm({
           reservationDate: isDirecto ? todayMadrid() : fields.reservationDate,
           reservationTime: isDirecto ? etaFromNow() : fields.reservationTime,
           directo: isDirecto,
+          origen: leerOrigen() ?? undefined,
           customerName: fields.customerName,
           email: fields.email,
           phone: fields.phone,

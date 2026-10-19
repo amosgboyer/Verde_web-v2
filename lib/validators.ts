@@ -28,6 +28,14 @@ export const reservationSchema = z.object({
   deliveryZone: z.string().max(100).optional().or(z.literal("")),
   deliveryZoneLevel: z.number().int().min(1).max(4).nullable().optional(),
   directo: z.boolean().optional().default(false),
+  // De dónde vino el cliente (lib/origen.ts). Opcional: un pedido sin origen es válido.
+  origen: z
+    .object({
+      utmSource: z.string().max(80),
+      utmCampaign: z.string().max(80),
+      referrer: z.string().max(80),
+    })
+    .optional(),
   accessCode: z.string().max(60).optional().or(z.literal("")),
   privacyAccepted: z.literal(true, {
     errorMap: () => ({ message: "Debes aceptar la política de privacidad." }),
