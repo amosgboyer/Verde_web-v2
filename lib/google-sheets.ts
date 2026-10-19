@@ -425,6 +425,16 @@ export interface OrderRow {
   referrer?: string;
 }
 
+/**
+ * Texto escrito por el cliente que va a la hoja con USER_ENTERED: si empieza como una fórmula
+ * (=, @, o +/- seguido de letra o paréntesis) Sheets la ejecutaría. Se antepone ' para que
+ * quede como texto. No se aplica a teléfonos (+34…), que empiezan por + y un número.
+ */
+export function textoSeguro(v: string | null | undefined): string {
+  const s = String(v ?? "");
+  return /^[=@]|^[+\-][\p{L}(]/u.test(s.trimStart()) ? "'" + s : s;
+}
+
 export async function appendOrderToSheet(order: OrderRow): Promise<void> {
   const auth = getAuth();
   const sheets = google.sheets({ version: "v4", auth });
@@ -433,7 +443,7 @@ export async function appendOrderToSheet(order: OrderRow): Promise<void> {
     order.createdAt,
     order.status,
     order.stripeSessionId,
-    order.customerName,
+    textoSeguro(order.customerName),
     order.email,
     order.phone,
     order.productId,
@@ -444,9 +454,9 @@ export async function appendOrderToSheet(order: OrderRow): Promise<void> {
     order.finalPrice,
     order.depositPaid,
     order.pendingAmount,
-    order.notes,
-    order.deliveryAddress,
-    order.deliveryDetails,
+    textoSeguro(order.notes),
+    textoSeguro(order.deliveryAddress),
+    textoSeguro(order.deliveryDetails),
     order.postalCode,
     order.deliveryZone,
     order.deliveryMethod,

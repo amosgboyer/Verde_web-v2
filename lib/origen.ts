@@ -24,6 +24,7 @@ export function limpiarValor(v: unknown, max = MAX): string {
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9._\-:/ ]/g, "")
+    .replace(/^[^a-z0-9]+/, "") // empieza por letra o número (nada de "-", "=", etc. en la hoja)
     .slice(0, max);
 }
 
@@ -78,7 +79,17 @@ export function combinarOrigen(
 function leerGuardado(): { origen: Origen; t: number } | null {
   try {
     const v = JSON.parse(localStorage.getItem(CLAVE) || "null");
-    if (v && typeof v.t === "number" && v.origen) return v;
+    const o = v?.origen;
+    if (v && typeof v.t === "number" && o && typeof o === "object") {
+      return {
+        t: v.t,
+        origen: {
+          utmSource: limpiarValor(o.utmSource),
+          utmCampaign: limpiarValor(o.utmCampaign),
+          referrer: limpiarValor(o.referrer),
+        },
+      };
+    }
   } catch {
     // almacenamiento bloqueado o dañado
   }

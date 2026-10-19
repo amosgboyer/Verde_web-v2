@@ -84,4 +84,9 @@ describe("codificar / decodificar", () => {
   it("un '|' colado en un valor no rompe el formato", () => {
     expect(limpiarValor("a|b")).toBe("ab");
   });
+
+  it("nunca empieza por un signo (la hoja no lo toma por fórmula)", () => {
+    expect(limpiarValor("-cmd")).toBe("cmd");
+    expect(limpiarValor("  ::bio")).toBe("bio");
+  });
 });
