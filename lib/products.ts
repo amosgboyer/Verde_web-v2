@@ -453,6 +453,10 @@ const AGOTADOS_TEMPORALES: { id: string; hasta: string }[] = [
   { id: "patacón-con-rabo-de-toto", hasta: "2026-09-01" },
   // Pedido de Amos (02-10): sold out hasta el martes; vuelve solo el miércoles 07.
   { id: "ceviche-jipijapa", hasta: "2026-10-06" },
+  // Pedido de Amos (20-10): sin stock de bolón; agotados hasta el miércoles 21,
+  // vuelven solos el jueves 22.
+  { id: "bolon-mixto", hasta: "2026-10-21" },
+  { id: "bolon-mixto-con-maduro", hasta: "2026-10-21" },
 ];
 
 /**
