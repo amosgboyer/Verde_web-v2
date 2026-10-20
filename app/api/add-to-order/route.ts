@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { stripe } from "@/lib/stripe";
-import { getProductById, estaAgotadoTemporal } from "@/lib/products";
+import { getProductById, estaAgotadoTemporal, agotadoParaFecha } from "@/lib/products";
 import {
   getProductsRows,
   getSettings,
@@ -70,6 +70,12 @@ export async function POST(req: NextRequest) {
       if (estaAgotadoTemporal(item.productId)) {
         throw new ErrorCliente(
           "Uno de los platos se ha agotado hoy. Quítalo para continuar."
+        );
+      }
+      // Sin stock para la fecha de entrega del pedido (p. ej. bolón solo mañana).
+      if (agotadoParaFecha(item.productId, ctx.reservationDate)) {
+        throw new ErrorCliente(
+          "Uno de los platos no está disponible para el día de tu pedido. Quítalo para continuar."
         );
       }
       const sheetProduct = sheetsProducts.find(

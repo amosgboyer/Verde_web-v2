@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { getProductById, estaAgotadoTemporal, DEFAULT_VAT_RATE } from "@/lib/products";
+import { getProductById, estaAgotadoTemporal, agotadoParaFecha, DEFAULT_VAT_RATE } from "@/lib/products";
 import { vatBreakdown } from "@/lib/vat";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { isSlotAvailable } from "@/lib/availability";
@@ -167,6 +167,12 @@ export async function POST(req: NextRequest) {
       if (estaAgotadoTemporal(item.productId)) {
         throw new ErrorCliente(
           "Uno de los platos de tu pedido se ha agotado hoy. Quítalo del carrito para continuar."
+        );
+      }
+      // Sin stock para ESA fecha de entrega (p. ej. bolón solo para mañana).
+      if (agotadoParaFecha(item.productId, parsed.reservationDate)) {
+        throw new ErrorCliente(
+          "Uno de los platos no está disponible para el día que has elegido. Quítalo o elige otra fecha."
         );
       }
       const sheetProduct = sheetsProducts.find((p) => p.productId === item.productId);

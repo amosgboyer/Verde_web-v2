@@ -8,6 +8,7 @@ import {
   mismoId,
   vatRateOf,
   DEFAULT_VAT_RATE,
+  agotadoParaFecha,
   PRODUCT_CHOICES,
 } from "@/lib/products";
 import { vatBreakdown, formatCents, ratePercent } from "@/lib/vat";
@@ -1405,13 +1406,21 @@ export default function ReservationForm({
                           const choiceCfg = PRODUCT_CHOICES.find((c) =>
                             mismoId(c.productId, product.id)
                           );
+                          // Sin stock para la fecha elegida (p. ej. bolón solo
+                          // mañana): se muestra agotado SOLO ese día.
+                          const sinStockFecha =
+                            !!fields.reservationDate &&
+                            agotadoParaFecha(product.id, fields.reservationDate);
+                          const cardProduct = sinStockFecha
+                            ? { ...product, available: false }
+                            : product;
                           return (
                           <div
                             key={product.id}
                             className="shrink-0 w-[46%] snap-start sm:w-full"
                           >
                             <ProductCard
-                              product={product}
+                              product={cardProduct}
                               quantity={cart[product.id] ?? 0}
                               maxQuantity={config.maxQuantityPerOrder}
                               onAdd={addToCart}

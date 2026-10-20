@@ -453,10 +453,6 @@ const AGOTADOS_TEMPORALES: { id: string; hasta: string }[] = [
   { id: "patacón-con-rabo-de-toto", hasta: "2026-09-01" },
   // Pedido de Amos (02-10): sold out hasta el martes; vuelve solo el miércoles 07.
   { id: "ceviche-jipijapa", hasta: "2026-10-06" },
-  // Pedido de Amos (20-10): sin stock de bolón; agotados hasta el miércoles 21,
-  // vuelven solos el jueves 22.
-  { id: "bolon-mixto", hasta: "2026-10-21" },
-  { id: "bolon-mixto-con-maduro", hasta: "2026-10-21" },
 ];
 
 /**
@@ -470,6 +466,29 @@ export function estaAgotadoTemporal(id: string): boolean {
   return AGOTADOS_TEMPORALES.some(
     (a) => mismoId(a.id, id) && hoy <= a.hasta
   );
+}
+
+// ─── Sin stock para una FECHA DE ENTREGA concreta ──────────────────────────
+// A diferencia de AGOTADOS_TEMPORALES (global, bloquea el plato para TODOS los
+// días hasta una fecha), esto bloquea un plato SOLO cuando la reserva es para
+// esa fecha concreta; el resto de días sigue disponible. Para "no nos queda
+// bolón para el miércoles, pero sí el resto de días".
+// Clave = fecha de entrega (YYYY-MM-DD) · valor = ids sin stock ese día.
+export const AGOTADO_POR_FECHA: Record<string, string[]> = {
+  // 20-10: sin bolón para el miércoles 21 (vuelve el jueves 22). Afecta a los
+  // dos bolones, Ahora Comen Todos (mini bolones) y el Pack Bolón + Patacón.
+  "2026-10-21": [
+    "bolon-mixto",
+    "bolon-mixto-con-maduro",
+    "Ahora -comen",
+    "pack-bolon-patacon",
+  ],
+};
+
+/** ¿Este producto está sin stock para esa fecha de entrega concreta? */
+export function agotadoParaFecha(id: string, fecha: string): boolean {
+  const lista = AGOTADO_POR_FECHA[fecha];
+  return !!lista && lista.some((x) => mismoId(x, id));
 }
 
 /**
