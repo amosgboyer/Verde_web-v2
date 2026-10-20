@@ -419,6 +419,20 @@ export interface OrderRow {
   discountAmount: number;
   subtotalBeforeDiscount: number;
   totalAfterDiscount: number;
+  // Origen del cliente (columnas AD–AF). Opcional: vacío si no se conoce.
+  utmSource?: string;
+  utmCampaign?: string;
+  referrer?: string;
+}
+
+/**
+ * Texto escrito por el cliente que va a la hoja con USER_ENTERED: si empieza como una fórmula
+ * (=, @, o +/- seguido de letra o paréntesis) Sheets la ejecutaría. Se antepone ' para que
+ * quede como texto. No se aplica a teléfonos (+34…), que empiezan por + y un número.
+ */
+export function textoSeguro(v: string | null | undefined): string {
+  const s = String(v ?? "");
+  return /^[=@]|^[+\-][\p{L}(]/u.test(s.trimStart()) ? "'" + s : s;
 }
 
 export async function appendOrderToSheet(order: OrderRow): Promise<void> {
@@ -429,7 +443,7 @@ export async function appendOrderToSheet(order: OrderRow): Promise<void> {
     order.createdAt,
     order.status,
     order.stripeSessionId,
-    order.customerName,
+    textoSeguro(order.customerName),
     order.email,
     order.phone,
     order.productId,
@@ -440,9 +454,9 @@ export async function appendOrderToSheet(order: OrderRow): Promise<void> {
     order.finalPrice,
     order.depositPaid,
     order.pendingAmount,
-    order.notes,
-    order.deliveryAddress,
-    order.deliveryDetails,
+    textoSeguro(order.notes),
+    textoSeguro(order.deliveryAddress),
+    textoSeguro(order.deliveryDetails),
     order.postalCode,
     order.deliveryZone,
     order.deliveryMethod,
@@ -457,11 +471,16 @@ export async function appendOrderToSheet(order: OrderRow): Promise<void> {
     order.discountAmount,
     order.subtotalBeforeDiscount,
     order.totalAfterDiscount,
+    // Origen — columnas AD, AE, AF. SIEMPRE al final: el terminal lee por posición cuando
+    // la hoja pierde la cabecera, así que nunca se inserta nada antes de estas.
+    order.utmSource ?? "",
+    order.utmCampaign ?? "",
+    order.referrer ?? "",
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: getSpreadsheetId(),
-    range: "Orders!A:AC",
+    range: "Orders!A:AF",
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [row] },
   });

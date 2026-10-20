@@ -3,6 +3,7 @@ import { Lilita_One, Caveat, Space_Mono, DM_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Image from "next/image";
 import ScrollAnimations from "@/components/ScrollAnimations";
+import CapturaOrigen from "@/components/CapturaOrigen";
 import NavCart from "@/components/NavCart";
 import { SOLD_OUT } from "@/lib/store-config";
 import "./globals.css";
@@ -195,6 +196,7 @@ export default function RootLayout({
           </div>
         </footer>
 
+        <CapturaOrigen />
         <Analytics />
       </body>
     </html>

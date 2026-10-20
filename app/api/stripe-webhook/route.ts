@@ -9,6 +9,7 @@ import {
 import { isSlotAvailable, normalizeTime, normalizeDate } from "@/lib/availability";
 import { orderCodeFromSession } from "@/lib/order-code";
 import { unirMeta } from "@/lib/stripe-meta";
+import { decodificarOrigen } from "@/lib/origen";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -97,6 +98,8 @@ export async function POST(req: NextRequest) {
     const privacyAccepted = meta.privacyAccepted === "true";
     const termsAccepted = meta.termsAccepted === "true";
     const acceptedAt = meta.acceptedAt ?? "";
+    // De dónde vino el cliente (vacío en sesiones antiguas o sin origen).
+    const origen = decodificarOrigen(meta.origen);
     if (!privacyAccepted || !termsAccepted) {
       console.warn("[stripe-webhook] Aceptaciones legales faltantes en sesión:", session.id);
     }
@@ -164,6 +167,9 @@ export async function POST(req: NextRequest) {
           discountAmount,
           subtotalBeforeDiscount,
           totalAfterDiscount,
+          utmSource: origen.utmSource,
+          utmCampaign: origen.utmCampaign,
+          referrer: origen.referrer,
         });
       }
 
@@ -199,6 +205,9 @@ export async function POST(req: NextRequest) {
           discountAmount: 0,
           subtotalBeforeDiscount: 0,
           totalAfterDiscount: deliveryFee,
+          utmSource: origen.utmSource,
+          utmCampaign: origen.utmCampaign,
+          referrer: origen.referrer,
         });
       }
 

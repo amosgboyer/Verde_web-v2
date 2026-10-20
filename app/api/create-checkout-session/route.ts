@@ -5,6 +5,7 @@ import { vatBreakdown } from "@/lib/vat";
 import { getProductsRows, getSettings } from "@/lib/google-sheets";
 import { isSlotAvailable } from "@/lib/availability";
 import { reservationSchema } from "@/lib/validators";
+import { codificarOrigen } from "@/lib/origen";
 import { getActivePromotion, calculateDiscount } from "@/lib/promotions";
 import { getActiveWeekendOffer, computeOfferDiscount, offerBadgeLabel } from "@/lib/offers";
 import {
@@ -361,6 +362,8 @@ export async function POST(req: NextRequest) {
         notes: parsed.notes ?? "",
         deliveryMethod: parsed.deliveryMethod ?? "delivery",
         directo: String(parsed.directo ?? false), // pedido "en directo" (hoy)
+        // Origen del cliente en UNA clave ("source|campaign|referrer"): Stripe admite 50.
+        origen: codificarOrigen(parsed.origen),
         deliveryAddress: isPickup ? "" : parsed.deliveryAddress ?? "",
         deliveryDetails: isPickup ? "" : parsed.deliveryDetails ?? "",
         postalCode: isPickup ? "" : parsed.postalCode ?? "",
