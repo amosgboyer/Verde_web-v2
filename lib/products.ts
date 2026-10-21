@@ -474,15 +474,18 @@ export function estaAgotadoTemporal(id: string): boolean {
 // esa fecha concreta; el resto de días sigue disponible. Para "no nos queda
 // bolón para el miércoles, pero sí el resto de días".
 // Clave = fecha de entrega (YYYY-MM-DD) · valor = ids sin stock ese día.
+// Platos que llevan bolón: los dos bolones, Ahora Comen Todos (mini bolones) y
+// el Pack Bolón + Patacón. Si falta stock de bolón, se bloquean todos juntos.
+const PLATOS_CON_BOLON = [
+  "bolon-mixto",
+  "bolon-mixto-con-maduro",
+  "Ahora -comen",
+  "pack-bolon-patacon",
+];
 export const AGOTADO_POR_FECHA: Record<string, string[]> = {
-  // 20-10: sin bolón para el miércoles 21 (vuelve el jueves 22). Afecta a los
-  // dos bolones, Ahora Comen Todos (mini bolones) y el Pack Bolón + Patacón.
-  "2026-10-21": [
-    "bolon-mixto",
-    "bolon-mixto-con-maduro",
-    "Ahora -comen",
-    "pack-bolon-patacon",
-  ],
+  // Sin bolón (Amos): bloqueado el miércoles 21 y el jueves 22. Vuelve el viernes.
+  "2026-10-21": PLATOS_CON_BOLON,
+  "2026-10-22": PLATOS_CON_BOLON,
 };
 
 /** ¿Este producto está sin stock para esa fecha de entrega concreta? */
