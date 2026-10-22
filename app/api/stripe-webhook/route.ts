@@ -53,6 +53,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Metadata vacía." }, { status: 400 });
     }
 
+    // Pagos que NO salen de esta web (enlace de pago de Stripe, cobro manual, otra app en la
+    // misma cuenta): llegan sin nuestra metadata. Antes se trataban como pedido y, al no
+    // tener fecha ni hora, disparaban un falso «URGENTE — Posible sobrecupo» con todo vacío
+    // y «NaN €». No son pedidos de la web: se ignoran (200, para que Stripe no reintente).
+    const esDeLaWeb =
+      meta.isAddon === "true" ||
+      Boolean(meta.items || meta.customerName || meta.reservationDate || meta.totalDeposit);
+    if (!esDeLaWeb) {
+      console.warn("[stripe-webhook] Pago ajeno a la web (sin metadata de pedido), ignorado:", session.id);
+      return NextResponse.json({ received: true, ignorado: "pago ajeno a la web" });
+    }
+
     // Dedup: skip if already processed
     try {
       const existing = await findOrderByStripeSessionId(session.id);
