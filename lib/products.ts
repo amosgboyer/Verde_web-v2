@@ -11,6 +11,9 @@ export interface Product {
   image?: string;           // ruta a /public o URL externa
   category?: string;
   isPack?: boolean;         // true = combo/pack con precio propio (no se muestra en la carta)
+  // Unidades que quedan si el plato es de edición limitada (stock total). Lo
+  // calcula el servidor (lib/stock) y lo usa la card para mostrar "quedan X".
+  stockRemaining?: number;
   // Tipo de IVA que YA incluye el precio (informativo; no cambia el importe).
   // 0.10 para toda la comida actual. Las bebidas alcohólicas y los refrescos
   // azucarados irán al 0.21 cuando se añadan. Opcional: la carta real viene del

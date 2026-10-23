@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { stripe } from "@/lib/stripe";
 import { getProductById, estaAgotadoTemporal, agotadoParaFecha } from "@/lib/products";
+import { comprobarStockCarrito } from "@/lib/stock";
 import {
   getProductsRows,
   getSettings,
   findAddOrderContext,
+  getOrdersRows,
 } from "@/lib/google-sheets";
 import { SOLD_OUT } from "@/lib/store-config";
 import { trocearMeta, ErrorCliente } from "@/lib/stripe-meta";
@@ -109,6 +111,16 @@ export async function POST(req: NextRequest) {
         quantity: item.quantity,
       };
     });
+
+    // Stock TOTAL limitado: lo que se añade cuenta contra lo que queda del cupo.
+    try {
+      const ordenes = await getOrdersRows();
+      const errorStock = comprobarStockCarrito(parsed.items, ordenes);
+      if (errorStock) throw new ErrorCliente(errorStock);
+    } catch (e) {
+      if (e instanceof ErrorCliente) throw e;
+      // Si no se pueden leer los pedidos, no bloqueamos la ampliación por ello.
+    }
 
     const totalItems = validatedItems.reduce((s, { quantity }) => s + quantity, 0);
     const productsSubtotal = validatedItems.reduce(

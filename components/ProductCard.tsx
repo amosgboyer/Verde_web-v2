@@ -159,6 +159,22 @@ export default function ProductCard({
         </div>
       )}
 
+      {/* Edición limitada: cuántas unidades quedan del cupo total. Solo si el
+          plato sigue disponible (al llegar a 0 toma el relevo el velo de
+          agotado). Sin oferta encima, así que no compite con la cinta terra. */}
+      {active.available &&
+        typeof active.stockRemaining === "number" &&
+        !offerBadge && (
+          <div
+            className="absolute top-0 left-0 z-[4] text-white text-[9px] font-bold uppercase tracking-[0.08em] px-2.5 py-1 rounded-br-[10px]"
+            style={{ background: "var(--terra, #c85a2a)" }}
+          >
+            {active.stockRemaining === 1
+              ? "¡Última unidad!"
+              : `Solo quedan ${active.stockRemaining}`}
+          </div>
+        )}
+
       {/* Precio (siempre visible) */}
       <div
         className="absolute top-2 right-2 z-[2] font-extrabold tabular-nums"

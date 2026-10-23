@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { getProductById, estaAgotadoTemporal, agotadoParaFecha, DEFAULT_VAT_RATE } from "@/lib/products";
 import { vatBreakdown } from "@/lib/vat";
-import { getProductsRows, getSettings } from "@/lib/google-sheets";
+import { getProductsRows, getSettings, getOrdersRows } from "@/lib/google-sheets";
+import { comprobarStockCarrito } from "@/lib/stock";
 import { isSlotAvailable } from "@/lib/availability";
 import { reservationSchema } from "@/lib/validators";
 import { codificarOrigen } from "@/lib/origen";
@@ -201,6 +202,18 @@ export async function POST(req: NextRequest) {
         quantity: item.quantity,
       };
     });
+
+    // ── Stock TOTAL limitado (edición limitada) ───────────────────────────────
+    // La hoja sigue diciendo TRUE hasta que se vende la última unidad, así que el
+    // corte real vive aquí: contamos lo ya vendido y lo que pide este carrito.
+    try {
+      const ordenes = await getOrdersRows();
+      const errorStock = comprobarStockCarrito(parsed.items, ordenes);
+      if (errorStock) throw new ErrorCliente(errorStock);
+    } catch (e) {
+      if (e instanceof ErrorCliente) throw e;
+      // Si no se pueden leer los pedidos, no bloqueamos la compra por ello.
+    }
 
     // ── Calcular subtotal, descuento y total ──────────────────────────────────
     const productsSubtotal = validatedItems.reduce(

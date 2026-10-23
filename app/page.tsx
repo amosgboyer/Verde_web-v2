@@ -6,7 +6,8 @@ import {
   getDestacados,
   mismoId,
 } from "@/lib/products";
-import { getProductsRows, getSettings } from "@/lib/google-sheets";
+import { getProductsRows, getSettings, getOrdersRows } from "@/lib/google-sheets";
+import { stockRestante } from "@/lib/stock";
 import { storeConfig, SOLD_OUT } from "@/lib/store-config";
 import { getLaunchPhase, EARLY_ACCESS_CODE, PUBLIC_OPEN_AT } from "@/lib/launch";
 import Countdown from "@/components/Countdown";
@@ -41,11 +42,13 @@ export default async function HomePage({
   let products: Product[] = getAvailableProducts();
   let reservationsOpen = storeConfig.reservationsOpen;
   let activePromotion: ActivePromotion | null = null;
+  let orders: { productId: string; quantity: number; status: string }[] = [];
 
   try {
-    const [sheetsProducts, settings] = await Promise.all([
+    const [sheetsProducts, settings, ordersRows] = await Promise.all([
       getProductsRows(),
       getSettings(),
+      getOrdersRows(),
     ]);
     if (sheetsProducts.length > 0) {
       products = sheetsProducts.map((p) => ({
@@ -61,6 +64,7 @@ export default async function HomePage({
         isPack: (p.category || "").trim().toLowerCase() === "pack",
       }));
     }
+    orders = ordersRows;
     reservationsOpen = settings.reservationsOpen;
     const promo = getActivePromotion(settings);
     if (promo.isActive) activePromotion = promo;
@@ -72,6 +76,14 @@ export default async function HomePage({
   // en su bloque sin alterar el orden del resto. Si el Sheet trae el mismo id,
   // manda el Sheet.
   products = withExtraProducts(products);
+
+  // Stock TOTAL limitado (edición limitada): resta lo vendido del cupo. Al
+  // llegar a 0, el plato se agota. stockRemaining alimenta el badge "quedan X".
+  products = products.map((p) => {
+    const restante = stockRestante(p.id, orders);
+    if (restante == null) return p;
+    return { ...p, stockRemaining: restante, available: p.available && restante > 0 };
+  });
 
   // SOLD OUT general (cierre del mes) — anula cualquier valor del Sheet.
   if (SOLD_OUT) reservationsOpen = false;

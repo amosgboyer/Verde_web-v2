@@ -178,6 +178,20 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
                         IVA incluido
                       </span>
                     </div>
+                    {typeof plato.stockRemaining === "number" &&
+                      plato.available !== false && (
+                        <span
+                          className="text-[0.66rem] font-bold uppercase tracking-[0.06em] px-3 py-1 rounded-full"
+                          style={{
+                            background: "var(--terra, #c85a2a)",
+                            color: "#fff",
+                          }}
+                        >
+                          {plato.stockRemaining === 1
+                            ? "¡Última unidad!"
+                            : `Edición limitada · quedan ${plato.stockRemaining}`}
+                        </span>
+                      )}
                     {!readOnly && (
                       <button
                         type="button"
