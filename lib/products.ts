@@ -575,8 +575,10 @@ export function getPacks(): Product[] {
 // y otra de packs. Estos son los platos que se empujan arriba, EN ESTE ORDEN.
 // Para cambiar las novedades, tocar esta lista; vaciarla oculta la zona entera.
 export const DESTACADOS_IDS: string[] = [
-  // La Chocletiza abre el escaparate (sep 2026); relevó al colonche, que sigue
-  // en la carta (sección Verde) pero fuera de Novedades.
+  // Caldo de Bolas de Verde abre el escaparate (oct 2026), plato nuevo.
+  "caldo-bolas-de-verde",
+  // La Chocletiza relevó al colonche, que sigue en la carta (sección Verde)
+  // pero fuera de Novedades.
   "la-chocletiza",
   "ceviche-jipijapa",
 ];
