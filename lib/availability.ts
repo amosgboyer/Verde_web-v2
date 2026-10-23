@@ -40,9 +40,10 @@ const BLOCKED_TIMES = ["14:00"];
 // (02-09): a las 10:00 entra UN solo pedido; la franja no se cierra.
 const CAPACITY_BY_TIME: Record<string, number> = { "10:00": 1 };
 
-// Capacidad por slot por defecto: 2 pedidos por hora (régimen de Amos desde
-// el 01-09). La columna C de la pestaña Availability la sobreescribe por día.
-const DEFAULT_MAX_ORDERS_PER_SLOT = 2;
+// Capacidad por slot por defecto: 1 pedido por hora (régimen de Amos desde el
+// 23-10; antes eran 2). Aplica a todos los días. La columna C de la pestaña
+// Availability lo sobreescribe por día, y SlotOverrides por franja concreta.
+const DEFAULT_MAX_ORDERS_PER_SLOT = 1;
 
 // Desde el 01-09 se abre TODOS los días: un día futuro sin fila en la pestaña
 // Availability se ofrece abierto con el cupo por defecto, dentro de esta
