@@ -9,6 +9,7 @@ import {
 import React from "react";
 import { PICKUP_ADDRESS } from "../lib/store-config";
 import { vatBreakdown, formatCents, ratePercent } from "../lib/vat";
+import { formatDeliveryWindow } from "../lib/delivery-window";
 
 // IVA que ya incluye el total (informativo). Toda la carta actual va al 10 %.
 const EMAIL_VAT_RATE = 0.10;
@@ -135,7 +136,7 @@ export function CustomerReservationEmail({
     <Html lang="es">
       <Head />
       <Preview>
-        Pedido confirmado en Verde — {reservationDate} · {reservationTime}
+        Pedido confirmado en Verde — {reservationDate} · {formatDeliveryWindow(reservationTime)}
       </Preview>
       <Body
         style={{
@@ -314,7 +315,7 @@ export function CustomerReservationEmail({
                   <table width="100%" cellPadding={0} cellSpacing={0}>
                     <tbody>
                       <Row label="Fecha" value={reservationDate} />
-                      <Row label="Hora" value={reservationTime} />
+                      <Row label={isDelivery ? "Entrega" : "Recogida"} value={formatDeliveryWindow(reservationTime)} />
                       {isDelivery ? (
                         <>
                           <Row label="Dirección de entrega" value={deliveryAddress || "—"} />

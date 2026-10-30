@@ -56,7 +56,7 @@ export default function TerminosPage() {
               Entrega
             </h2>
             <p>
-              La entrega se realiza en la fecha, hora y dirección seleccionadas por el cliente.
+              La entrega se realiza en la fecha y dirección seleccionadas por el cliente, en un margen de 30 minutos desde la hora elegida.
               Si necesitamos confirmar algún detalle, contactaremos por WhatsApp o email antes
               de la hora de entrega.
             </p>

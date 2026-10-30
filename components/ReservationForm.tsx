@@ -31,6 +31,7 @@ import {
   defaultMinOrder,
 } from "@/lib/delivery";
 import { todayMadrid, etaFromNow } from "@/lib/directo";
+import { formatDeliveryWindow, deliveryWindowSentence, DELIVERY_WINDOW_MIN } from "@/lib/delivery-window";
 import { estadoVentana, esMiercolesOJueves, VENTANA_LUNES } from "@/lib/ventana-lunes";
 import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
@@ -1670,7 +1671,7 @@ export default function ReservationForm({
               title="Elige la hora"
               isActive={currentStep === 3}
               isDone={currentStep > 3}
-              summary={step3Done ? fields.reservationTime : "Pendiente"}
+              summary={step3Done ? formatDeliveryWindow(fields.reservationTime) : "Pendiente"}
               onEdit={() => goToStep(3)}
             >
               {selectedDay && selectedDay.slots.length > 0 ? (
@@ -1710,6 +1711,14 @@ export default function ReservationForm({
                   {fields.reservationDate
                     ? "No hay horarios disponibles para esta fecha."
                     : "Selecciona primero una fecha."}
+                </p>
+              )}
+
+              {selectedDay && selectedDay.slots.length > 0 && (
+                <p className="-mt-2 mb-5 text-sm text-negro/55">
+                  {fields.reservationTime
+                    ? <>Te lo entregamos <b className="text-verde-bosque">{deliveryWindowSentence(fields.reservationTime)}</b>.</>
+                    : `La entrega llega en un margen de ${DELIVERY_WINDOW_MIN} min desde la hora que elijas.`}
                 </p>
               )}
 
@@ -2185,8 +2194,8 @@ export default function ReservationForm({
                   </span>
                 </div>
                 <div className="flex justify-between text-sm text-negro/45">
-                  <span>Hora</span>
-                  <span>{fields.reservationTime}</span>
+                  <span>Entrega</span>
+                  <span>{formatDeliveryWindow(fields.reservationTime)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-negro/45">
                   <span>Nombre</span>
