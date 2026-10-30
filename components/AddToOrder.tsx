@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Product } from "@/lib/products";
 import type { AddOrderContext } from "@/lib/google-sheets";
+import { deliveryWindowSentence } from "@/lib/delivery-window";
 
 function fmtPrice(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
@@ -111,7 +112,7 @@ export default function AddToOrder({
           {ctx.reservationTime ? (
             <>
               {" "}
-              a las <b>{ctx.reservationTime}</b>
+              <b>{deliveryWindowSentence(ctx.reservationTime)}</b>
             </>
           ) : null}
           . Solo pagas lo nuevo — sin cobrarte el envío otra vez.
