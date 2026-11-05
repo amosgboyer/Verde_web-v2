@@ -44,7 +44,7 @@ export function pickupTimeError(dateISO: string, time: string): string | null {
 
 // Dirección del local. Se enseña en el formulario/resumen/email cuando hay
 // recogida, y en el pie de la web.
-export const STORE_ADDRESS_LINE1 = "Mercado de Barceló, local 301";
+export const STORE_ADDRESS_LINE1 = "Mercado de Barceló, planta 2, local 301";
 export const STORE_ADDRESS_LINE2 = "Calle de Barceló 6, 28004 Madrid";
 export const PICKUP_ADDRESS = `${STORE_ADDRESS_LINE1}, ${STORE_ADDRESS_LINE2}`;
 export const PICKUP_MAPS_URL =
