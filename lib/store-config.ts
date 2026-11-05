@@ -9,7 +9,38 @@ export interface StoreConfig {
 // ─── Recogida en local ──────────────────────────────────────────────────────
 // Pon `true` para volver a ofrecer "Recogida" en el checkout. Con `false` solo
 // hay entrega a domicilio (el servidor también rechaza pedidos de recogida).
-export const PICKUP_ENABLED = false;
+export const PICKUP_ENABLED = true;
+
+// Hora mínima de RECOGIDA por día de la semana (0=domingo … 6=sábado). La
+// entrega a domicilio no se ve afectada. Domingo: recogida desde las 11:00.
+export const PICKUP_MIN_TIME_BY_WEEKDAY: Record<number, string> = { 0: "11:00" };
+
+const NOMBRE_DIA = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+function hhmmAMin(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + (m || 0);
+}
+
+/** Hora mínima de recogida para una fecha YYYY-MM-DD, o null si no hay límite. */
+export function pickupMinTimeFor(dateISO: string): string | null {
+  if (!dateISO) return null;
+  const dia = new Date(dateISO + "T12:00:00Z").getUTCDay();
+  return PICKUP_MIN_TIME_BY_WEEKDAY[dia] ?? null;
+}
+
+/**
+ * Si la recogida NO se permite a esa fecha+hora, devuelve el aviso para el
+ * cliente (p. ej. "Los domingos la recogida en local es a partir de las 11:00.").
+ * Si se permite, devuelve null.
+ */
+export function pickupTimeError(dateISO: string, time: string): string | null {
+  const min = pickupMinTimeFor(dateISO);
+  if (!min || !time) return null;
+  if (hhmmAMin(time) >= hhmmAMin(min)) return null;
+  const dia = NOMBRE_DIA[new Date(dateISO + "T12:00:00Z").getUTCDay()];
+  return `Los ${dia}s la recogida en local es a partir de las ${min}.`;
+}
 
 // Dirección del local. Se enseña en el formulario/resumen/email cuando hay
 // recogida, y en el pie de la web.

@@ -15,7 +15,7 @@ import {
   zoneForPostalCode,
   zoneLabel,
 } from "@/lib/delivery";
-import { SOLD_OUT, PICKUP_ENABLED } from "@/lib/store-config";
+import { SOLD_OUT, PICKUP_ENABLED, pickupTimeError } from "@/lib/store-config";
 import { getLaunchPhase, isAccessCodeValid } from "@/lib/launch";
 import { getDirectoStatus, todayMadrid } from "@/lib/directo";
 import { ventanaAplicaAlPago, promocionVentana } from "@/lib/ventana-lunes";
@@ -95,6 +95,17 @@ export async function POST(req: NextRequest) {
         { error: "Ahora mismo no tenemos recogida en local. Elige entrega a domicilio." },
         { status: 400 }
       );
+    }
+
+    // Hora mínima de recogida por día (domingo desde las 11:00).
+    if (parsed.deliveryMethod === "pickup") {
+      const avisoHora = pickupTimeError(parsed.reservationDate, parsed.reservationTime);
+      if (avisoHora) {
+        return NextResponse.json(
+          { error: `${avisoHora} Elige otra hora o entrega a domicilio.` },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate delivery fields when method is "delivery"

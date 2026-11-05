@@ -15,7 +15,7 @@ import { vatBreakdown, formatCents, ratePercent } from "@/lib/vat";
 import { leerOrigen } from "@/lib/origen";
 import { platoDeclaraAlergeno, platoSinDetallar } from "@/lib/allergens";
 import type { StoreConfig } from "@/lib/store-config";
-import { PICKUP_ADDRESS, PICKUP_ENABLED, PICKUP_MAPS_URL } from "@/lib/store-config";
+import { PICKUP_ADDRESS, PICKUP_ENABLED, PICKUP_MAPS_URL, pickupMinTimeFor, pickupTimeError } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
 import type { WeekendOffer } from "@/lib/offers";
 import {
@@ -648,6 +648,7 @@ export default function ReservationForm({
   // automáticamente aquí (el cliente no tiene que pulsar "Calcular envío").
   function continueFromDelivery() {
     if (fields.deliveryMethod === "pickup") {
+      if (pickupTimeError(fields.reservationDate, fields.reservationTime)) return;
       goToStep(6);
       return;
     }
@@ -920,8 +921,13 @@ export default function ReservationForm({
     fields.email.trim() &&
     fields.phone.trim()
   );
+  // Recogida a una hora no permitida (domingo antes de las 11:00).
+  const pickupHoraAviso =
+    fields.deliveryMethod === "pickup"
+      ? pickupTimeError(fields.reservationDate, fields.reservationTime)
+      : null;
   const step5Done =
-    fields.deliveryMethod === "pickup" ||
+    (fields.deliveryMethod === "pickup" && !pickupHoraAviso) ||
     !!(fields.deliveryAddress.trim().length >= 5 && fields.postalCode.trim());
 
   // Carrito flotante → llevar a "Tu selección". Antes empujaba hacia adelante
@@ -973,6 +979,14 @@ export default function ReservationForm({
       setError("Completa tus datos para continuar.");
       goToStep(4);
       return;
+    }
+    if (fields.deliveryMethod === "pickup") {
+      const avisoHora = pickupTimeError(fields.reservationDate, fields.reservationTime);
+      if (avisoHora) {
+        setError(`${avisoHora} Elige otra hora o entrega a domicilio.`);
+        goToStep(3);
+        return;
+      }
     }
     if (fields.deliveryMethod === "delivery") {
       if (!fields.deliveryAddress || fields.deliveryAddress.trim().length < 5) {
@@ -1722,6 +1736,13 @@ export default function ReservationForm({
                 </p>
               )}
 
+              {PICKUP_ENABLED && pickupMinTimeFor(fields.reservationDate) && (
+                <p className="-mt-3 mb-5 text-xs text-negro/45">
+                  Si vas a recoger en el local: este día la recogida es a partir de las{" "}
+                  {pickupMinTimeFor(fields.reservationDate)}.
+                </p>
+              )}
+
               <button
                 type="button"
                 disabled={!step3Done}
@@ -1989,6 +2010,21 @@ export default function ReservationForm({
                     Te avisaremos cuando tu pedido esté listo para recoger en el
                     día y hora elegidos.
                   </p>
+                </div>
+              )}
+
+              {pickupHoraAviso && (
+                <div className="mt-3 mb-2 border border-terra/40 bg-terra/[0.06] p-4 text-sm text-negro/75">
+                  <p>
+                    {pickupHoraAviso} Has elegido las {fields.reservationTime}.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => goToStep(3)}
+                    className="mt-2 text-xs font-semibold text-verde-bosque underline underline-offset-2 hover:text-verde-platano"
+                  >
+                    Cambiar la hora
+                  </button>
                 </div>
               )}
 
