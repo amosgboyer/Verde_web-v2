@@ -56,8 +56,27 @@ export const TIGRILLO_2X1: WeekendOffer = {
   reservationEndDate: "2026-08-02",
 };
 
+// 2×1 en Empanada de Queso — lanzamiento del plato. Se ve de miércoles 11 a
+// domingo 15 de noviembre y solo vale para pedidos que se entregan esos días.
+// Se apaga sola el lunes 16 a las 00:00 (Madrid).
+export const EMPANADA_2X1: WeekendOffer = {
+  id: "empanada-2x1",
+  name: "2×1 en Empanada de Queso",
+  tagline: "La 2ª Empanada de Queso, gratis",
+  badge: "Hasta el domingo",
+  productId: "empanada-de-queso",
+  productName: "Empanada de Queso",
+  productNameMatch: "empanada de queso",
+  everyNth: 2,
+  percentOff: 100,
+  startDate: "2026-11-11", // miércoles
+  endDate: "2026-11-15", // domingo
+  reservationStartDate: "2026-11-11",
+  reservationEndDate: "2026-11-15",
+};
+
 // Orden de prioridad: la primera que esté activa hoy es la que se aplica.
-const OFERTAS: WeekendOffer[] = [TIGRILLO_2X1, SWEET_WEEKEND];
+const OFERTAS: WeekendOffer[] = [EMPANADA_2X1, TIGRILLO_2X1, SWEET_WEEKEND];
 
 // Normaliza un nombre para comparar (minúsculas, sin acentos, espacios colapsados).
 // El id del producto puede variar entre el Sheet y el fallback estático; casar
