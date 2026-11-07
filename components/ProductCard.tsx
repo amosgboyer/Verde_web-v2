@@ -178,7 +178,7 @@ export default function ProductCard({
 
       {/* Precio (siempre visible) */}
       <div
-        className="absolute top-2 right-2 z-[2] font-extrabold tabular-nums"
+        className="pc-price absolute top-2 right-2 z-[2] font-extrabold tabular-nums"
         style={{
           background: "rgba(255,255,255,0.92)", color: "var(--g1, #2d5a1b)",
           fontSize: "0.8rem", padding: "3px 9px", borderRadius: "999px",
@@ -214,7 +214,7 @@ export default function ProductCard({
         </div>
         <div
           className="flex-1 overflow-y-auto leading-snug"
-          style={{ fontSize: "0.72rem", color: "rgba(245,240,232,0.82)" }}
+          style={{ fontSize: "0.78rem", color: "rgba(245,240,232,0.88)" }}
         >
           {product.description}
         </div>
@@ -351,8 +351,8 @@ export default function ProductCard({
                   className="w-full flex items-center justify-between gap-2 rounded-md px-2 py-1"
                   style={{ background: "rgba(255,255,255,0.1)" }}
                 >
-                  <span className="text-[0.68rem]">+ {a.label}</span>
-                  <span className="text-[0.68rem] font-bold">{fmtPrice(ap)} €</span>
+                  <span className="text-[0.68rem] text-left">+ {a.label}</span>
+                  <span className="text-[0.68rem] font-bold whitespace-nowrap">{fmtPrice(ap)} €</span>
                 </button>
               );
             })}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Product } from "@/lib/products";
-import { imageForProduct } from "@/lib/products";
+import { imageForProduct, mismoId, SALSAS_DESTACADAS } from "@/lib/products";
 
 // Precio en formato español: entero "10", decimal "2,20".
 function fmtPrice(n: number): string {
@@ -83,13 +83,31 @@ export default function DrinkUpsellModal({
     const qty = cart[item.id] ?? 0;
     const price = item.depositAmount || item.finalPrice;
     const active = qty > 0;
-    const img = imageForProduct(item);
+    // Topping destacado (p. ej. queso + mayo de la empanada): va marcado como
+    // el principal, con la foto del plato al que acompaña.
+    const destacada = SALSAS_DESTACADAS.find((d) => mismoId(d.id, item.id));
+    const img = destacada
+      ? imageForProduct({ id: destacada.baseId })
+      : imageForProduct(item);
     return (
       <div
         key={item.id}
-        className="flex items-center gap-3 rounded-2xl border bg-white p-2.5 pr-3 transition-colors"
-        style={{ borderColor: active ? "#509234" : "rgba(0,0,0,0.10)" }}
+        className={`relative flex items-center gap-3 rounded-2xl bg-white p-2.5 pr-3 transition-colors ${
+          destacada ? "border-2 pt-6" : "border"
+        }`}
+        style={{
+          borderColor: active ? "#509234" : destacada ? "#c85a2a" : "rgba(0,0,0,0.10)",
+          background: destacada ? "rgba(200,90,42,0.06)" : undefined,
+        }}
       >
+        {destacada && (
+          <span
+            className="absolute top-0 left-0 text-[10px] font-bold uppercase tracking-[0.1em] text-white px-2.5 py-1 rounded-br-xl rounded-tl-[14px]"
+            style={{ background: "#c85a2a" }}
+          >
+            ★ {destacada.etiqueta}
+          </span>
+        )}
         {img && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -241,7 +259,13 @@ export default function DrinkUpsellModal({
           {step === "bebidas" && drinks.map((d) => ItemRow(d))}
           {step === "extras" && (
             <>
-              {salsas.map((s) => ItemRow(s))}
+              {[...salsas]
+                .sort(
+                  (a, b) =>
+                    Number(SALSAS_DESTACADAS.some((d) => mismoId(d.id, b.id))) -
+                    Number(SALSAS_DESTACADAS.some((d) => mismoId(d.id, a.id)))
+                )
+                .map((s) => ItemRow(s))}
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-negro/40 px-1 pt-3">
                 ¿Necesitas cubiertos?
               </p>

@@ -339,6 +339,16 @@ export const EXTRA_SALSAS: Product[] = [
   },
 ];
 
+// Toppings que en el popup de salsas van PRIMERO y destacados, ligados a su
+// plato (se muestran con la foto y el nombre del plato al que van).
+export const SALSAS_DESTACADAS: { id: string; baseId: string; etiqueta: string }[] = [
+  {
+    id: "extra-empanada-queso-mayo",
+    baseId: "empanada-de-queso",
+    etiqueta: "Topping de la Empanada de Queso",
+  },
+];
+
 export function getSalsas(): Product[] {
   return EXTRA_SALSAS.filter((s) => s.available);
 }
