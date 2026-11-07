@@ -150,7 +150,8 @@ export default function ProductCard({
 
       {/* Cinta de oferta — nunca sobre un agotado: anunciar un descuento en
           algo que no se puede comprar sería tomar el pelo. */}
-      {active.available && offerBadge && (
+      {/* Con la card abierta se oculta: el sello grande tapaba la descripción. */}
+      {active.available && offerBadge && !open && (
         <div
           className="absolute top-0 left-0 z-[4] text-white font-extrabold leading-none tracking-tight px-3.5 py-2 rounded-br-[14px] shadow-md"
           style={{ background: "var(--terra, #c85a2a)", fontSize: "1.6rem" }}
