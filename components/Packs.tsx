@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { Product } from "@/lib/products";
+import type { WeekendOffer } from "@/lib/offers";
+import { productMatchesOffer, offerBadgeLabel, offerReservationText } from "@/lib/offers";
 import { getPacks, PRODUCT_CHOICES, mismoId, esPlatoDorado } from "@/lib/products";
 
 // Nombre, descripción y PRECIO salen de lib/products.ts — que es lo que cobra
@@ -54,9 +56,12 @@ interface PacksProps {
   /** El menú de la semana (fila `menu-semana` del Sheet). Se pinta como la
    *  card MÁS destacada del bloque de packs, con la bebida a elegir. */
   menuSemana?: Product;
+  /** Oferta activa (2×1, 2ª al 50 %…). Si cae sobre un plato de Novedades,
+   *  su card lo anuncia. */
+  weekendOffer?: WeekendOffer | null;
 }
 
-export default function Packs({ readOnly = false, destacados = [], menuSemana }: PacksProps) {
+export default function Packs({ readOnly = false, destacados = [], menuSemana, weekendOffer = null }: PacksProps) {
   const hayNovedades = destacados.length > 0;
 
   // Bebida del menú de la semana: se elige AQUÍ, en la propia tarjeta, y
@@ -165,6 +170,22 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana }:
                   >
                     {plato.description}
                   </p>
+
+                  {weekendOffer && productMatchesOffer(weekendOffer, plato) && (
+                    <div
+                      className="mb-3 sm:mb-4 flex flex-col items-center gap-1 rounded-[10px] px-3 py-2"
+                      style={{ background: "var(--terra, #c85a2a)", color: "#fff" }}
+                    >
+                      <span className="text-[0.8rem] font-bold uppercase tracking-[0.06em]">
+                        {offerBadgeLabel(weekendOffer)} · {weekendOffer.tagline}
+                      </span>
+                      {offerReservationText(weekendOffer) && (
+                        <span className="text-[0.66rem]" style={{ color: "rgba(255,255,255,0.85)" }}>
+                          {offerReservationText(weekendOffer)}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
                     <div className="flex flex-col items-center leading-tight">

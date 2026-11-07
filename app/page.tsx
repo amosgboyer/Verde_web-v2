@@ -200,6 +200,7 @@ export default async function HomePage({
         <section id="packs">
           <Packs
             destacados={getDestacados(products)}
+            weekendOffer={weekendOffer}
             menuSemana={products.find(
               (p) => mismoId(p.id, "menu-semana") && p.available !== false
             )}

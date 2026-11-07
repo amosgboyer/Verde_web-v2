@@ -56,22 +56,22 @@ export const TIGRILLO_2X1: WeekendOffer = {
   reservationEndDate: "2026-08-02",
 };
 
-// 2×1 en Empanada de Queso — lanzamiento del plato. Se ve de miércoles 11 a
-// domingo 15 de noviembre y solo vale para pedidos que se entregan esos días.
+// 2×1 en Empanada de Queso — lanzamiento del plato. Se anuncia desde el
+// sábado 7 y solo vale para pedidos que se entregan de miércoles 11 a domingo 15.
 // Se apaga sola el lunes 16 a las 00:00 (Madrid).
 export const EMPANADA_2X1: WeekendOffer = {
   id: "empanada-2x1",
   name: "2×1 en Empanada de Queso",
   tagline: "La 2ª Empanada de Queso, gratis",
-  badge: "Hasta el domingo",
+  badge: "Del 11 al 15 nov",
   productId: "empanada-de-queso",
   productName: "Empanada de Queso",
   productNameMatch: "empanada de queso",
   everyNth: 2,
   percentOff: 100,
-  startDate: "2026-11-11", // miércoles
+  startDate: "2026-11-07", // sábado — se anuncia desde ya
   endDate: "2026-11-15", // domingo
-  reservationStartDate: "2026-11-11",
+  reservationStartDate: "2026-11-11", // miércoles — primera entrega con 2×1
   reservationEndDate: "2026-11-15",
 };
 
