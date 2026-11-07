@@ -592,6 +592,8 @@ export function getPacks(): Product[] {
 // y otra de packs. Estos son los platos que se empujan arriba, EN ESTE ORDEN.
 // Para cambiar las novedades, tocar esta lista; vaciarla oculta la zona entera.
 export const DESTACADOS_IDS: string[] = [
+  // Empanada de Queso (nov 2026): plato nuevo con 2×1 del 11 al 15.
+  "empanada-de-queso",
   // Caldo de Bolas de Verde abre el escaparate (oct 2026), plato nuevo.
   "caldo-bolas-de-verde",
   // La Chocletiza relevó al colonche, que sigue en la carta (sección Verde)
