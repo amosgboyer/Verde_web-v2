@@ -323,6 +323,20 @@ export const EXTRA_SALSAS: Product[] = [
     allergens: ["Cacahuetes", "Huevos", "Sésamo"],
     category: "Salsas",
   },
+  {
+    // Topping de la Empanada de Queso. Sale en el popup de salsas Y dentro de
+    // la card de la empanada (PRODUCT_ADDONS en ReservationForm): mismo id,
+    // así que es la misma línea del carrito.
+    id: "extra-empanada-queso-mayo",
+    name: "Queso y mayonesa de sal prieta",
+    description: "Queso rallado, mayonesa de sal prieta y sal prieta por encima.",
+    finalPrice: 2,
+    depositAmount: 2,
+    available: true,
+    // Mayonesa = huevo; sal prieta = maní.
+    allergens: ["Lácteos", "Huevos", "Cacahuetes"],
+    category: "Salsas",
+  },
 ];
 
 export function getSalsas(): Product[] {
@@ -404,19 +418,6 @@ export const EXTRA_PLATOS: Product[] = [
     allergens: ["Lácteos"],
     category: "verde",
     image: "/productos/empanada-de-queso-topping.jpg",
-  },
-  {
-    // Extra de la empanada: NO sale como card en la carta, se ofrece dentro
-    // de la card de la empanada (PRODUCT_ADDONS en ReservationForm).
-    id: "extra-empanada-queso-mayo",
-    name: "Extra empanada: queso y mayonesa de sal prieta",
-    description: "Queso rallado, mayonesa de sal prieta y sal prieta por encima.",
-    finalPrice: 2,
-    depositAmount: 2,
-    available: true,
-    // Mayonesa = huevo; sal prieta = maní.
-    allergens: ["Lácteos", "Huevos", "Cacahuetes"],
-    category: "verde",
   },
 ];
 
