@@ -250,6 +250,10 @@ const PRODUCT_ADDONS: { baseId: string; addons: { label: string; id: string }[] 
     baseId: "corviche-de-pescado",
     addons: [{ label: "Reahogado de pescado", id: "Reahogado-de-pescado" }],
   },
+  {
+    baseId: "empanada-de-queso",
+    addons: [{ label: "Queso y mayo de sal prieta", id: "extra-empanada-queso-mayo" }],
+  },
 ];
 
 // Las elecciones incluidas (bebida del menú, etc.) viven en lib/products.ts
@@ -1256,19 +1260,24 @@ export default function ReservationForm({
                 border: "1px solid rgba(200,90,42,0.28)",
               }}
             >
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-[13px] text-[#a8451f] tracking-tight">
-                  {weekendOffer.name}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="font-extrabold text-[2.2rem] leading-none text-white bg-[#c85a2a] rounded-lg px-3 py-1.5 shrink-0 tabular-nums">
+                  {offerBadgeLabel(weekendOffer)}
                 </span>
-                <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-white bg-[#c85a2a] rounded-full px-2 py-0.5 shrink-0">
-                  {weekendOffer.badge}
+                <span className="flex flex-col gap-1">
+                  <span className="font-bold text-[18px] leading-tight text-[#a8451f] tracking-tight">
+                    {weekendOffer.name}
+                  </span>
+                  <span className="self-start text-[10px] font-bold uppercase tracking-[0.15em] text-white bg-[#c85a2a] rounded-full px-2 py-0.5">
+                    {weekendOffer.badge}
+                  </span>
                 </span>
               </div>
-              <p className="text-[12px] text-negro/60 leading-snug mt-0.5">
+              <p className="text-[13px] text-negro/70 leading-snug mt-2">
                 {weekendOffer.tagline}. {offerRuleText(weekendOffer)}
               </p>
               {offerReservationText(weekendOffer) && (
-                <p className="text-[11px] font-semibold text-[#a8451f] leading-snug mt-1.5">
+                <p className="text-[12px] font-semibold text-[#a8451f] leading-snug mt-1.5">
                   {offerReservationText(weekendOffer)}
                 </p>
               )}

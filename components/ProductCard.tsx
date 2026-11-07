@@ -63,7 +63,7 @@ export default function ProductCard({
       )}
       style={{
         border: offerBadge
-          ? "1.5px solid var(--terra, #c85a2a)"
+          ? "2.5px solid var(--terra, #c85a2a)"
           : inCart
           ? "1.5px solid var(--g2, #4a7c2f)"
           : "1px solid var(--border, rgba(44,90,27,0.13))",
@@ -152,8 +152,8 @@ export default function ProductCard({
           algo que no se puede comprar sería tomar el pelo. */}
       {active.available && offerBadge && (
         <div
-          className="absolute top-0 left-0 z-[4] text-white text-[9px] font-bold uppercase tracking-[0.08em] px-2.5 py-1 rounded-br-[10px]"
-          style={{ background: "var(--terra, #c85a2a)" }}
+          className="absolute top-0 left-0 z-[4] text-white font-extrabold leading-none tracking-tight px-3.5 py-2 rounded-br-[14px] shadow-md"
+          style={{ background: "var(--terra, #c85a2a)", fontSize: "1.6rem" }}
         >
           {offerBadge}
         </div>

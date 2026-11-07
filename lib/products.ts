@@ -279,7 +279,7 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   "inca-kola": "/productos/inca-kola.jpg",
   "ceviche-jipijapa": "/productos/ceviche-jipijapa.jpg",
   "colonche-de-chicharron": "/productos/colonche-de-chicharron.jpg",
-  "empanada-de-queso": "/productos/empanada-de-queso.jpg",
+  "empanada-de-queso": "/productos/empanada-de-queso-topping.jpg",
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
@@ -395,14 +395,28 @@ export const EXTRA_PLATOS: Product[] = [
     id: "empanada-de-queso",
     name: "Empanada de Queso",
     description:
-      "Masa de verde crocante, rellena de queso mozzarella fundido.",
-    finalPrice: 6,
-    depositAmount: 6,
+      "Masa de verde crocante, rellena de queso mozzarella fundido. Pídela con queso rallado, mayonesa de sal prieta y sal prieta por 2 € más.",
+    finalPrice: 5,
+    depositAmount: 5,
     available: true,
-    // Receta (verdehost): plátano verde, mozzarella, maicena, sal → solo lácteos.
+    // Receta (verdehost): plátano verde, mozzarella, maicena, sal → solo
+    // lácteos. Los alérgenos del topping van en su propio producto (abajo).
     allergens: ["Lácteos"],
     category: "verde",
-    image: "/productos/empanada-de-queso.jpg",
+    image: "/productos/empanada-de-queso-topping.jpg",
+  },
+  {
+    // Extra de la empanada: NO sale como card en la carta, se ofrece dentro
+    // de la card de la empanada (PRODUCT_ADDONS en ReservationForm).
+    id: "extra-empanada-queso-mayo",
+    name: "Extra empanada: queso y mayonesa de sal prieta",
+    description: "Queso rallado, mayonesa de sal prieta y sal prieta por encima.",
+    finalPrice: 2,
+    depositAmount: 2,
+    available: true,
+    // Mayonesa = huevo; sal prieta = maní.
+    allergens: ["Lácteos", "Huevos", "Cacahuetes"],
+    category: "verde",
   },
 ];
 
