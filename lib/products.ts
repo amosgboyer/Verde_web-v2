@@ -279,6 +279,7 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   "inca-kola": "/productos/inca-kola.jpg",
   "ceviche-jipijapa": "/productos/ceviche-jipijapa.jpg",
   "colonche-de-chicharron": "/productos/colonche-de-chicharron.jpg",
+  "empanada-de-queso": "/productos/empanada-de-queso.jpg",
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
@@ -389,6 +390,19 @@ export const EXTRA_PLATOS: Product[] = [
     allergens: ["Pescado", "Maní"],
     category: "pesca",
     image: "/productos/ceviche-jipijapa.jpg",
+  },
+  {
+    id: "empanada-de-queso",
+    name: "Empanada de Queso",
+    description:
+      "Masa de verde crocante, rellena de queso mozzarella fundido.",
+    finalPrice: 6,
+    depositAmount: 6,
+    available: true,
+    // Receta (verdehost): plátano verde, mozzarella, maicena, sal → solo lácteos.
+    allergens: ["Lácteos"],
+    category: "verde",
+    image: "/productos/empanada-de-queso.jpg",
   },
 ];
 
