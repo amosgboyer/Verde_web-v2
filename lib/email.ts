@@ -102,6 +102,7 @@ export interface ConfirmationEmailData {
   privacyAccepted?: boolean;
   termsAccepted?: boolean;
   acceptedAt?: string;
+  marketingOptIn?: boolean;
   subtotalBeforeDiscount?: number;
   discountAmount?: number;
   promoName?: string;
@@ -166,6 +167,7 @@ export async function sendInternalOrderNotification(
       privacyAccepted:          data.privacyAccepted,
       termsAccepted:            data.termsAccepted,
       acceptedAt:               data.acceptedAt,
+      marketingOptIn:           data.marketingOptIn,
       subtotalBeforeDiscount:   data.subtotalBeforeDiscount,
       discountAmount:           data.discountAmount,
       promoName:                data.promoName,

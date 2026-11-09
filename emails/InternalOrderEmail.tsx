@@ -33,6 +33,7 @@ export interface InternalOrderEmailProps {
   privacyAccepted?: boolean;
   termsAccepted?: boolean;
   acceptedAt?: string;
+  marketingOptIn?: boolean;
   subtotalBeforeDiscount?: number;
   discountAmount?: number;
   promoName?: string;
@@ -116,6 +117,7 @@ export function InternalOrderEmail({
   privacyAccepted,
   termsAccepted,
   acceptedAt,
+  marketingOptIn,
   subtotalBeforeDiscount,
   discountAmount,
   promoName,
@@ -413,6 +415,7 @@ export function InternalOrderEmail({
                         <tbody>
                           <DataRow label="Política privacidad" value={privacyAccepted ? "Sí" : "No"} />
                           <DataRow label="Condiciones compra" value={termsAccepted ? "Sí" : "No"} />
+                          <DataRow label="Ofertas por email" value={marketingOptIn ? "Sí" : "No"} />
                           {acceptedAt && <DataRow label="Fecha aceptación" value={acceptedAt} />}
                         </tbody>
                       </table>

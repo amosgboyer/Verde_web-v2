@@ -69,6 +69,19 @@ export default function PoliticaPrivacidadPage() {
 
           <div>
             <h2 className="text-negro text-xs font-semibold uppercase tracking-[0.2em] mb-3">
+              Ofertas y novedades por email
+            </h2>
+            <p>
+              Solo si lo marcas al hacer tu pedido (la casilla es opcional y viene desmarcada),
+              te enviaremos por email ofertas y novedades de la carta de VERDE. La base legal es
+              tu consentimiento, que puedes retirar cuando quieras desde el enlace de baja que
+              incluye cada email o escribiéndonos. Retirarlo no afecta a tus pedidos. Si no
+              marcas la casilla, nunca te enviaremos publicidad.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-negro text-xs font-semibold uppercase tracking-[0.2em] mb-3">
               Datos guardados en tu dispositivo
             </h2>
             <p>

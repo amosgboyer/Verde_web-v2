@@ -423,6 +423,8 @@ export interface OrderRow {
   utmSource?: string;
   utmCampaign?: string;
   referrer?: string;
+  // Consentimiento de ofertas por email (columna AG). Opcional.
+  marketingOptIn?: boolean;
 }
 
 /**
@@ -476,11 +478,13 @@ export async function appendOrderToSheet(order: OrderRow): Promise<void> {
     order.utmSource ?? "",
     order.utmCampaign ?? "",
     order.referrer ?? "",
+    // Ofertas por email — columna AG (TRUE/FALSE). Al final por la misma razón.
+    order.marketingOptIn ? "TRUE" : "FALSE",
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: getSpreadsheetId(),
-    range: "Orders!A:AF",
+    range: "Orders!A:AG",
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [row] },
   });
