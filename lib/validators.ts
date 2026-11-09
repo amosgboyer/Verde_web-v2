@@ -42,6 +42,8 @@ export const reservationSchema = z.object({
   privacyAccepted: z.literal(true, {
     errorMap: () => ({ message: "Debes aceptar la política de privacidad." }),
   }),
+  // Opcional: consentimiento de publicidad por email (LSSI art. 21).
+  marketingOptIn: z.boolean().optional().default(false),
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: "Debes aceptar las condiciones de compra." }),
   }),

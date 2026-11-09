@@ -436,6 +436,8 @@ export default function ReservationForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  // Consentimiento de publicidad (LSSI art. 21): opcional y DESMARCADO por defecto.
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
@@ -1095,6 +1097,7 @@ export default function ReservationForm({
               : null,
           privacyAccepted,
           termsAccepted,
+          marketingOptIn,
           accessCode: requireAccessCode ? accessCode.trim() : undefined,
         }),
       });
@@ -2362,6 +2365,22 @@ export default function ReservationForm({
                       condiciones de compra
                     </a>
                     , preparación y entrega del pedido.
+                  </span>
+                </label>
+
+                {/* Opcional — no bloquea el pago. Separado de la privacidad a
+                    propósito: el consentimiento de publicidad tiene que ser
+                    libre y específico. */}
+                <label className="flex items-start gap-3 cursor-pointer pt-1 border-t border-negro/8">
+                  <input
+                    type="checkbox"
+                    checked={marketingOptIn}
+                    onChange={(e) => setMarketingOptIn(e.target.checked)}
+                    className="mt-3 shrink-0 w-4 h-4 accent-verde-bosque cursor-pointer"
+                  />
+                  <span className="text-xs text-negro/55 leading-relaxed pt-2.5">
+                    Quiero recibir ofertas y novedades de VERDE por email (opcional). Puedes
+                    darte de baja cuando quieras desde cualquier email.
                   </span>
                 </label>
               </div>

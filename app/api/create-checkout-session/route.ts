@@ -413,6 +413,7 @@ export async function POST(req: NextRequest) {
         deliveryZoneLevel: isPickup ? "" : String(serverZone ?? ""),
         privacyAccepted: String(parsed.privacyAccepted),
         termsAccepted: String(parsed.termsAccepted),
+        marketingOptIn: String(parsed.marketingOptIn === true),
         acceptedAt,
         // Descuento total registrado (promo global + oferta finde combinadas)
         promoApplied: String(anyDiscount),

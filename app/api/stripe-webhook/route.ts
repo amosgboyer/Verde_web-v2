@@ -109,6 +109,7 @@ export async function POST(req: NextRequest) {
 
     const privacyAccepted = meta.privacyAccepted === "true";
     const termsAccepted = meta.termsAccepted === "true";
+    const marketingOptIn = meta.marketingOptIn === "true";
     const acceptedAt = meta.acceptedAt ?? "";
     // De dónde vino el cliente (vacío en sesiones antiguas o sin origen).
     const origen = decodificarOrigen(meta.origen);
@@ -182,6 +183,7 @@ export async function POST(req: NextRequest) {
           utmSource: origen.utmSource,
           utmCampaign: origen.utmCampaign,
           referrer: origen.referrer,
+          marketingOptIn,
         });
       }
 
@@ -220,6 +222,7 @@ export async function POST(req: NextRequest) {
           utmSource: origen.utmSource,
           utmCampaign: origen.utmCampaign,
           referrer: origen.referrer,
+          marketingOptIn,
         });
       }
 
@@ -299,6 +302,7 @@ export async function POST(req: NextRequest) {
             privacyAccepted,
             termsAccepted,
             acceptedAt,
+            marketingOptIn,
             ...deliveryEmailFields,
           });
         } catch (err) {
