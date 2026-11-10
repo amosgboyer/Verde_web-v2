@@ -478,16 +478,31 @@ export async function appendOrderToSheet(order: OrderRow): Promise<void> {
     order.utmSource ?? "",
     order.utmCampaign ?? "",
     order.referrer ?? "",
-    // Ofertas por email — columna AG (TRUE/FALSE). Al final por la misma razón.
-    order.marketingOptIn ? "TRUE" : "FALSE",
   ];
 
-  await sheets.spreadsheets.values.append({
+  const res = await sheets.spreadsheets.values.append({
     spreadsheetId: getSpreadsheetId(),
-    range: "Orders!A:AG",
+    range: "Orders!A:AF",
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [row] },
   });
+
+  // Ofertas por email — columna AG. Se escribe APARTE y sin poder romper nada:
+  // si la hoja no tiene columna AG, escribirla en el mismo append hacía fallar
+  // el guardado del pedido entero (y con él los emails de confirmación).
+  try {
+    const fila = res.data.updates?.updatedRange?.match(/![A-Z]+(\d+)/)?.[1];
+    if (fila) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: getSpreadsheetId(),
+        range: `Orders!AG${fila}`,
+        valueInputOption: "RAW",
+        requestBody: { values: [[order.marketingOptIn ? "TRUE" : "FALSE"]] },
+      });
+    }
+  } catch (err) {
+    console.warn("[sheets] No se pudo guardar 'Acepta ofertas' (columna AG):", err);
+  }
 }
 
 // ─── Append Waitlist ──────────────────────────────────────────────────────────
