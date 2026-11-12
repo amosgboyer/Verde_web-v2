@@ -429,6 +429,21 @@ export const EXTRA_PLATOS: Product[] = [
     category: "verde",
     image: "/productos/empanada-de-queso-topping.jpg",
   },
+  {
+    // Nov 2026: versión para compartir del Patacón de Rabo de Toro, en el
+    // formato del Ahora Comen Todos (que es de mini bolones).
+    id: "ahora-comen-todos-rabo",
+    name: "Ahora Comen Todos · Rabo de Toro",
+    description:
+      "4 pataconcitos crocantes con rabo de toro de 16h de cocción, cebolla caramelizada, queso gruyer y mostaza antigua. Para compartir.",
+    finalPrice: 15,
+    depositAmount: 15,
+    available: true,
+    // Mismos alérgenos que el Patacón de Rabo de Toro (hoja Products).
+    allergens: ["Lácteos", "Apio", "Mostaza", "Sulfitos"],
+    category: "Ahora -comen", // mismo bloque que el Ahora Comen Todos de bolones
+    // Foto pendiente (Amos la pasa). Sin imagen hasta entonces.
+  },
 ];
 
 export function getPlatosExtra(): Product[] {
@@ -629,6 +644,8 @@ export function getPacks(): Product[] {
 export const DESTACADOS_IDS: string[] = [
   // Empanada de Queso (nov 2026): plato nuevo con 2×1 del 11 al 15.
   "empanada-de-queso",
+  // Ahora Comen Todos versión rabo de toro (nov 2026), plato nuevo.
+  "ahora-comen-todos-rabo",
   // La Chocletiza relevó al colonche, que sigue en la carta (sección Verde)
   // pero fuera de Novedades.
   "la-chocletiza",
