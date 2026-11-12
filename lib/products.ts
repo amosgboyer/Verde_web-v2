@@ -438,7 +438,8 @@ export const EXTRA_PLATOS: Product[] = [
       "4 pataconcitos crocantes con rabo de toro de 16h de cocción, cebolla caramelizada, queso gruyer y mostaza antigua. Para compartir.",
     finalPrice: 15,
     depositAmount: 15,
-    available: true,
+    // OCULTO (Amos, 12-11): no se publica hasta tener foto y todo listo.
+    available: false,
     // Mismos alérgenos que el Patacón de Rabo de Toro (hoja Products).
     allergens: ["Lácteos", "Apio", "Mostaza", "Sulfitos"],
     category: "Ahora -comen", // mismo bloque que el Ahora Comen Todos de bolones
@@ -644,8 +645,7 @@ export function getPacks(): Product[] {
 export const DESTACADOS_IDS: string[] = [
   // Empanada de Queso (nov 2026): plato nuevo con 2×1 del 11 al 15.
   "empanada-de-queso",
-  // Ahora Comen Todos versión rabo de toro (nov 2026), plato nuevo.
-  "ahora-comen-todos-rabo",
+  // Ahora Comen Todos versión rabo de toro: añadir aquí cuando se publique.
   // La Chocletiza relevó al colonche, que sigue en la carta (sección Verde)
   // pero fuera de Novedades.
   "la-chocletiza",
