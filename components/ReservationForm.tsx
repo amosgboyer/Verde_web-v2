@@ -37,6 +37,7 @@ import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
 import DrinkUpsellModal from "./DrinkUpsellModal";
 import clsx from "clsx";
+import { sugerirEmail } from "@/lib/email-typo";
 
 interface DeliveryInfo {
   deliverable: boolean;
@@ -1830,7 +1831,29 @@ export default function ReservationForm({
                     value={fields.email}
                     onChange={handleFieldChange}
                     className={inputClass}
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    spellCheck={false}
                   />
+                  {(() => {
+                    // Aviso de error típico al escribir el email (gmail.con,
+                    // ocloud.com…). Si rebota, el cliente no recibe la confirmación.
+                    const sugerido = sugerirEmail(fields.email);
+                    if (!sugerido) return null;
+                    return (
+                      <p className="mt-2 text-xs text-tierra leading-relaxed" role="alert">
+                        ¿Quisiste decir{" "}
+                        <button
+                          type="button"
+                          onClick={() => setFields((prev) => ({ ...prev, email: sugerido }))}
+                          className="underline font-semibold hover:text-verde-bosque transition-colors"
+                        >
+                          {sugerido}
+                        </button>
+                        ? Si el email está mal no te llegará la confirmación del pedido.
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div>
                   <label htmlFor="phone" className={labelClass}>
