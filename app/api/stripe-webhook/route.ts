@@ -6,6 +6,7 @@ import {
   sendInternalOrderNotification,
   sendOverbookingAlert,
 } from "@/lib/email";
+import { registrarSuscriptor } from "@/lib/subscribers";
 import { isSlotAvailable, normalizeTime, normalizeDate } from "@/lib/availability";
 import { orderCodeFromSession } from "@/lib/order-code";
 import { unirMeta } from "@/lib/stripe-meta";
@@ -330,6 +331,16 @@ export async function POST(req: NextRequest) {
             err
           );
         }
+      }
+
+      // Toggle «ofertas por email» → lista de suscriptores ligada al email.
+      // Después de los emails y sin poder lanzar (registrarSuscriptor no lanza).
+      if (marketingOptIn && meta.email) {
+        await registrarSuscriptor({
+          email: meta.email,
+          name: meta.customerName ?? "",
+          phone: meta.phone ?? "",
+        });
       }
     } catch (err) {
       console.error("[stripe-webhook] Error procesando pedido:", session.id, err);

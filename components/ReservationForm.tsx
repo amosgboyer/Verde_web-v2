@@ -2370,19 +2370,36 @@ export default function ReservationForm({
 
                 {/* Opcional — no bloquea el pago. Separado de la privacidad a
                     propósito: el consentimiento de publicidad tiene que ser
-                    libre y específico. */}
-                <label className="flex items-start gap-3 cursor-pointer pt-1 border-t border-negro/8">
-                  <input
-                    type="checkbox"
-                    checked={marketingOptIn}
-                    onChange={(e) => setMarketingOptIn(e.target.checked)}
-                    className="mt-3 shrink-0 w-4 h-4 accent-verde-bosque cursor-pointer"
-                  />
-                  <span className="text-xs text-negro/55 leading-relaxed pt-2.5">
-                    Quiero recibir ofertas y novedades de VERDE por email (opcional). Puedes
-                    darte de baja cuando quieras desde cualquier email.
-                  </span>
-                </label>
+                    libre y específico, por eso empieza APAGADO. Queda ligado al
+                    email: en pedidos siguientes no hace falta volver a activarlo. */}
+                <div className="flex items-start justify-between gap-4 pt-3 border-t border-negro/8">
+                  <label htmlFor="marketing-optin" className="text-xs text-negro/55 leading-relaxed cursor-pointer">
+                    <span className="block text-negro/80 font-medium mb-0.5">
+                      Ofertas y novedades por email
+                    </span>
+                    Te avisaremos de platos nuevos y promociones en el email de este pedido.
+                    Opcional. Puedes darte de baja cuando quieras desde cualquier email.
+                  </label>
+                  <button
+                    id="marketing-optin"
+                    type="button"
+                    role="switch"
+                    aria-checked={marketingOptIn}
+                    onClick={() => setMarketingOptIn((v) => !v)}
+                    className={clsx(
+                      "relative mt-1 shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-verde-bosque/40",
+                      marketingOptIn ? "bg-verde-bosque" : "bg-negro/15"
+                    )}
+                  >
+                    <span className="sr-only">Recibir ofertas y novedades por email</span>
+                    <span
+                      className={clsx(
+                        "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200",
+                        marketingOptIn ? "translate-x-[22px]" : "translate-x-[2px]"
+                      )}
+                    />
+                  </button>
+                </div>
               </div>
 
               {error && (
