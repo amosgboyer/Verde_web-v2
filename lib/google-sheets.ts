@@ -599,3 +599,84 @@ export async function updateSetting(key: string, value: string): Promise<void> {
     requestBody: { values: [[value]] },
   });
 }
+
+// ─── Suscriptores (ofertas por email) ─────────────────────────────────────────
+//
+// Lista única por EMAIL de quien ha marcado «Quiero recibir ofertas» en algún
+// pedido. Pestaña "Suscriptores" del Sheet (se crea sola si no existe):
+//   A email · B nombre · C teléfono · D alta · E último pedido con el toggle
+//   F estado ("suscrito" / "baja") · G veces que lo ha marcado
+// El consentimiento queda ligado al email: en pedidos siguientes del mismo
+// email NO se pierde aunque no vuelva a marcarlo. Nunca se pone "suscrito" a
+// alguien que lo dejó en "baja" a mano: solo un nuevo toggle lo reactiva.
+
+const SUBS_TAB = "Suscriptores";
+const SUBS_HEADER = [
+  "email", "nombre", "telefono", "alta", "ultimo_consentimiento", "estado", "veces",
+];
+
+export interface SubscriberInput {
+  email: string;
+  name: string;
+  phone: string;
+  at: string; // ISO
+}
+
+export async function upsertSubscriber(sub: SubscriberInput): Promise<"nuevo" | "actualizado"> {
+  const email = sub.email.trim().toLowerCase();
+  if (!email.includes("@")) throw new Error("email inválido");
+
+  const auth = getAuth();
+  const sheets = google.sheets({ version: "v4", auth });
+  const spreadsheetId = getSpreadsheetId();
+
+  let rows: string[][];
+  try {
+    rows = await getSheetValues(`${SUBS_TAB}!A:G`);
+  } catch {
+    // La pestaña no existe todavía → crearla con cabecera.
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: { requests: [{ addSheet: { properties: { title: SUBS_TAB } } }] },
+    });
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${SUBS_TAB}!A1:G1`,
+      valueInputOption: "RAW",
+      requestBody: { values: [SUBS_HEADER] },
+    });
+    rows = [SUBS_HEADER];
+  }
+
+  const idx = rows.findIndex((r, i) => i > 0 && (r[0] ?? "").trim().toLowerCase() === email);
+
+  if (idx === -1) {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: `${SUBS_TAB}!A:G`,
+      valueInputOption: "RAW",
+      requestBody: { values: [[email, sub.name, sub.phone, sub.at, sub.at, "suscrito", "1"]] },
+    });
+    return "nuevo";
+  }
+
+  const fila = idx + 1; // 1-based
+  const prev = rows[idx];
+  const veces = (parseInt(prev[6] ?? "0", 10) || 0) + 1;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `${SUBS_TAB}!B${fila}:G${fila}`,
+    valueInputOption: "RAW",
+    requestBody: {
+      values: [[
+        sub.name || prev[1] || "",
+        sub.phone || prev[2] || "",
+        prev[3] || sub.at,
+        sub.at,
+        "suscrito", // ha vuelto a marcar el toggle → consentimiento nuevo
+        String(veces),
+      ]],
+    },
+  });
+  return "actualizado";
+}

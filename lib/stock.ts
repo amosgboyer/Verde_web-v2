@@ -6,7 +6,6 @@ import { mismoId } from "./products";
 
 // id del plato → unidades totales disponibles.
 export const STOCK_LIMITADO: Record<string, number> = {
-  "caldo-bolas-de-verde": 5,
 };
 
 type OrderLike = { productId: string; quantity: number; status: string };

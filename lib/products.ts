@@ -602,10 +602,20 @@ export function withExtraPlatos(products: Product[]): Product[] {
 // que acordarse de tocar cada página por separado. El agotado se aplica al
 // FINAL, sobre la lista ya fusionada, para que pise igual la versión de la
 // hoja que la del respaldo.
+// Platos RETIRADOS de la carta: no se muestran en ningún sitio (ni como
+// agotados), aunque sigan en la hoja Products. Para recuperar uno, quitarlo de
+// aquí y ponerlo available=TRUE en la hoja.
+export const PLATOS_RETIRADOS: string[] = [
+  "caldo-bolas-de-verde", // retirado 12-11-2026 (decisión Amos)
+];
+export function estaRetirado(id: string): boolean {
+  return PLATOS_RETIRADOS.some((r) => mismoId(r, id));
+}
+
 export function withExtraProducts(products: Product[]): Product[] {
-  return withExtraPlatos(withExtraBebidas(products)).map((p) =>
-    estaAgotadoTemporal(p.id) ? { ...p, available: false } : p
-  );
+  return withExtraPlatos(withExtraBebidas(products))
+    .filter((p) => !estaRetirado(p.id))
+    .map((p) => (estaAgotadoTemporal(p.id) ? { ...p, available: false } : p));
 }
 
 export function getPacks(): Product[] {
@@ -619,8 +629,6 @@ export function getPacks(): Product[] {
 export const DESTACADOS_IDS: string[] = [
   // Empanada de Queso (nov 2026): plato nuevo con 2×1 del 11 al 15.
   "empanada-de-queso",
-  // Caldo de Bolas de Verde abre el escaparate (oct 2026), plato nuevo.
-  "caldo-bolas-de-verde",
   // La Chocletiza relevó al colonche, que sigue en la carta (sección Verde)
   // pero fuera de Novedades.
   "la-chocletiza",
