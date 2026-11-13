@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Product } from "@/lib/products";
 import type { WeekendOffer } from "@/lib/offers";
 import { productMatchesOffer, offerBadgeLabel, offerReservationText } from "@/lib/offers";
+import OfferCountdown from "./OfferCountdown";
 import { getPacks, PRODUCT_CHOICES, mismoId, esPlatoDorado } from "@/lib/products";
 
 // Nombre, descripción y PRECIO salen de lib/products.ts — que es lo que cobra
@@ -184,6 +185,7 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
                           {offerReservationText(weekendOffer)}
                         </span>
                       )}
+                      <OfferCountdown offer={weekendOffer} light className="justify-center mt-0.5" />
                     </div>
                   )}
 

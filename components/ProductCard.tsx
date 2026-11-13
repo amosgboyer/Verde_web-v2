@@ -23,6 +23,8 @@ interface ProductCardProps {
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
   offerBadge?: string;
+  /** "Pide 1, llévate 2": cuántas se entregan por cada una pedida (2). */
+  offerMultiplier?: number;
   sizeOptions?: SizeOption[];
   quantityOf?: (productId: string) => number;
   addons?: { label: string; product: Product }[];
@@ -37,6 +39,7 @@ interface ProductCardProps {
 
 export default function ProductCard({
   product, quantity, maxQuantity, onAdd, onIncrement, onDecrement, offerBadge,
+  offerMultiplier,
   sizeOptions, quantityOf, addons, image,
   choiceLabel, choiceOptions, choiceValue, onChoiceChange,
 }: ProductCardProps) {
@@ -366,6 +369,16 @@ export default function ProductCard({
               {fmtPrice(price)} €
             </span>
             <span style={{ fontSize: "0.6rem", opacity: 0.6 }}>IVA incluido</span>
+            {offerMultiplier && offerMultiplier > 1 && (
+              <span
+                className="font-bold"
+                style={{ fontSize: "0.68rem", color: "#ffb48a", marginTop: 2 }}
+              >
+                {inCart
+                  ? `Te llevas ${qty * offerMultiplier}`
+                  : `Pide 1, llévate ${offerMultiplier}`}
+              </span>
+            )}
           </span>
           {active.available ? (
             inCart ? (
