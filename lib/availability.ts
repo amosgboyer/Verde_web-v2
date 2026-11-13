@@ -43,7 +43,7 @@ const CAPACITY_BY_TIME: Record<string, number> = { "10:00": 1 };
 // Capacidad por slot por defecto: 1 pedido por hora (régimen de Amos desde el
 // 23-10; antes eran 2). Aplica a todos los días. La columna C de la pestaña
 // Availability lo sobreescribe por día, y SlotOverrides por franja concreta.
-const DEFAULT_MAX_ORDERS_PER_SLOT = 1;
+const DEFAULT_MAX_ORDERS_PER_SLOT = 2;
 
 // Desde el 01-09 se abre TODOS los días: un día futuro sin fila en la pestaña
 // Availability se ofrece abierto con el cupo por defecto, dentro de esta
@@ -61,7 +61,7 @@ const DIAS_CIERRE_SEMANAL: number[] = [1, 2]; // lunes y martes
 // Cierre anticipado por día de la semana (getUTCDay: 0=domingo…): hora del
 // ÚLTIMO pedido de ese día, distinta del endTime global de Settings. El resto de
 // días usa el endTime global. Domingo: última franja a las 13:00 (cierra después).
-const ENDTIME_POR_DIA: Record<number, string> = { 0: "13:00" };
+const ENDTIME_POR_DIA: Record<number, string> = {};
 
 const NOMBRE_DIA: Record<number, string> = {
   0: "domingo", 1: "lunes", 2: "martes", 3: "miércoles",
