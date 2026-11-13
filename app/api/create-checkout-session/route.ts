@@ -8,7 +8,13 @@ import { isSlotAvailable } from "@/lib/availability";
 import { reservationSchema } from "@/lib/validators";
 import { codificarOrigen } from "@/lib/origen";
 import { getActivePromotion, calculateDiscount } from "@/lib/promotions";
-import { getActiveWeekendOffer, computeOfferDiscount, offerBadgeLabel } from "@/lib/offers";
+import {
+  getActiveWeekendOffer,
+  computeOfferDiscount,
+  offerBadgeLabel,
+  offerGiftApplies,
+  giftItemName,
+} from "@/lib/offers";
 import {
   feeForZone,
   minOrderForZone,
@@ -341,6 +347,14 @@ export async function POST(req: NextRequest) {
     if (discount.isActive) {
       discountNotes.push(`${discount.promoName} −${discount.promoValue}%`);
     }
+    const giftLine = validatedItems.find(({ product }) =>
+      offerGiftApplies(weekendOffer, product, parsed.reservationDate)
+    );
+    if (giftLine && weekendOffer) {
+      discountNotes.push(
+        `${weekendOffer.name}: te llevas ${giftLine.quantity * 2} ${giftLine.product.name}`
+      );
+    }
     if (offer.discountAmount > 0 && weekendOffer) {
       discountNotes.push(
         `${weekendOffer.name}: ${offer.discountedUnits}× ${offerBadgeLabel(weekendOffer)}`
@@ -371,7 +385,11 @@ export async function POST(req: NextRequest) {
     const itemsMeta = JSON.stringify(
       validatedItems.map(({ product, quantity }) => ({
         id: product.id,
-        name: product.name,
+        // "Pide 1, llévate 2": el nombre lleva cuántas se entregan, para que
+        // cocina (Sheet, email interno) y cliente no tengan que adivinarlo.
+        name: offerGiftApplies(weekendOffer, product, parsed.reservationDate)
+          ? giftItemName(product.name, quantity)
+          : product.name,
         qty: quantity,
         price: product.finalPrice,
         deposit: product.depositAmount,
@@ -429,7 +447,7 @@ export async function POST(req: NextRequest) {
         subtotalBeforeDiscount: String(productsSubtotal),
         totalAfterDiscount: String(subtotalAfterDiscount),
         // Oferta de fin de semana (nivel ítem) — desglose propio
-        offerApplied: String(offer.discountAmount > 0),
+        offerApplied: String(offer.discountAmount > 0 || !!giftLine),
         offerName: weekendOffer?.name ?? "",
         offerDiscount: String(offer.discountAmount),
         offerUnits: String(offer.discountedUnits),

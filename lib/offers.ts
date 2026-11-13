@@ -21,6 +21,10 @@ export interface WeekendOffer {
   // Sirve para "se anuncia hoy, pero solo para pedidos de mañana".
   reservationStartDate?: string;
   reservationEndDate?: string;
+  // "Pide 1, llévate 2": cada unidad pedida se entrega doble y el precio NO
+  // baja (no hay descuento en euros). Sin impares: pides 3, te llevas 6.
+  // El nombre del ítem en el pedido lleva "(2×1 · N empanadas)" para cocina.
+  regalo?: boolean;
 }
 
 // Sweet Weekend — la 2ª Canoa de Maduro al 50%. Solo este fin de semana.
@@ -59,11 +63,15 @@ export const TIGRILLO_2X1: WeekendOffer = {
 // 2×1 en Empanada de Queso — lanzamiento del plato. Se anuncia desde el
 // sábado 7 y solo vale para pedidos que se entregan de miércoles 11 a domingo 15.
 // Se apaga sola el lunes 16 a las 00:00 (Madrid).
+// Desde el viernes 13 por la noche: "pide 1, llévate 2" (antes era "mete 2 en
+// el carrito y paga 1"). Los pedidos anteriores NO llevan la etiqueta en el
+// nombre y se entregan tal cual la cantidad.
 export const EMPANADA_2X1: WeekendOffer = {
   id: "empanada-2x1",
   name: "2×1 en Empanada de Queso",
-  tagline: "La 2ª Empanada de Queso, gratis",
-  badge: "Del 11 al 15 nov",
+  tagline: "Pide 1 Empanada de Queso y llévate 2",
+  badge: "Pide 1, llévate 2",
+  regalo: true,
   productId: "empanada-de-queso",
   productName: "Empanada de Queso",
   productNameMatch: "empanada de queso",
@@ -141,6 +149,9 @@ export function offerBadgeLabel(offer: WeekendOffer): string {
 // Cómo se consigue, en una frase. El gancho ya lo da `tagline`, así que aquí
 // solo va la mecánica — si no, la tarjeta dice dos veces lo mismo.
 export function offerRuleText(offer: WeekendOffer): string {
+  if (offer.regalo) {
+    return "Cada una que pidas son dos: te llevamos el doble sin pagar más.";
+  }
   return `Añade ${offer.everyNth} al carrito y el descuento se aplica solo.`;
 }
 
@@ -192,6 +203,8 @@ export function computeOfferDiscount(
   if (!offerCoversReservationDate(offer, reservationDate)) {
     return { discountAmount: 0, discountedUnits: 0 };
   }
+  // "Pide 1, llévate 2" no rebaja el precio: el regalo va en unidades.
+  if (offer.regalo) return { discountAmount: 0, discountedUnits: 0 };
   const line = items.find((i) =>
     productMatchesOffer(offer, { id: i.productId, name: i.productName })
   );
@@ -206,4 +219,58 @@ export function computeOfferDiscount(
   const discountCents = perUnitDiscountCents * discountedUnits;
 
   return { discountAmount: discountCents / 100, discountedUnits };
+}
+
+
+// ─── "Pide 1, llévate 2" ───────────────────────────────────────────────────
+
+// ¿Se entrega doble este producto en este pedido? (oferta regalo + día válido)
+export function offerGiftApplies(
+  offer: WeekendOffer | null | undefined,
+  product: { id: string; name?: string },
+  reservationDate: string | undefined
+): boolean {
+  return (
+    !!offer?.regalo &&
+    productMatchesOffer(offer, product) &&
+    offerCoversReservationDate(offer, reservationDate)
+  );
+}
+
+// Nombre del ítem en el pedido (Sheet, emails, Stripe) cuando va doble.
+// Ej.: "Empanada de Queso (2×1 · 6 empanadas)" con cantidad 3.
+export function giftItemName(name: string, quantity: number): string {
+  return `${name} (2×1 · ${quantity * 2} empanadas)`;
+}
+
+// ─── Fin de la oferta (cuenta atrás) ───────────────────────────────────────
+
+// Instante (ms UTC) de las 00:00 en Madrid del día siguiente a `endDate`:
+// es cuando la oferta deja de verse. Sirve igual en invierno y en verano.
+export function offerEndsAtMs(offer: WeekendOffer): number {
+  const [y, m, d] = offer.endDate.split("-").map(Number);
+  const guess = Date.UTC(y, m - 1, d + 1, 0, 0, 0);
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Europe/Madrid",
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+      .formatToParts(new Date(guess))
+      .map((p) => [p.type, p.value])
+  );
+  const madridAsUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second)
+  );
+  return guess - (madridAsUtc - guess);
 }

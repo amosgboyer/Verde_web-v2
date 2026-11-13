@@ -24,6 +24,7 @@ import {
   offerBadgeLabel,
   offerRuleText,
   offerReservationText,
+  offerGiftApplies,
 } from "@/lib/offers";
 import {
   quoteDeliveryByPostalCode,
@@ -36,6 +37,7 @@ import { estadoVentana, esMiercolesOJueves, VENTANA_LUNES } from "@/lib/ventana-
 import ProductCard, { type SizeOption } from "./ProductCard";
 import AccessGate from "./AccessGate";
 import DrinkUpsellModal from "./DrinkUpsellModal";
+import OfferCountdown from "./OfferCountdown";
 import clsx from "clsx";
 import { sugerirEmail } from "@/lib/email-typo";
 
@@ -883,6 +885,14 @@ export default function ReservationForm({
         )
       : { discountAmount: 0, discountedUnits: 0 };
   const offerDiscount = offerResult.discountAmount;
+  // "Pide 1, llévate 2": línea informativa en el resumen (no cambia el total).
+  const giftCartLine = (() => {
+    const fecha = isDirecto ? todayMadrid() : fields.reservationDate;
+    const p = cartProducts.find(
+      (p) => (cart[p.id] ?? 0) > 0 && offerGiftApplies(weekendOffer, p, fecha)
+    );
+    return p ? { name: p.name, qty: cart[p.id] ?? 0 } : null;
+  })();
 
   // Descuento combinado (promo global + oferta finde), nunca mayor que el subtotal.
   const combinedDiscount = Math.min(totalDeposit, discountAmount + offerDiscount);
@@ -1285,6 +1295,7 @@ export default function ReservationForm({
                   {offerReservationText(weekendOffer)}
                 </p>
               )}
+              <OfferCountdown offer={weekendOffer} className="mt-2.5" />
             </div>
           )}
         </div>
@@ -1475,6 +1486,15 @@ export default function ReservationForm({
                                   name: product.name,
                                 })
                                   ? offerBadgeLabel(weekendOffer)
+                                  : undefined
+                              }
+                              offerMultiplier={
+                                weekendOffer?.regalo &&
+                                productMatchesOffer(weekendOffer, {
+                                  id: product.id,
+                                  name: product.name,
+                                })
+                                  ? 2
                                   : undefined
                               }
                             />
@@ -2316,6 +2336,14 @@ export default function ReservationForm({
                   <div className="flex justify-between text-verde-bosque/75">
                     <span>{promoAplicada.nombre} −{promoAplicada.pct}%</span>
                     <span>−{discountAmount.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                )}
+                {giftCartLine && (
+                  <div className="flex justify-between text-[#c85a2a] font-semibold">
+                    <span>
+                      {weekendOffer!.name} · te llevas {giftCartLine.qty * 2} {giftCartLine.name}
+                    </span>
+                    <span>gratis</span>
                   </div>
                 )}
                 {weekendOffer && offerDiscount > 0 && (
