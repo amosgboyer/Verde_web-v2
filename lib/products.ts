@@ -11,6 +11,8 @@ export interface Product {
   image?: string;           // ruta a /public o URL externa
   category?: string;
   isPack?: boolean;         // true = combo/pack con precio propio (no se muestra en la carta)
+  // true = solo se ve y se pide desde Novedades (arriba); no sale en la carta.
+  soloNovedades?: boolean;
   // Unidades que quedan si el plato es de edición limitada (stock total). Lo
   // calcula el servidor (lib/stock) y lo usa la card para mostrar "quedan X".
   stockRemaining?: number;
@@ -436,10 +438,11 @@ export const EXTRA_PLATOS: Product[] = [
     name: "Ahora Comen Todos · Rabo de Toro",
     description:
       "4 pataconcitos crocantes con rabo de toro de 16h de cocción, cebolla caramelizada, queso gruyer y mostaza antigua. Para compartir.",
-    finalPrice: 15,
-    depositAmount: 15,
-    // OCULTO (Amos, 12-11): no se publica hasta tener foto y todo listo.
-    available: false,
+    finalPrice: 19.9,
+    depositAmount: 19.9,
+    // Publicado 16-11 (Amos): 19,90 €, solo en Novedades, fuera de la carta.
+    available: true,
+    soloNovedades: true,
     // Mismos alérgenos que el Patacón de Rabo de Toro (hoja Products).
     allergens: ["Lácteos", "Apio", "Mostaza", "Sulfitos"],
     category: "Ahora -comen", // mismo bloque que el Ahora Comen Todos de bolones
@@ -643,9 +646,10 @@ export function getPacks(): Product[] {
 // y otra de packs. Estos son los platos que se empujan arriba, EN ESTE ORDEN.
 // Para cambiar las novedades, tocar esta lista; vaciarla oculta la zona entera.
 export const DESTACADOS_IDS: string[] = [
+  // Ahora Comen Todos versión rabo de toro (16-11): SOLO se pide desde aquí.
+  "ahora-comen-todos-rabo",
   // Empanada de Queso (nov 2026): plato nuevo con 2×1 del 11 al 15.
   "empanada-de-queso",
-  // Ahora Comen Todos versión rabo de toro: añadir aquí cuando se publique.
   // La Chocletiza relevó al colonche, que sigue en la carta (sección Verde)
   // pero fuera de Novedades.
   "la-chocletiza",

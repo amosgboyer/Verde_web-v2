@@ -15,7 +15,7 @@ function normCat(c?: string) {
 }
 
 export default function MenuShowcase({ products }: { products: Product[] }) {
-  const items = products.filter((p) => !p.isPack && p.available);
+  const items = products.filter((p) => !p.isPack && !p.soloNovedades && p.available);
   if (!items.length) return null;
 
   return (

@@ -1417,6 +1417,7 @@ export default function ReservationForm({
               const grouped: Partial<Record<NormalizedCategory, typeof products>> = {};
               for (const p of products) {
                 if (p.isPack) continue; // los packs no se muestran en la carta
+                if (p.soloNovedades) continue; // solo se pide desde Novedades
                 if (hiddenVariantIds.has(p.id)) continue; // variante → va como selector
                 if ((p.category ?? "").trim().toLowerCase() === "salsas") continue; // salsas → popup
                 const cat = normalizeCategory(p.category ?? "");
