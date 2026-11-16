@@ -41,7 +41,7 @@ export default async function AnadirPage({ searchParams }: Props) {
     // respaldo estático
   }
   products = withExtraProducts(products).filter(
-    (p) => !p.isPack && p.available !== false
+    (p) => !p.isPack && !p.soloNovedades && p.available !== false
   );
 
   const today = new Date().toISOString().slice(0, 10);
