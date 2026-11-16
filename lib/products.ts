@@ -658,7 +658,13 @@ export const DESTACADOS_IDS: string[] = [
 
 // Platos que en la CARTA se resaltan con el dorado del menú (borde + brillo)
 // para llamar la atención. Añadir/quitar ids aquí.
-export const PLATOS_DORADOS: string[] = ["la-chocletiza"];
+export const PLATOS_DORADOS: string[] = [
+  // 16-11 (Amos): el brillo dorado a las 4 novedades.
+  "ahora-comen-todos-rabo",
+  "empanada-de-queso",
+  "la-chocletiza",
+  "ceviche-jipijapa",
+];
 export function esPlatoDorado(id: string): boolean {
   return PLATOS_DORADOS.some((d) => mismoId(d, id));
 }
