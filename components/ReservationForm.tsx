@@ -649,7 +649,8 @@ export default function ReservationForm({
     const falta = faltaParaEmpezar().toFixed(2).replace(".", ",");
     return (
       `Pedido mínimo a domicilio: ${defaultMinOrder()} € (sin contar el envío). ` +
-      `Te faltan ${falta} € — añade una salsa o una bebida para continuar.`
+      `Te faltan ${falta} € — añade una salsa o una bebida para continuar` +
+      (PICKUP_ENABLED ? `, o elige "Recoger en el local" (sin mínimo).` : ".")
     );
   }
 
@@ -1360,6 +1361,47 @@ export default function ReservationForm({
                     </span>
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Método de entrega AL PRINCIPIO: la recogida no tiene pedido
+                mínimo, así que hay que poder elegirla antes del candado del
+                carrito. El paso 5 mantiene el mismo selector para cambiarlo. */}
+            {PICKUP_ENABLED && (
+              <div className="mb-5">
+                <span className={labelClass}>¿Cómo lo quieres?</span>
+                <div className="mt-2 grid grid-cols-2 gap-2.5">
+                  {(
+                    [
+                      { v: "delivery", icon: "🏠", t: "A domicilio", s: `Pedido mínimo ${defaultMinOrder()} €` },
+                      { v: "pickup", icon: "🛍️", t: "Recoger en el local", s: "Sin mínimo · sin envío" },
+                    ] as const
+                  ).map((o) => (
+                    <button
+                      key={o.v}
+                      type="button"
+                      onClick={() => setFields((p) => ({ ...p, deliveryMethod: o.v }))}
+                      aria-pressed={fields.deliveryMethod === o.v}
+                      className={clsx(
+                        "flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                        fields.deliveryMethod === o.v
+                          ? "border-verde-bosque bg-verde-bosque text-crema"
+                          : "border-negro/15 bg-white text-negro/70 hover:border-negro/30"
+                      )}
+                    >
+                      <span className="text-xl leading-none" aria-hidden>{o.icon}</span>
+                      <span className="leading-tight">
+                        <span className="block font-bold text-[13.5px]">{o.t}</span>
+                        <span className="block text-[11px] opacity-80">{o.s}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {fields.deliveryMethod === "pickup" && (
+                  <p className="mt-2 text-[11.5px] text-negro/55">
+                    Recoges en {PICKUP_ADDRESS}.
+                  </p>
+                )}
               </div>
             )}
 
