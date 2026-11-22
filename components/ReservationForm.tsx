@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { Product, NormalizedCategory } from "@/lib/products";
 import {
   imageForProduct,
@@ -498,6 +499,10 @@ export default function ReservationForm({
   // Panel "Tu selección" — destino del carrito flotante.
   const seleccionRef = useRef<HTMLDivElement>(null);
   const stepRefs = [ref1, ref2, ref3, ref4, ref5, ref6];
+  // Pantalla de checkout (pasos 2–6): capa a pantalla completa con su propio scroll.
+  const checkoutRef = useRef<HTMLDivElement>(null);
+  const [portalReady, setPortalReady] = useState(false);
+  useEffect(() => setPortalReady(true), []);
 
   useEffect(() => {
     fetch("/api/availability")
@@ -558,6 +563,11 @@ export default function ReservationForm({
     setCurrentStep(step);
     setMaxStep((prev) => Math.max(prev, step));
     if (opts.scroll === false) return;
+    if (step >= 2) {
+      // En el checkout cada paso es una pantalla: se empieza arriba.
+      requestAnimationFrame(() => checkoutRef.current?.scrollTo({ top: 0 }));
+      return;
+    }
     scrollSuaveA(() => stepRefs[step - 1]?.current ?? null);
   }
 
@@ -952,16 +962,59 @@ export default function ReservationForm({
   // (popup de bebidas o siguiente paso), así que quien quería ver o corregir su
   // pedido no tenía forma de llegar a la lista: en móvil queda a media página de
   // scroll. El botón de continuar está justo debajo, así que no se pierde nada.
-  useEffect(() => {
-    function onCartOpen() {
-      // Sin scroll propio del paso: el destino es el panel, no la cabecera.
+  // Ahora: si el pedido ya puede seguir, el carrito abre la pantalla de
+  // checkout (donde se ve y edita el pedido); si se había avanzado, retoma el
+  // paso. Solo con el pedido por debajo del mínimo se baja a "Tu selección".
+  const cartOpenRef = useRef<() => void>(() => {});
+  cartOpenRef.current = () => {
+    if (cartProducts.length === 0 || faltaParaEmpezar() > 0) {
       goToStep(1, { scroll: false });
       scrollSuaveA(() => seleccionRef.current, "center");
+      return;
+    }
+    if (maxStep >= 2) {
+      goToStep(isDirecto ? Math.max(4, maxStep) : maxStep);
+      return;
+    }
+    continueFromMenu();
+  };
+  useEffect(() => {
+    function onCartOpen() {
+      cartOpenRef.current();
     }
     window.addEventListener("verde:cart:open", onCartOpen);
     return () => window.removeEventListener("verde:cart:open", onCartOpen);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const checkoutOpen = currentStep >= 2;
+  const checkoutSteps = isDirecto ? [4, 5, 6] : [2, 3, 4, 5, 6];
+  const STEP_LABEL: Record<number, string> = {
+    2: "Día", 3: "Hora", 4: "Tus datos", 5: "Entrega", 6: "Pago",
+  };
+  const checkoutIdx = Math.max(0, checkoutSteps.indexOf(Math.min(currentStep, 6)));
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("verde:checkout", { detail: { open: checkoutOpen } }));
+    if (!checkoutOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [checkoutOpen]);
+
+  // Salir del checkout al menú para añadir más (o volver atrás desde el 1.er paso).
+  function volverAlMenu(destino: "menu" | "seleccion") {
+    goToStep(1, { scroll: false });
+    scrollSuaveA(
+      () => (destino === "menu" ? ref1.current : seleccionRef.current),
+      destino === "menu" ? "start" : "center"
+    );
+  }
+  function pasoAtras() {
+    if (checkoutIdx === 0) volverAlMenu("seleccion");
+    else goToStep(checkoutSteps[checkoutIdx - 1]);
+  }
 
   // Recalcular animaciones GSAP cuando cambia el alto (al colapsar/expandir pasos)
   useEffect(() => {
@@ -1306,6 +1359,7 @@ export default function ReservationForm({
         )}
 
         {(!requireAccessCode || unlocked) && (
+        <>
         <form onSubmit={handleSubmit} noValidate>
 
           {/* ── PASO 1: PRODUCTO ── */}
@@ -1723,8 +1777,122 @@ export default function ReservationForm({
             )}
           </StepSection>
 
+          {/* Hueco para que la barra del carrito (móvil) no tape el botón */}
+          <div className="h-24 sm:hidden" aria-hidden />
+        </form>
+
+        {portalReady && checkoutOpen && createPortal(
+        <div
+          ref={checkoutRef}
+          className="fixed inset-0 z-[1000] overflow-y-auto overscroll-contain"
+          style={{ background: "#efe6d2" }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tu pedido"
+        >
+          {/* Cabecera: atrás · paso X de N · añadir más */}
+          <div
+            className="sticky top-0 z-20 border-b border-negro/10"
+            style={{ background: "#efe6d2" }}
+          >
+            <div className="max-w-xl mx-auto px-5 pt-3 pb-3">
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={pasoAtras}
+                  className="text-sm font-semibold text-verde-bosque py-2 pr-3"
+                >
+                  ← Atrás
+                </button>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-negro/50">
+                  Paso {checkoutIdx + 1} de {checkoutSteps.length} · {STEP_LABEL[checkoutSteps[checkoutIdx]]}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => volverAlMenu("menu")}
+                  aria-label="Cerrar y volver a la carta"
+                  className="text-lg leading-none text-negro/45 py-2 pl-3"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="mt-2 flex gap-1.5">
+                {checkoutSteps.map((n, i) => (
+                  <span
+                    key={n}
+                    className={clsx(
+                      "h-1 flex-1 rounded-full",
+                      i <= checkoutIdx ? "bg-verde-bosque" : "bg-negro/10"
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-xl mx-auto px-5 pb-10">
+            {/* Tu pedido: plegable, editable y con "Añadir más" */}
+            <details className="mt-4 rounded-xl border border-negro/10 bg-white/70 group">
+              <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none">
+                <span className="text-sm text-negro/70">
+                  <span className="font-semibold text-verde-bosque">Tu pedido</span>
+                  {" · "}{totalItems} {totalItems === 1 ? "producto" : "productos"}
+                  {" · "}<span className="font-semibold text-negro/80">{fmtPrice(totalDeposit)} €</span>
+                </span>
+                <span className="text-xs font-semibold text-verde-bosque underline underline-offset-2">
+                  <span className="group-open:hidden">Ver / editar</span>
+                  <span className="hidden group-open:inline">Ocultar</span>
+                </span>
+              </summary>
+              <div className="px-4 pb-4">
+                {cartProducts.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between gap-3 py-2 border-t border-black/10">
+                    <span className="text-sm text-negro/80 min-w-0 truncate">{p.name}</span>
+                    <span className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => decrement(p.id)}
+                        aria-label={`Quitar uno de ${p.name}`}
+                        className="w-8 h-8 rounded-full bg-black/10 text-negro/70 text-lg leading-none"
+                      >
+                        −
+                      </button>
+                      <span className="w-5 text-center text-sm font-semibold">{cart[p.id]}</span>
+                      <button
+                        type="button"
+                        onClick={() => increment(p.id)}
+                        aria-label={`Añadir otro ${p.name}`}
+                        className="w-8 h-8 rounded-full bg-verde-bosque text-crema text-lg leading-none"
+                      >
+                        +
+                      </button>
+                    </span>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => volverAlMenu("menu")}
+                  className="mt-3 w-full rounded-lg border border-verde-bosque/40 py-2.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-verde-bosque"
+                >
+                  + Añadir más platos
+                </button>
+              </div>
+            </details>
+
+            {faltaParaEmpezar() > 0 && (
+              <p className="mt-3 rounded-xl border px-3.5 py-2.5 text-[12.5px] text-negro/75"
+                 style={{ background: "rgba(200,90,42,0.09)", borderColor: "rgba(200,90,42,0.32)" }}>
+                {mensajeMinimoGlobal()}
+              </p>
+            )}
+
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="[&>div]:border-t-0 [&>div]:mt-2 [&>div]:pt-0"
+        >
           {/* ── PASO 2: FECHA ── (oculto en modo directo: es para HOY) */}
-          {maxStep >= 2 && !isDirecto && (
+          {currentStep === 2 && !isDirecto && (
             <StepSection
               stepRef={ref2}
               number={2}
@@ -1741,10 +1909,10 @@ export default function ReservationForm({
                 disabled={!step2Done}
                 onClick={() => step2Done && goToStep(3)}
                 className={clsx(
-                  "mt-5 w-full text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
+                  "mt-5 w-full sticky bottom-3 z-10 shadow-[0_6px_24px_rgba(0,0,0,0.18)] text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
                   step2Done
                     ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
-                    : "bg-negro/8 text-negro/30 cursor-not-allowed"
+                    : "bg-[#ddd3bd] text-negro/35 cursor-not-allowed"
                 )}
               >
                 Continuar con la hora
@@ -1753,7 +1921,7 @@ export default function ReservationForm({
           )}
 
           {/* ── PASO 3: HORA ── (oculto en modo directo: entrega ~40 min) */}
-          {maxStep >= 3 && !isDirecto && (
+          {currentStep === 3 && !isDirecto && (
             <StepSection
               stepRef={ref3}
               number={3}
@@ -1823,10 +1991,10 @@ export default function ReservationForm({
                 disabled={!step3Done}
                 onClick={() => step3Done && goToStep(4)}
                 className={clsx(
-                  "w-full text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
+                  "w-full sticky bottom-3 z-10 shadow-[0_6px_24px_rgba(0,0,0,0.18)] text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
                   step3Done
                     ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
-                    : "bg-negro/8 text-negro/30 cursor-not-allowed"
+                    : "bg-[#ddd3bd] text-negro/35 cursor-not-allowed"
                 )}
               >
                 Continuar con tus datos
@@ -1835,7 +2003,7 @@ export default function ReservationForm({
           )}
 
           {/* ── PASO 4: DATOS PERSONALES ── */}
-          {maxStep >= 4 && (
+          {currentStep === 4 && (
             <StepSection
               stepRef={ref4}
               number={4}
@@ -2034,7 +2202,7 @@ export default function ReservationForm({
           )}
 
           {/* ── PASO 5: ENTREGA ── */}
-          {maxStep >= 5 && (
+          {currentStep === 5 && (
             <StepSection
               stepRef={ref5}
               number={5}
@@ -2244,10 +2412,10 @@ export default function ReservationForm({
                 disabled={!step5Done}
                 onClick={() => step5Done && continueFromDelivery()}
                 className={clsx(
-                  "w-full text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
+                  "w-full sticky bottom-3 z-10 shadow-[0_6px_24px_rgba(0,0,0,0.18)] text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
                   step5Done
                     ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
-                    : "bg-negro/8 text-negro/30 cursor-not-allowed"
+                    : "bg-[#ddd3bd] text-negro/35 cursor-not-allowed"
                 )}
               >
                 Ver resumen y pagar
@@ -2256,7 +2424,7 @@ export default function ReservationForm({
           )}
 
           {/* ── PASO 6: RESUMEN Y PAGO ── */}
-          {maxStep >= 6 && (
+          {currentStep >= 6 && (
             <StepSection
               stepRef={ref6}
               number={6}
@@ -2524,6 +2692,11 @@ export default function ReservationForm({
           )}
 
         </form>
+          </div>
+        </div>,
+        document.body
+        )}
+        </>
         )}
       </div>
 
