@@ -9,6 +9,15 @@ interface CartState {
 export default function FloatingCart({ onOpen }: { onOpen?: () => void }) {
   const [cart, setCart] = useState<CartState>({ items: 0, total: 0 });
   const [visible, setVisible] = useState(false);
+  // Con la pantalla de checkout abierta el carrito sobra (el pedido ya se ve arriba).
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  useEffect(() => {
+    function onCheckout(e: Event) {
+      setCheckoutOpen(!!(e as CustomEvent<{ open: boolean }>).detail?.open);
+    }
+    window.addEventListener("verde:checkout", onCheckout);
+    return () => window.removeEventListener("verde:checkout", onCheckout);
+  }, []);
 
   useEffect(() => {
     function onUpdate(e: Event) {
@@ -22,7 +31,7 @@ export default function FloatingCart({ onOpen }: { onOpen?: () => void }) {
 
   function fmt(n: number) { return n.toFixed(2).replace(".", ",") + " €"; }
 
-  if (!visible) return null;
+  if (!visible || checkoutOpen) return null;
 
   return (
     <div
@@ -33,11 +42,14 @@ export default function FloatingCart({ onOpen }: { onOpen?: () => void }) {
         // no pelearse con ese scroll.
         window.dispatchEvent(new CustomEvent("verde:cart:open"));
       }}
-      className="fixed bottom-6 right-6 z-[999] flex items-center gap-3 px-5 py-3 rounded-xl cursor-pointer transition-all duration-200 hover:-translate-y-1"
+      role="button"
+      aria-label="Ver pedido"
+      className="fixed bottom-3 left-3 right-3 sm:left-auto sm:bottom-6 sm:right-6 z-[999] flex items-center gap-3 px-5 py-3 rounded-xl cursor-pointer transition-all duration-200 hover:-translate-y-1"
       style={{
         background: "#1c3a10",
         boxShadow: "0 8px 40px rgba(28,58,16,0.4)",
         minWidth: 190,
+        marginBottom: "env(safe-area-inset-bottom)",
       }}
     >
       <span style={{ fontSize: "1.1rem" }}>🛒</span>
@@ -56,7 +68,7 @@ export default function FloatingCart({ onOpen }: { onOpen?: () => void }) {
         className="text-[10px] font-semibold uppercase tracking-[0.12em]"
         style={{ color: "rgba(245,240,232,0.55)" }}
       >
-        Ver / editar
+        Ver pedido →
       </span>
     </div>
   );
