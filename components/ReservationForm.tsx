@@ -1373,8 +1373,8 @@ export default function ReservationForm({
                 <div className="mt-2 grid grid-cols-2 gap-2.5">
                   {(
                     [
-                      { v: "delivery", icon: "🏠", t: "A domicilio", s: `Pedido mínimo ${defaultMinOrder()} €` },
-                      { v: "pickup", icon: "🛍️", t: "Recoger en el local", s: "Sin mínimo · sin envío" },
+                      { v: "delivery", t: "A domicilio", s: `Pedido mínimo ${defaultMinOrder()} €` },
+                      { v: "pickup", t: "Recoger en el local", s: "Sin mínimo · sin envío" },
                     ] as const
                   ).map((o) => (
                     <button
@@ -1389,7 +1389,6 @@ export default function ReservationForm({
                           : "border-negro/15 bg-white text-negro/70 hover:border-negro/30"
                       )}
                     >
-                      <span className="text-xl leading-none" aria-hidden>{o.icon}</span>
                       <span className="leading-tight">
                         <span className="block font-bold text-[13.5px]">{o.t}</span>
                         <span className="block text-[11px] opacity-80">{o.s}</span>
