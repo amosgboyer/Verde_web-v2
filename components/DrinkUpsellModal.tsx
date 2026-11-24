@@ -86,6 +86,10 @@ export default function DrinkUpsellModal({
     // Topping destacado (p. ej. queso + mayo de la empanada): va marcado como
     // el principal, con la foto del plato al que acompaña.
     const destacada = SALSAS_DESTACADAS.find((d) => mismoId(d.id, item.id));
+    // Extra en oferta (trío de salsas): mismo marco que el destacado pero en el
+    // naranja de las ofertas, más intenso, y con el precio de antes tachado.
+    const oferta = item.oferta;
+    const marcado = !!(destacada || oferta);
     const img = destacada
       ? imageForProduct({ id: destacada.baseId })
       : imageForProduct(item);
@@ -93,14 +97,26 @@ export default function DrinkUpsellModal({
       <div
         key={item.id}
         className={`relative flex items-center gap-3 rounded-2xl bg-white p-2.5 pr-3 transition-colors ${
-          destacada ? "border-2 pt-6" : "border"
+          marcado ? "border-2 pt-6" : "border"
         }`}
         style={{
-          borderColor: active ? "#509234" : destacada ? "#c85a2a" : "rgba(0,0,0,0.10)",
-          background: destacada ? "rgba(200,90,42,0.06)" : undefined,
+          borderColor: active ? "#509234" : marcado ? "#c85a2a" : "rgba(0,0,0,0.10)",
+          background: oferta
+            ? "rgba(200,90,42,0.14)"
+            : destacada
+              ? "rgba(200,90,42,0.06)"
+              : undefined,
         }}
       >
-        {destacada && (
+        {oferta && (
+          <span
+            className="absolute top-0 left-0 text-[10px] font-bold uppercase tracking-[0.1em] text-white px-2.5 py-1 rounded-br-xl rounded-tl-[14px]"
+            style={{ background: "#c85a2a" }}
+          >
+            ★ {oferta.etiqueta}
+          </span>
+        )}
+        {!oferta && destacada && (
           <span
             className="absolute top-0 left-0 text-[10px] font-bold uppercase tracking-[0.1em] text-white px-2.5 py-1 rounded-br-xl rounded-tl-[14px]"
             style={{ background: "#c85a2a" }}
@@ -121,8 +137,16 @@ export default function DrinkUpsellModal({
           <p className="text-sm font-semibold text-negro/80 leading-snug">
             {item.name}
           </p>
-          <p className="text-sm font-semibold text-verde-bosque">
+          <p
+            className={`text-sm font-semibold ${oferta ? "" : "text-verde-bosque"}`}
+            style={oferta ? { color: "#c85a2a" } : undefined}
+          >
             {fmtPrice(price)} €
+            {oferta && (
+              <span className="ml-1.5 text-xs font-normal text-negro/40 line-through">
+                {fmtPrice(oferta.precioAntes)} €
+              </span>
+            )}
           </p>
         </div>
 
@@ -264,11 +288,13 @@ export default function DrinkUpsellModal({
           {step === "extras" && (
             <>
               {[...salsas]
-                .sort(
-                  (a, b) =>
-                    Number(SALSAS_DESTACADAS.some((d) => mismoId(d.id, b.id))) -
-                    Number(SALSAS_DESTACADAS.some((d) => mismoId(d.id, a.id)))
-                )
+                .sort((a, b) => {
+                  // Primero las ofertas (trío), luego los toppings destacados.
+                  const peso = (x: Product) =>
+                    (x.oferta ? 2 : 0) +
+                    (SALSAS_DESTACADAS.some((d) => mismoId(d.id, x.id)) ? 1 : 0);
+                  return peso(b) - peso(a);
+                })
                 .map((s) => ItemRow(s))}
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-negro/40 px-1 pt-3">
                 ¿Necesitas cubiertos?

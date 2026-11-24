@@ -13,7 +13,7 @@ import { getLaunchPhase, EARLY_ACCESS_CODE, PUBLIC_OPEN_AT } from "@/lib/launch"
 import Countdown from "@/components/Countdown";
 import { getActivePromotion } from "@/lib/promotions";
 import type { ActivePromotion } from "@/lib/promotions";
-import { getActiveWeekendOffer } from "@/lib/offers";
+import { getActiveWeekendOffer, esBlackFriday } from "@/lib/offers";
 import ReservationForm from "@/components/ReservationForm";
 import { getDirectoStatus } from "@/lib/directo";
 import ClosedState from "@/components/ClosedState";
@@ -201,6 +201,7 @@ export default async function HomePage({
           <Packs
             destacados={getDestacados(products)}
             weekendOffer={weekendOffer}
+            blackFriday={esBlackFriday()}
             menuSemana={products.find(
               (p) => mismoId(p.id, "menu-semana") && p.available !== false
             )}

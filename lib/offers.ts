@@ -106,6 +106,15 @@ export const CHOCLETIZA_BF: WeekendOffer = {
   endDate: "2026-11-29", // domingo
 };
 
+// Semana de Black Friday (Amos, 24-11): la zona de ofertas de la home se pone
+// en negro con detalles dorados. De miércoles 25 (sale el trío de salsas) a
+// domingo 29. Se apaga sola el lunes 30.
+export const BLACK_FRIDAY = { desde: "2026-11-25", hasta: "2026-11-29" };
+export function esBlackFriday(): boolean {
+  const hoy = todayMadrid();
+  return hoy >= BLACK_FRIDAY.desde && hoy <= BLACK_FRIDAY.hasta;
+}
+
 // Orden de prioridad: la primera que esté activa hoy es la que se aplica.
 const OFERTAS: WeekendOffer[] = [CHOCLETIZA_BF, EMPANADA_2X1, TIGRILLO_2X1, SWEET_WEEKEND];
 

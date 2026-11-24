@@ -30,6 +30,9 @@ export interface Product {
   // `hasta` (inclusive, día natural de Madrid). Fuera de la ventana no sale en
   // la web y el checkout lo rechaza como no disponible.
   ventana?: { desde: string; hasta: string };
+  // Extras en oferta (popup «Completa tu pedido»): van primero, con el color de
+  // oferta, esta etiqueta y el precio de antes tachado.
+  oferta?: { etiqueta: string; precioAntes: number };
 }
 
 /** ¿El producto está dentro de su ventana de venta hoy (Madrid)? Sin ventana, siempre. */
@@ -384,6 +387,7 @@ export const EXTRA_SALSAS: Product[] = [
     depositAmount: 4.5,
     // Semana de Black Friday (Amos, 24-11): de miércoles 25 a domingo 29.
     ventana: { desde: "2026-11-25", hasta: "2026-11-29" },
+    oferta: { etiqueta: "Oferta · ahorras 1,50 €", precioAntes: 6 },
     available: true,
     allergens: ["Lácteos", "Cacahuetes", "Huevos", "Sésamo"],
     category: "Salsas",

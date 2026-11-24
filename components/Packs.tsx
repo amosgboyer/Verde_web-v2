@@ -82,9 +82,12 @@ interface PacksProps {
   /** Oferta activa (2×1, 2ª al 50 %…). Si cae sobre un plato de Novedades,
    *  su card lo anuncia. */
   weekendOffer?: WeekendOffer | null;
+  /** Semana de Black Friday: fondo negro, acentos dorados y textos de campaña.
+   *  Lo decide el servidor (fecha de Madrid) para que no parpadee al cargar. */
+  blackFriday?: boolean;
 }
 
-export default function Packs({ readOnly = false, destacados = [], menuSemana, weekendOffer = null }: PacksProps) {
+export default function Packs({ readOnly = false, destacados = [], menuSemana, weekendOffer = null, blackFriday = false }: PacksProps) {
   const hayNovedades = destacados.length > 0;
 
   // Bebida del menú de la semana: se elige AQUÍ, en la propia tarjeta, y
@@ -97,7 +100,13 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
   );
 
   // El bloque admite las dos cosas, así que el texto se adapta a lo que hay.
-  const copy = hayNovedades
+  const copy = blackFriday
+    ? {
+        eyebrow: "Black Friday · Hasta el domingo 29",
+        titulo: "Black Friday en Verde",
+        sub: "Ofertas toda la semana: packs nuevos, trío de salsas, Mar y Tierra el jueves y, del viernes al domingo, Tigrillos y Chocletiza 2×1.",
+      }
+    : hayNovedades
     ? {
         eyebrow: "Novedades · Combinaciones",
         titulo: "Lo nuevo y lo que más se pide",
@@ -121,7 +130,17 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
   return (
     <section
       className="px-5 py-10 sm:px-8 sm:py-[4.5rem]"
-      style={{ background: "var(--g0, #1c3a10)" }}
+      style={
+        blackFriday
+          ? ({
+              background: "linear-gradient(180deg, #050505 0%, #111 100%)",
+              borderTop: "2px solid var(--gold, #c8960a)",
+              borderBottom: "2px solid var(--gold, #c8960a)",
+              // Los rótulos verdes de la sección pasan a dorado.
+              "--g3": "#e0b23a",
+            } as React.CSSProperties)
+          : { background: "var(--g0, #1c3a10)" }
+      }
     >
       <div className="max-w-[1060px] mx-auto">
         {/* Header */}
