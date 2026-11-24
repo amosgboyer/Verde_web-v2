@@ -27,6 +27,12 @@ const PRESENTACION: Record<
     ahorro: "ahorras 3€",
     ribbon: "Nuevo",
   },
+  "pack-black-friday-dulce": {
+    titulo: "Black Friday Dulce",
+    ahorro: "ahorras hasta 3,10€",
+    featured: true,
+    ribbon: "Nuevo",
+  },
   "pack-mar-y-tierra": {
     titulo: "Mar y Tierra",
     ahorro: "ahorras 3€",
@@ -98,6 +104,9 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
   const [bebidaMenu, setBebidaMenu] = useState<string>(
     menuChoice?.options[0] ?? ""
   );
+  // Packs con elección (p. ej. Black Friday Dulce: Canoa o Bolón). Igual que la
+  // bebida del menú: se elige en la tarjeta y viaja con el evento al carrito.
+  const [packChoices, setPackChoices] = useState<Record<string, string>>({});
 
   // El bloque admite las dos cosas, así que el texto se adapta a lo que hay.
   const copy = blackFriday
@@ -438,6 +447,51 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
                 {pack.desc}
               </p>
 
+              {(() => {
+                const cfg = PRODUCT_CHOICES.find((c) => mismoId(c.productId, pack.id));
+                if (!cfg || readOnly) return null;
+                const actual = packChoices[pack.id] ?? cfg.options[0];
+                return (
+                  <div className="mb-3 sm:mb-4 w-full max-w-[300px]">
+                    <p
+                      className="text-[0.62rem] font-medium tracking-[0.15em] uppercase mb-1.5"
+                      style={{ color: "rgba(245,237,216,0.75)" }}
+                    >
+                      Elige tu plato
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-1.5">
+                      {cfg.options.map((opt) => {
+                        const sel = actual === opt;
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => setPackChoices((prev) => ({ ...prev, [pack.id]: opt }))}
+                            aria-pressed={sel}
+                            className="rounded-full px-2.5 py-1 text-[0.7rem] font-semibold transition-colors border"
+                            style={
+                              sel
+                                ? {
+                                    background: "var(--gold, #c8960a)",
+                                    color: "var(--dark, #1a1a0e)",
+                                    borderColor: "var(--gold, #c8960a)",
+                                  }
+                                : {
+                                    background: "rgba(255,255,255,0.08)",
+                                    color: "rgba(245,237,216,0.85)",
+                                    borderColor: "rgba(245,237,216,0.3)",
+                                  }
+                            }
+                          >
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="flex flex-col items-center gap-2 sm:gap-3 mt-auto">
                 <div className="flex flex-col items-center leading-tight">
                   <div className="flex items-center justify-center gap-2">
@@ -471,8 +525,14 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
                   <button
                     type="button"
                     onClick={() => {
+                      const cfg = PRODUCT_CHOICES.find((c) => mismoId(c.productId, pack.id));
                       window.dispatchEvent(new CustomEvent('verde:add-pack', {
-                        detail: { items: pack.items }
+                        detail: {
+                          items: pack.items,
+                          choice: cfg
+                            ? { productId: pack.id, value: packChoices[pack.id] ?? cfg.options[0] }
+                            : undefined,
+                        }
                       }));
                     }}
                     className="text-[0.78rem] font-medium px-6 py-2 rounded-lg text-white transition-colors cursor-pointer border-none"

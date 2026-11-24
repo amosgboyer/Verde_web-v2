@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getPacks, getProductById, getSalsas } from "./products";
+import { getPacks, getProductById, getSalsas, PRODUCT_CHOICES } from "./products";
 import {
   getActiveWeekendOffer,
   computeOfferDiscount,
@@ -51,11 +51,17 @@ describe("Black Friday 2026", () => {
     expect(getActiveWeekendOffer()?.id).not.toBe("chocletiza-black-friday");
   });
 
-  it("packs: fuera Bolón + Patacón, dentro los dos de Macambo", () => {
+  it("packs: fuera Bolón + Patacón y los dos de Macambo; dentro Black Friday Dulce con elección", () => {
     const ids = getPacks().map((p) => p.id);
     expect(ids).not.toContain("pack-bolon-patacon");
-    expect(getProductById("pack-canoa-macambo")?.finalPrice).toBe(17);
-    expect(getProductById("pack-bolon-macambo")?.finalPrice).toBe(15.9);
+    expect(ids).not.toContain("pack-canoa-macambo");
+    expect(ids).not.toContain("pack-bolon-macambo");
+    expect(ids).toContain("pack-black-friday-dulce");
+    expect(getProductById("pack-black-friday-dulce")?.finalPrice).toBe(16.9);
+    expect(PRODUCT_CHOICES.find((c) => c.productId === "pack-black-friday-dulce")?.options).toEqual([
+      "Canoa de Maduro",
+      "Bolón Mixto con Maduro",
+    ]);
   });
 
   it("trío de salsas a 4,50 €, solo del miércoles 25 al domingo 29", () => {

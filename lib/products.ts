@@ -214,7 +214,8 @@ export const PACKS: Product[] = [
       "Canoa de Maduro y, de postre, Maduro con Macambo: maduro asado con mantequilla, queso, macambo tostado y menta.",
     finalPrice: 17,
     depositAmount: 17,
-    available: true,
+    // APAGADO 24-11 (Amos): lo sustituye el pack Black Friday Dulce (con elección).
+    available: false,
     allergens: ["Lácteos", "Maní"],
     category: "pack",
     isPack: true,
@@ -243,6 +244,23 @@ export const PACKS: Product[] = [
       "Bolón Mixto con Maduro y, de postre, Maduro con Macambo: maduro asado con mantequilla, queso, macambo tostado y menta.",
     finalPrice: 15.9,
     depositAmount: 15.9,
+    // APAGADO 24-11 (Amos): lo sustituye el pack Black Friday Dulce (con elección).
+    available: false,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    // 24-11-2026 (Amos): un solo pack con elección — Canoa de Maduro o Bolón
+    // Mixto con Maduro — y el Maduro con Macambo de postre. Fijo (no caduca).
+    // La elección va a las notas del pedido ("Pack Dulce: …", PRODUCT_CHOICES).
+    // Sueltos: 20 € (Canoa) / 18 € (Bolón). Deja ~11,30 € / ~9,60 €.
+    id: "pack-black-friday-dulce",
+    name: "Pack · Black Friday Dulce",
+    description:
+      "Elige Canoa de Maduro o Bolón Mixto con Maduro y, de postre, Maduro con Macambo: maduro asado con mantequilla, queso, macambo tostado y menta.",
+    finalPrice: 16.9,
+    depositAmount: 16.9,
     available: true,
     allergens: ["Lácteos", "Maní"],
     category: "pack",
@@ -337,6 +355,11 @@ export const PRODUCT_CHOICES: {
       "Fuze Tea",
       "Agua",
     ],
+  },
+  {
+    productId: "pack-black-friday-dulce",
+    label: "Pack Dulce",
+    options: ["Canoa de Maduro", "Bolón Mixto con Maduro"],
   },
 ];
 
