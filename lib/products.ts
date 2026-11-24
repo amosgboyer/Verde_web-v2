@@ -21,6 +21,24 @@ export interface Product {
   // azucarados irán al 0.21 cuando se añadan. Opcional: la carta real viene del
   // Sheet (sin columna de IVA), así que se resuelve con `vatRateOf` (default 10%).
   vatRate?: number;
+  // Precio rebajado SOLO para pedidos hechos entre `desde` y `hasta` (ambos
+  // inclusive, día natural de Madrid). Lo aplica `conPromo` en getPacks y en
+  // getProductById, así que la carta y el cobro de Stripe ven el mismo precio.
+  // Se apaga sola al pasar `hasta`.
+  promo?: { precio: number; desde: string; hasta: string; etiqueta: string };
+}
+
+/** ¿La promo de precio del producto está vigente hoy (Madrid)? */
+export function promoVigente(p: Product): boolean {
+  if (!p.promo) return false;
+  const hoy = todayMadrid();
+  return hoy >= p.promo.desde && hoy <= p.promo.hasta;
+}
+
+/** El producto con su precio de promo si está vigente hoy; si no, tal cual. */
+export function conPromo(p: Product): Product {
+  if (!promoVigente(p)) return p;
+  return { ...p, finalPrice: p.promo!.precio, depositAmount: p.promo!.precio };
 }
 
 // IVA que incluye el precio de un producto. Toda la comida actual va al 10 %;
@@ -150,6 +168,8 @@ export const PACKS: Product[] = [
       "2× Tigrillo Mixto. Hecho en demiglass de carne, chicharrón, mix de quesos y sal prieta.",
     finalPrice: 29,
     depositAmount: 29,
+    // Black Friday 2026 (Amos, 24-11): 27 € para pedidos del vie 27 al dom 29.
+    promo: { precio: 27, desde: "2026-11-27", hasta: "2026-11-29", etiqueta: "Black Friday" },
     available: true,
     allergens: ["Lácteos", "Maní"],
     category: "pack",
@@ -162,6 +182,36 @@ export const PACKS: Product[] = [
       "Bolón Mixto de la Casa + Ración de Patacón con salsa verde de queso y queso manaba.",
     finalPrice: 15,
     depositAmount: 15,
+    // APAGADO 24-11-2026 (Amos): el pack que menos deja (8,82 €) y en caída.
+    // Lo sustituyen los packs con Maduro con Macambo de postre.
+    available: false,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    // 24-11-2026 (Amos): Canoa + el Maduro con Macambo de postre. Suelto 20 €.
+    // Escandallo: 2,63 + 3,00 € → deja ~11,50 €.
+    id: "pack-canoa-macambo",
+    name: "Pack · Canoa + Maduro con Macambo",
+    description:
+      "Canoa de Maduro y, de postre, Maduro con Macambo: maduro asado con mantequilla, queso, macambo tostado y menta.",
+    finalPrice: 17,
+    depositAmount: 17,
+    available: true,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    // 24-11-2026 (Amos): Bolón con Maduro + Maduro con Macambo de postre.
+    // Suelto 18 €. Escandallo: 4,30 + 3,00 € → deja ~8,80 €.
+    id: "pack-bolon-macambo",
+    name: "Pack · Bolón con Maduro + Maduro con Macambo",
+    description:
+      "Bolón Mixto con Maduro y, de postre, Maduro con Macambo: maduro asado con mantequilla, queso, macambo tostado y menta.",
+    finalPrice: 15.9,
+    depositAmount: 15.9,
     available: true,
     allergens: ["Lácteos", "Maní"],
     category: "pack",
@@ -295,6 +345,19 @@ export function imageForProduct(p: { id: string; image?: string }): string | und
 // Se ofrecen en el popup de extras (no como card en la carta). Se validan y
 // cobran como productos normales (categoría "Salsas").
 export const EXTRA_SALSAS: Product[] = [
+  {
+    // 24-11-2026 (Amos): las tres salsas de la casa juntas a precio cerrado,
+    // para cualquier plato de la carta (sale el primero en el popup de extras).
+    // Sueltas 6 €. Escandallo: 0,17 + 0,45 + 0,84 € → deja ~3 €.
+    id: "trio-salsas",
+    name: "Trío de salsas",
+    description: "Ají de la casa, salsa verde de queso y nuestra salsa de maní secreta. Las tres por 4,50 €.",
+    finalPrice: 4.5,
+    depositAmount: 4.5,
+    available: true,
+    allergens: ["Lácteos", "Cacahuetes", "Huevos", "Sésamo"],
+    category: "Salsas",
+  },
   {
     id: "salsa-aji-extra",
     name: "Salsa de ají extra",
@@ -558,6 +621,7 @@ const PLATOS_CON_BOLON = [
   "bolon-mixto-con-maduro",
   "Ahora -comen",
   "pack-bolon-patacon",
+  "pack-bolon-macambo",
 ];
 export const AGOTADO_POR_FECHA: Record<string, string[]> = {
   // Sin bolón (Amos): bloqueado el miércoles 21 y el jueves 22. Vuelve el viernes.
@@ -665,7 +729,7 @@ export function withExtraProducts(products: Product[]): Product[] {
 }
 
 export function getPacks(): Product[] {
-  return PACKS.filter((p) => p.available);
+  return PACKS.filter((p) => p.available).map(conPromo);
 }
 
 // ─── Novedades del escaparate ──────────────────────────────────────────────
@@ -700,13 +764,14 @@ export function getDestacados(products: Product[]): Product[] {
 }
 
 export function getProductById(id: string): Product | undefined {
-  return [
+  const prod = [
     ...PRODUCTS,
     ...PACKS,
     ...EXTRA_SALSAS,
     ...EXTRA_BEBIDAS,
     ...EXTRA_PLATOS,
   ].find((p) => p.id === id);
+  return prod ? conPromo(prod) : undefined;
 }
 
 export function getAvailableProducts(): Product[] {

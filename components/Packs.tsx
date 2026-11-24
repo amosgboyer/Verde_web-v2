@@ -5,7 +5,7 @@ import type { Product } from "@/lib/products";
 import type { WeekendOffer } from "@/lib/offers";
 import { productMatchesOffer, offerBadgeLabel, offerReservationText } from "@/lib/offers";
 import OfferCountdown from "./OfferCountdown";
-import { getPacks, PRODUCT_CHOICES, mismoId, esPlatoDorado } from "@/lib/products";
+import { getPacks, PRODUCT_CHOICES, mismoId, esPlatoDorado, promoVigente } from "@/lib/products";
 
 // Nombre, descripción y PRECIO salen de lib/products.ts — que es lo que cobra
 // el checkout. Antes estaban copiados aquí a mano y un cambio de precio en el
@@ -13,13 +13,23 @@ import { getPacks, PRODUCT_CHOICES, mismoId, esPlatoDorado } from "@/lib/product
 // puramente de presentación (destacado, cinta y el "ahorras X").
 const PRESENTACION: Record<
   string,
-  { titulo: string; ahorro: string; featured?: boolean; ribbon?: string }
+  { titulo: string; ahorro: string; ahorroPromo?: string; featured?: boolean; ribbon?: string }
 > = {
   "pack-dos-tigrillos": {
     titulo: "Los Dos Tigrillos",
     ahorro: "ahorras 3€",
+    ahorroPromo: "ahorras 5€", // Black Friday: 27 € frente a 32 € sueltos
     featured: true,
     ribbon: "Popular",
+  },
+  "pack-canoa-macambo": {
+    titulo: "Canoa + Maduro con Macambo",
+    ahorro: "ahorras 3€",
+    ribbon: "Nuevo",
+  },
+  "pack-bolon-macambo": {
+    titulo: "Bolón con Maduro + Macambo",
+    ahorro: "ahorras 2,10€",
   },
   "pack-bolon-patacon": { titulo: "Bolón + Patacón", ahorro: "ahorras 2€" },
   "pack-grupo": { titulo: "Para Todo el Grupo", ahorro: "ahorras 2€" },
@@ -35,8 +45,14 @@ function fmtPrecio(n: number): string {
   return (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",")) + "€";
 }
 
+// Si el pack lleva una promo vigente (Black Friday…), la cinta es la de la
+// promo y el ahorro sale de `ahorroPromo`.
 const PACKS = getPacks().map((p) => {
-  const pres = PRESENTACION[p.id] ?? { titulo: p.name, ahorro: "" };
+  const base = PRESENTACION[p.id] ?? { titulo: p.name, ahorro: "" };
+  const pres =
+    p.promo && promoVigente(p)
+      ? { ...base, ribbon: p.promo.etiqueta, ahorro: base.ahorroPromo ?? base.ahorro }
+      : base;
   return {
     id: p.id,
     name: pres.titulo,

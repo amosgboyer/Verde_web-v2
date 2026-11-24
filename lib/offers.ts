@@ -83,8 +83,24 @@ export const EMPANADA_2X1: WeekendOffer = {
   reservationEndDate: "2026-11-15",
 };
 
+// Black Friday 2026 (Amos, 24-11) — la 2ª Chocletiza al 50 %. Se ve y vale
+// para pedidos hechos del viernes 27 al domingo 29. Se apaga sola el lunes 30.
+export const CHOCLETIZA_BF: WeekendOffer = {
+  id: "chocletiza-black-friday",
+  name: "Black Friday · 2ª Chocletiza al 50%",
+  tagline: "La 2ª Chocletiza, a mitad de precio",
+  badge: "Black Friday",
+  productId: "la-chocletiza",
+  productName: "La Chocletiza",
+  productNameMatch: "la chocletiza",
+  everyNth: 2,
+  percentOff: 50,
+  startDate: "2026-11-27", // viernes
+  endDate: "2026-11-29", // domingo
+};
+
 // Orden de prioridad: la primera que esté activa hoy es la que se aplica.
-const OFERTAS: WeekendOffer[] = [EMPANADA_2X1, TIGRILLO_2X1, SWEET_WEEKEND];
+const OFERTAS: WeekendOffer[] = [CHOCLETIZA_BF, EMPANADA_2X1, TIGRILLO_2X1, SWEET_WEEKEND];
 
 // Normaliza un nombre para comparar (minúsculas, sin acentos, espacios colapsados).
 // El id del producto puede variar entre el Sheet y el fallback estático; casar
