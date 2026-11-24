@@ -631,9 +631,20 @@ export function estaRetirado(id: string): boolean {
   return PLATOS_RETIRADOS.some((r) => mismoId(r, id));
 }
 
+// Platos que NO salen en la carta mientras no tengan foto (ni en
+// PRODUCT_IMAGES ni imageUrl en el Sheet). En cuanto se le pone foto,
+// aparece solo; no hay que tocar nada más.
+export const OCULTOS_HASTA_FOTO: string[] = [
+  "ahora-comen-todos-rabo", // 24-11-2026 (Amos): fuera hasta tener foto
+];
+function pendienteDeFoto(p: Product): boolean {
+  return OCULTOS_HASTA_FOTO.some((id) => mismoId(id, p.id)) && !imageForProduct(p);
+}
+
 export function withExtraProducts(products: Product[]): Product[] {
   return withExtraPlatos(withExtraBebidas(products))
     .filter((p) => !estaRetirado(p.id))
+    .filter((p) => !pendienteDeFoto(p))
     .map((p) => (estaAgotadoTemporal(p.id) ? { ...p, available: false } : p));
 }
 
@@ -645,26 +656,15 @@ export function getPacks(): Product[] {
 // El bloque de arriba de la home tiene una zona de "Novedades" (platos sueltos)
 // y otra de packs. Estos son los platos que se empujan arriba, EN ESTE ORDEN.
 // Para cambiar las novedades, tocar esta lista; vaciarla oculta la zona entera.
-export const DESTACADOS_IDS: string[] = [
-  // Ahora Comen Todos versión rabo de toro (16-11): SOLO se pide desde aquí.
-  "ahora-comen-todos-rabo",
-  // Empanada de Queso (nov 2026): plato nuevo con 2×1 del 11 al 15.
-  "empanada-de-queso",
-  // La Chocletiza relevó al colonche, que sigue en la carta (sección Verde)
-  // pero fuera de Novedades.
-  "la-chocletiza",
-  "ceviche-jipijapa",
-];
+// 24-11-2026 (Amos): se quita la zona de Novedades. Los platos siguen en su
+// sección de la carta. Antes: ahora-comen-todos-rabo, empanada-de-queso,
+// la-chocletiza, ceviche-jipijapa.
+export const DESTACADOS_IDS: string[] = [];
 
 // Platos que en la CARTA se resaltan con el dorado del menú (borde + brillo)
 // para llamar la atención. Añadir/quitar ids aquí.
-export const PLATOS_DORADOS: string[] = [
-  // 16-11 (Amos): el brillo dorado a las 4 novedades.
-  "ahora-comen-todos-rabo",
-  "empanada-de-queso",
-  "la-chocletiza",
-  "ceviche-jipijapa",
-];
+// 24-11-2026 (Amos): sin brillo dorado, ya no son novedades.
+export const PLATOS_DORADOS: string[] = [];
 export function esPlatoDorado(id: string): boolean {
   return PLATOS_DORADOS.some((d) => mismoId(d, id));
 }
