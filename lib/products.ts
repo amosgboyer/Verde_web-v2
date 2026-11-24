@@ -461,7 +461,8 @@ export const EXTRA_PLATOS: Product[] = [
     // Receta: queso + mantequilla → lácteos. El macambo es semilla de la
     // familia del cacao, no fruto seco.
     allergens: ["Lácteos"],
-    category: "maduro",
+    // 24-11-2026 (Amos): va en su propio apartado de Postres, no en Maduro.
+    category: "postres",
     image: "/productos/maduro-con-macambo.jpg",
   },
 ];
@@ -480,6 +481,7 @@ export type NormalizedCategory =
   | "Maduro"
   | "Pesca"
   | "Otros"
+  | "Postres"
   | "Bebidas";
 
 export function normalizeCategory(raw: string): NormalizedCategory {
@@ -492,6 +494,8 @@ export function normalizeCategory(raw: string): NormalizedCategory {
   if (lower.startsWith("menu") || lower.startsWith("menú")) return "Menu";
   // "pesca", "pesca del día", "pescado"… → sección Pesca del Día (sep 2026)
   if (lower.startsWith("pesca")) return "Pesca";
+  // "postre", "postres" → sección Postres (24-11-2026, Maduro con Macambo).
+  if (lower.startsWith("postre")) return "Postres";
   if (
     lower === "bebida" ||
     lower === "bebidas" ||

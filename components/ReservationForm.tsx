@@ -202,7 +202,7 @@ function fmtPrice(n: number): string {
 // bloque que toca. Tenerlo duplicado aquí era invitar a que se desincronizara.
 // "Menu" queda fuera a propósito: el menú de la semana no tiene sección en la
 // carta — vive como card destacada en el bloque de Packs de la home (02-09).
-const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Pesca", "Otros", "Bebidas"];
+const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Pesca", "Otros", "Postres", "Bebidas"];
 
 const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: string }> = {
   Menu: {
@@ -224,6 +224,10 @@ const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: str
   Otros: {
     title: "OTROS PRODUCTOS",
     subtitle: "Más opciones disponibles por reserva.",
+  },
+  Postres: {
+    title: "POSTRES",
+    subtitle: "Para cerrar con algo dulce.",
   },
   Bebidas: {
     title: "BEBIDAS",
