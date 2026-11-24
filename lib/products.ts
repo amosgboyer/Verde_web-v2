@@ -282,6 +282,7 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   "ceviche-jipijapa": "/productos/ceviche-jipijapa.jpg",
   "colonche-de-chicharron": "/productos/colonche-de-chicharron.jpg",
   "empanada-de-queso": "/productos/empanada-de-queso-topping.jpg",
+  "maduro-con-macambo": "/productos/maduro-con-macambo.jpg",
 };
 
 export function imageForProduct(p: { id: string; image?: string }): string | undefined {
@@ -447,6 +448,21 @@ export const EXTRA_PLATOS: Product[] = [
     allergens: ["Lácteos", "Apio", "Mostaza", "Sulfitos"],
     category: "Ahora -comen", // mismo bloque que el Ahora Comen Todos de bolones
     // Foto pendiente (Amos la pasa). Sin imagen hasta entonces.
+  },
+  {
+    // 24-11-2026 (Amos): plato nuevo, 7 €. Escandallo: coste 2,83 €/porción.
+    id: "maduro-con-macambo",
+    name: "Maduro con Macambo",
+    description:
+      "Maduro asado en su piel con mantequilla, queso rallado, macambo tostado y menta fresca.",
+    finalPrice: 7,
+    depositAmount: 7,
+    available: true,
+    // Receta: queso + mantequilla → lácteos. El macambo es semilla de la
+    // familia del cacao, no fruto seco.
+    allergens: ["Lácteos"],
+    category: "maduro",
+    image: "/productos/maduro-con-macambo.jpg",
   },
 ];
 
@@ -659,7 +675,9 @@ export function getPacks(): Product[] {
 // 24-11-2026 (Amos): se quita la zona de Novedades. Los platos siguen en su
 // sección de la carta. Antes: ahora-comen-todos-rabo, empanada-de-queso,
 // la-chocletiza, ceviche-jipijapa.
-export const DESTACADOS_IDS: string[] = [];
+export const DESTACADOS_IDS: string[] = [
+  "maduro-con-macambo", // 24-11-2026 (Amos): novedad
+];
 
 // Platos que en la CARTA se resaltan con el dorado del menú (borde + brillo)
 // para llamar la atención. Añadir/quitar ids aquí.
