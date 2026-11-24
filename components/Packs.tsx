@@ -62,6 +62,7 @@ const PRESENTACION: Record<
 // reglas de verdad están en lib/offers.ts (2×1) y lib/products.ts (trío y
 // Tigrillos −30 %); esto solo lo cuenta.
 const LINEUP_BF: { dia: string; oferta: string; nota?: string; sello: string; todo?: boolean }[] = [
+  { dia: "Toda la semana", oferta: "Recoge en el local", nota: "Te regalamos una Empanada de Queso", sello: "GRATIS" },
   { dia: "Mié 25", oferta: "Trío de salsas", nota: "Ají + verde + maní, toda la semana", sello: "4,50€" },
   { dia: "Jue 26", oferta: "Bollo de Verde", nota: "Pide 1 y llévate 2", sello: "2×1" },
   { dia: "Vie 27", oferta: "Pack Dos Tigrillos", nota: "20,30 € en vez de 29 €", sello: "−30%" },
