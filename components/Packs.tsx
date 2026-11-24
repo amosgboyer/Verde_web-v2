@@ -61,13 +61,31 @@ const PRESENTACION: Record<
 // Lineup de Black Friday 2026 (Amos, 24-11). Días = días de ENTREGA. Las
 // reglas de verdad están en lib/offers.ts (2×1) y lib/products.ts (trío y
 // Tigrillos −30 %); esto solo lo cuenta.
-const LINEUP_BF: { dia: string; oferta: string; nota?: string; sello: string; todo?: boolean }[] = [
-  { dia: "Toda la semana", oferta: "Recoge en el local", nota: "Te regalamos una Empanada de Queso", sello: "GRATIS" },
-  { dia: "Mié 25", oferta: "Trío de salsas", nota: "Ají + verde + maní, toda la semana", sello: "4,50€" },
-  { dia: "Jue 26", oferta: "Bollo de Verde", nota: "Pide 1 y llévate 2", sello: "2×1" },
-  { dia: "Vie 27", oferta: "Pack Dos Tigrillos", nota: "20,30 € en vez de 29 €", sello: "−30%" },
-  { dia: "Sáb 28", oferta: "La Chocletiza", nota: "Pide 1 y llévate 2", sello: "2×1" },
-  { dia: "Dom 29", oferta: "Todas las ofertas", nota: "Bollo 2×1 · Tigrillos −30% · Chocletiza 2×1 · Trío", sello: "TODO", todo: true },
+type FilaLineup = {
+  dia: string;
+  oferta: string;
+  nota?: string;
+  sello: string;
+  todo?: boolean;
+  // Al pulsar: qué se añade al carrito y con qué día de entrega / método.
+  items?: { id: string; qty: number }[];
+  fecha?: string;
+  metodo?: "pickup";
+  accion: string;
+};
+const LINEUP_BF: FilaLineup[] = [
+  { dia: "Toda la semana", oferta: "Recoge en el local", nota: "Te regalamos una Empanada de Queso", sello: "GRATIS",
+    metodo: "pickup", accion: "Elegir recogida" },
+  { dia: "Mié 25", oferta: "Trío de salsas", nota: "Ají + verde + maní, toda la semana", sello: "4,50€",
+    items: [{ id: "trio-salsas", qty: 1 }], fecha: "2026-11-25", accion: "Añadir para el miércoles" },
+  { dia: "Jue 26", oferta: "Bollo de Verde", nota: "Pide 1 y llévate 2", sello: "2×1",
+    items: [{ id: "bollo-de-verde", qty: 1 }], fecha: "2026-11-26", accion: "Añadir para el jueves" },
+  { dia: "Vie 27", oferta: "Pack Dos Tigrillos", nota: "20,30 € en vez de 29 €", sello: "−30%",
+    items: [{ id: "pack-dos-tigrillos-bf", qty: 1 }], fecha: "2026-11-27", accion: "Añadir para el viernes" },
+  { dia: "Sáb 28", oferta: "La Chocletiza", nota: "Pide 1 y llévate 2", sello: "2×1",
+    items: [{ id: "la-chocletiza", qty: 1 }], fecha: "2026-11-28", accion: "Añadir para el sábado" },
+  { dia: "Dom 29", oferta: "Todas las ofertas", nota: "Bollo 2×1 · Tigrillos −30% · Chocletiza 2×1 · Trío", sello: "TODO", todo: true,
+    fecha: "2026-11-29", accion: "Pedir para el domingo" },
 ];
 
 // Precio en formato español, entero sin decimales: "27€", "14,50€".
@@ -199,12 +217,24 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
             {LINEUP_BF.map((d, i) => (
               <li
                 key={d.dia}
-                className="flex items-center gap-3 px-4 py-3 text-left"
                 style={{
                   background: d.todo ? "rgba(224,178,58,0.16)" : i % 2 ? "rgba(255,255,255,0.03)" : "transparent",
                   borderTop: i ? "1px solid rgba(224,178,58,0.18)" : undefined,
                 }}
               >
+                <button
+                  type="button"
+                  disabled={readOnly}
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent("verde:add-pack", {
+                        detail: { items: d.items ?? [], fecha: d.fecha, metodo: d.metodo },
+                      })
+                    );
+                  }}
+                  aria-label={`${d.dia}: ${d.oferta}. ${d.accion}`}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/5 disabled:cursor-default"
+                >
                 <span
                   className="font-mono text-[0.68rem] tracking-[0.12em] uppercase w-[72px] shrink-0"
                   style={{ color: "#e0b23a" }}
@@ -219,12 +249,20 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
                     </span>
                   )}
                 </span>
-                <span
-                  className="text-[0.7rem] font-bold px-2 py-0.5 rounded-full shrink-0"
-                  style={{ background: "#e0b23a", color: "#111" }}
-                >
-                  {d.sello}
+                <span className="flex flex-col items-end gap-1 shrink-0">
+                  <span
+                    className="text-[0.7rem] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: "#e0b23a", color: "#111" }}
+                  >
+                    {d.sello}
+                  </span>
+                  {!readOnly && (
+                    <span className="text-[0.62rem] font-semibold whitespace-nowrap" style={{ color: "#e0b23a" }}>
+                      {d.items?.length ? "+ Añadir" : "Elegir →"}
+                    </span>
+                  )}
                 </span>
+                </button>
               </li>
             ))}
           </ol>

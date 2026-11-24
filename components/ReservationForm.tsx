@@ -406,10 +406,27 @@ export default function ReservationForm({
   }, [isDirecto, directoAvailable]);
   useEffect(() => {
     function onAddPack(e: Event) {
-      const { items, choice } = (e as CustomEvent<{
+      const { items, choice, fecha, metodo } = (e as CustomEvent<{
         items: { id: string; qty: number }[];
         choice?: { productId: string; value: string };
+        // Lineup de Black Friday: el día de entrega de esa oferta y, para la
+        // empanada de regalo, la recogida en el local.
+        fecha?: string;
+        metodo?: "pickup";
       }>).detail;
+      if (metodo) setFields((prev) => ({ ...prev, deliveryMethod: metodo }));
+      if (fecha) {
+        const dia = availabilityRef.current.find((d) => d.date === fecha);
+        if (dia && dia.status === "available") {
+          setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
+          setError(null);
+        } else if (availabilityRef.current.length) {
+          setError("Ese día ya no quedan huecos. Elige otro día en el calendario.");
+        } else {
+          // La disponibilidad aún no ha cargado: se elige igual y el calendario lo comprobará.
+          setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
+        }
+      }
       setCart(prev => {
         const next = {...prev};
         items.forEach(({id, qty}) => { next[id] = (next[id] ?? 0) + qty; });
@@ -452,6 +469,11 @@ export default function ReservationForm({
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
+  // Copia viva para los listeners registrados una sola vez (lineup → carrito).
+  const availabilityRef = useRef<DayAvailability[]>([]);
+  useEffect(() => {
+    availabilityRef.current = availability;
+  }, [availability]);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
   const [saveData, setSaveData] = useState(false);
   const [savedDataDetected, setSavedDataDetected] = useState(false);
@@ -1351,35 +1373,30 @@ export default function ReservationForm({
 
           {weekendOffer && (
             <div
-              className="mt-4 rounded-xl px-4 py-3 max-w-md"
+              className="mt-3 rounded-lg px-3 py-2 max-w-md"
               style={{
                 background:
-                  "linear-gradient(100deg, rgba(200,90,42,0.14), rgba(217,164,65,0.16))",
-                border: "1px solid rgba(200,90,42,0.28)",
+                  "linear-gradient(100deg, rgba(200,90,42,0.12), rgba(217,164,65,0.14))",
+                border: "1px solid rgba(200,90,42,0.25)",
               }}
             >
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="font-extrabold text-[2.2rem] leading-none text-white bg-[#c85a2a] rounded-lg px-3 py-1.5 shrink-0 tabular-nums">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-[1rem] leading-none text-white bg-[#c85a2a] rounded-md px-2 py-1 shrink-0 tabular-nums">
                   {offerBadgeLabel(weekendOffer)}
                 </span>
-                <span className="flex flex-col gap-1">
-                  <span className="font-bold text-[18px] leading-tight text-[#a8451f] tracking-tight">
-                    {weekendOffer.name}
-                  </span>
-                  <span className="self-start text-[10px] font-bold uppercase tracking-[0.15em] text-white bg-[#c85a2a] rounded-full px-2 py-0.5">
-                    {weekendOffer.badge}
-                  </span>
+                <span className="font-bold text-[13px] leading-tight text-[#a8451f]">
+                  {weekendOffer.productos ? weekendOffer.badge : weekendOffer.name}
                 </span>
               </div>
-              <p className="text-[13px] text-negro/70 leading-snug mt-2">
+              <p className="text-[12px] text-negro/70 leading-snug mt-1">
                 {weekendOffer.tagline}. {offerRuleText(weekendOffer)}
               </p>
-              {offerReservationText(weekendOffer) && (
-                <p className="text-[12px] font-semibold text-[#a8451f] leading-snug mt-1.5">
+              {!weekendOffer.productos && offerReservationText(weekendOffer) && (
+                <p className="text-[11px] font-semibold text-[#a8451f] leading-snug mt-1">
                   {offerReservationText(weekendOffer)}
                 </p>
               )}
-              <OfferCountdown offer={weekendOffer} className="mt-2.5" />
+              <OfferCountdown offer={weekendOffer} className="mt-1.5" />
             </div>
           )}
         </div>
