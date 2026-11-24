@@ -7,6 +7,7 @@ const CATS = [
   { label: "Para los amantes del Maduro", id: "cat-maduro" },
   { label: "Pesca del Día", id: "cat-pesca" },
   { label: "Otros productos", id: "cat-otros" },
+  { label: "Postres", id: "cat-postres" },
   { label: "Bebidas", id: "cat-bebidas" },
 ];
 
