@@ -860,7 +860,9 @@ export default function ReservationForm({
     // Tras cerrar, avanzar al primer paso pendiente (nunca hacia atrás).
     // goToStep aplica el candado del mínimo: si sigue corto, se queda en el
     // carrito con el aviso en vez de avanzar.
-    if (!step2Done) goToStep(2);
+    // Con el día ya elegido (p. ej. desde el lineup) se salta a la hora, salvo
+    // que algo del carrito no se entregue ese día: entonces, al paso del día con el aviso.
+    if (!step2Done || avisosFecha.length > 0) goToStep(2);
     else if (!step3Done) goToStep(3);
     else if (!step4Done) goToStep(4);
     else if (!step5Done) goToStep(5);
