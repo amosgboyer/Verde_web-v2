@@ -415,6 +415,15 @@ export default function ReservationForm({
         metodo?: "pickup";
       }>).detail;
       if (metodo) setFields((prev) => ({ ...prev, deliveryMethod: metodo }));
+      // Aviso visible: desde el lineup se elige el día de TODO el pedido.
+      if (fecha || metodo) {
+        const partes: string[] = [];
+        if (fecha) partes.push(`Vas a pedir para el ${formatDateLabel(fecha)}. Todo el pedido se entrega ese día.`);
+        if (metodo === "pickup") partes.push("Recoges en el local: te regalamos una Empanada de Queso.");
+        setAvisoLineup((items.length ? "✓ Añadido. " : "") + partes.join(" "));
+        if (avisoLineupTimer.current) clearTimeout(avisoLineupTimer.current);
+        avisoLineupTimer.current = setTimeout(() => setAvisoLineup(null), 6000);
+      }
       if (fecha) {
         const dia = availabilityRef.current.find((d) => d.date === fecha);
         if (dia && dia.status === "available") {
@@ -471,6 +480,9 @@ export default function ReservationForm({
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
   // Copia viva para los listeners registrados una sola vez (lineup → carrito).
   const availabilityRef = useRef<DayAvailability[]>([]);
+  // Aviso flotante al pulsar un día del lineup de Black Friday.
+  const [avisoLineup, setAvisoLineup] = useState<string | null>(null);
+  const avisoLineupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     availabilityRef.current = availability;
   }, [availability]);
@@ -1410,6 +1422,24 @@ export default function ReservationForm({
         {(!requireAccessCode || unlocked) && (
         <>
         <form onSubmit={handleSubmit} noValidate>
+          {avisoLineup && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="fixed left-1/2 -translate-x-1/2 top-[70px] z-[200] w-[min(92vw,420px)] rounded-xl px-4 py-3 text-[13px] font-semibold leading-snug shadow-[0_8px_30px_rgba(0,0,0,0.35)]"
+              style={{ background: "#111", color: "#f2ead8", border: "1.5px solid #e0b23a" }}
+            >
+              <span className="pr-4 block">{avisoLineup}</span>
+              <button
+                type="button"
+                onClick={() => setAvisoLineup(null)}
+                className="absolute top-1.5 right-2.5 text-[#e0b23a] text-base leading-none"
+                aria-label="Cerrar aviso"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
           {/* ── PASO 1: PRODUCTO ── */}
           <StepSection
