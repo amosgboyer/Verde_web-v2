@@ -14,6 +14,8 @@ import {
   offerBadgeLabel,
   offerGiftApplies,
   unidadPluralDe,
+  regaloRecogidaAplica,
+  REGALO_RECOGIDA,
   giftItemName,
 } from "@/lib/offers";
 import {
@@ -369,6 +371,9 @@ export async function POST(req: NextRequest) {
         `${weekendOffer.name}: ${offer.discountedUnits}× ${offerBadgeLabel(weekendOffer)}`
       );
     }
+    // Black Friday: empanada de regalo por recoger en el local → línea a 0 €.
+    const conRegaloRecogida = regaloRecogidaAplica(parsed.deliveryMethod, parsed.reservationDate);
+    if (conRegaloRecogida) discountNotes.push(`Regalo: ${REGALO_RECOGIDA.nombre}`);
     const lineItemDescription =
       productSummary +
       (discountNotes.length > 0 ? ` — ${discountNotes.join(" · ")}` : "") +
@@ -391,8 +396,8 @@ export async function POST(req: NextRequest) {
       },
     ];
 
-    const itemsMeta = JSON.stringify(
-      validatedItems.map(({ product, quantity }) => ({
+    const itemsMeta = JSON.stringify([
+      ...validatedItems.map(({ product, quantity }) => ({
         id: product.id,
         // "Pide 1, llévate 2": el nombre lleva cuántas se entregan, para que
         // cocina (Sheet, email interno) y cliente no tengan que adivinarlo.
@@ -402,8 +407,11 @@ export async function POST(req: NextRequest) {
         qty: quantity,
         price: product.finalPrice,
         deposit: product.depositAmount,
-      }))
-    );
+      })),
+      ...(conRegaloRecogida
+        ? [{ id: REGALO_RECOGIDA.id, name: REGALO_RECOGIDA.nombre, qty: 1, price: 0, deposit: 0 }]
+        : []),
+    ]);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

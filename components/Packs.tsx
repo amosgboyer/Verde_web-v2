@@ -205,7 +205,7 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
                 }}
               >
                 <span
-                  className="font-mono text-[0.68rem] tracking-[0.12em] uppercase w-[64px] shrink-0"
+                  className="font-mono text-[0.68rem] tracking-[0.12em] uppercase w-[72px] shrink-0"
                   style={{ color: "#e0b23a" }}
                 >
                   {d.dia}

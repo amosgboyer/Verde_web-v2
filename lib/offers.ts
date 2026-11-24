@@ -152,6 +152,33 @@ export function esBlackFriday(): boolean {
   return Date.now() >= Date.parse(BLACK_FRIDAY.abreEn) && todayMadrid() <= BLACK_FRIDAY.hasta;
 }
 
+// Black Friday 2026 (Amos, 24-11): quien RECOGE en el local se lleva una
+// Empanada de Queso de regalo. Recogidas del miércoles 25 al domingo 29; se
+// anuncia desde hoy a las 20:00. Va como línea propia a 0 € en el pedido
+// (Sheet, Verde Host, emails) para que cocina la prepare.
+export const REGALO_RECOGIDA = {
+  id: "empanada-regalo-recogida",
+  nombre: "Empanada de Queso · regalo por recoger en el local",
+  fechas: ["2026-11-25", "2026-11-26", "2026-11-27", "2026-11-28", "2026-11-29"],
+  abreEn: "2026-11-24T20:00:00+01:00",
+};
+/** ¿Este pedido lleva la empanada de regalo? (recogida + día de recogida válido). */
+export function regaloRecogidaAplica(
+  deliveryMethod: string | undefined,
+  reservationDate: string | undefined
+): boolean {
+  if (deliveryMethod !== "pickup") return false;
+  if (Date.now() < Date.parse(REGALO_RECOGIDA.abreEn)) return false;
+  return REGALO_RECOGIDA.fechas.includes((reservationDate ?? "").slice(0, 10));
+}
+/** ¿Se anuncia hoy la empanada de regalo por recoger? */
+export function regaloRecogidaVisible(): boolean {
+  return (
+    Date.now() >= Date.parse(REGALO_RECOGIDA.abreEn) &&
+    todayMadrid() <= REGALO_RECOGIDA.fechas[REGALO_RECOGIDA.fechas.length - 1]
+  );
+}
+
 // Orden de prioridad: la primera que esté activa hoy es la que se aplica.
 const OFERTAS: WeekendOffer[] = [BLACK_FRIDAY_2X1, EMPANADA_2X1, TIGRILLO_2X1, SWEET_WEEKEND];
 

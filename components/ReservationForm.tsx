@@ -6,6 +6,7 @@ import type { Product, NormalizedCategory } from "@/lib/products";
 import {
   imageForProduct,
   normalizeCategory,
+  categoriaDe,
   mismoId,
   vatRateOf,
   DEFAULT_VAT_RATE,
@@ -27,6 +28,8 @@ import {
   offerRuleText,
   offerReservationText,
   offerGiftApplies,
+  regaloRecogidaAplica,
+  regaloRecogidaVisible,
 } from "@/lib/offers";
 import {
   quoteDeliveryByPostalCode,
@@ -203,7 +206,7 @@ function fmtPrice(n: number): string {
 // bloque que toca. Tenerlo duplicado aquí era invitar a que se desincronizara.
 // "Menu" queda fuera a propósito: el menú de la semana no tiene sección en la
 // carta — vive como card destacada en el bloque de Packs de la home (02-09).
-const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Pesca", "Otros", "Postres", "Bebidas"];
+const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Pesca", "Otros", "Acompanantes", "Bebidas"];
 
 const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: string }> = {
   Menu: {
@@ -226,9 +229,9 @@ const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: str
     title: "OTROS PRODUCTOS",
     subtitle: "Más opciones disponibles por reserva.",
   },
-  Postres: {
-    title: "POSTRES",
-    subtitle: "Para cerrar con algo dulce.",
+  Acompanantes: {
+    title: "ACOMPAÑANTES",
+    subtitle: "Para completar tu plato.",
   },
   Bebidas: {
     title: "BEBIDAS",
@@ -902,6 +905,11 @@ export default function ReservationForm({
       : { discountAmount: 0, discountedUnits: 0 };
   const offerDiscount = offerResult.discountAmount;
   // "Pide 1, llévate 2": línea informativa en el resumen (no cambia el total).
+  // Black Friday: empanada de regalo al recoger en el local (línea gratis).
+  const regaloRecogida = regaloRecogidaAplica(
+    fields.deliveryMethod,
+    isDirecto ? todayMadrid() : fields.reservationDate
+  );
   const giftCartLines = (() => {
     const fecha = isDirecto ? todayMadrid() : fields.reservationDate;
     return cartProducts
@@ -1450,7 +1458,13 @@ export default function ReservationForm({
                   {(
                     [
                       { v: "delivery", t: "A domicilio", s: `Pedido mínimo ${defaultMinOrder()} €` },
-                      { v: "pickup", t: "Recoger en el local", s: "Sin mínimo · sin envío" },
+                      {
+                        v: "pickup",
+                        t: "Recoger en el local",
+                        s: regaloRecogidaVisible()
+                          ? "Sin mínimo · empanada de regalo"
+                          : "Sin mínimo · sin envío",
+                      },
                     ] as const
                   ).map((o) => (
                     <button
@@ -1537,7 +1551,7 @@ export default function ReservationForm({
                 if (p.soloNovedades) continue; // solo se pide desde Novedades
                 if (hiddenVariantIds.has(p.id)) continue; // variante → va como selector
                 if ((p.category ?? "").trim().toLowerCase() === "salsas") continue; // salsas → popup
-                const cat = normalizeCategory(p.category ?? "");
+                const cat = categoriaDe(p);
                 (grouped[cat] ??= []).push(p);
               }
               const activeGroups = CATEGORY_ORDER.filter((c) => (grouped[c]?.length ?? 0) > 0);
@@ -2576,6 +2590,12 @@ export default function ReservationForm({
                   <div className="flex justify-between text-verde-bosque/75">
                     <span>{promoAplicada.nombre} −{promoAplicada.pct}%</span>
                     <span>−{discountAmount.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                )}
+                {regaloRecogida && (
+                  <div className="flex justify-between text-[#c85a2a] font-semibold">
+                    <span>Regalo por recoger · 1 Empanada de Queso</span>
+                    <span>gratis</span>
                   </div>
                 )}
                 {giftCartLines.map((g) => (

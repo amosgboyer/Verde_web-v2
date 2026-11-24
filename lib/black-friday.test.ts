@@ -14,6 +14,7 @@ import {
   giftItemName,
   unidadPluralDe,
   esBlackFriday,
+  regaloRecogidaAplica,
 } from "./offers";
 
 // Hora de Madrid (UTC+1 en noviembre).
@@ -85,16 +86,25 @@ describe("Black Friday 2026 — lineup por día de entrega", () => {
     expect(agotadoParaFecha("trio-salsas", "2026-11-30")).toBe(true);
   });
 
-  it("packs: fuera Bolón + Patacón, Mar y Tierra y los dos de Macambo; dentro Black Friday Dulce", () => {
+  it("packs: solo Dos Tigrillos (29 €) y, en sus días, el −30 %; fuera los de Maduro con Macambo", () => {
+    vi.useFakeTimers();
+    a("2026-11-25T12:00:00");
     const ids = getPacks().map((p) => p.id);
-    for (const fuera of ["pack-bolon-patacon", "pack-mar-y-tierra", "pack-canoa-macambo", "pack-bolon-macambo"]) {
-      expect(ids).not.toContain(fuera);
-    }
-    expect(ids).toContain("pack-black-friday-dulce");
-    expect(getProductById("pack-black-friday-dulce")?.finalPrice).toBe(16.9);
-    expect(PRODUCT_CHOICES.find((c) => c.productId === "pack-black-friday-dulce")?.options).toEqual([
-      "Canoa de Maduro",
-      "Bolón Mixto con Maduro",
-    ]);
+    expect(ids.sort()).toEqual(["pack-dos-tigrillos", "pack-dos-tigrillos-bf"]);
+    a("2026-11-30T12:00:00");
+    expect(getPacks().map((p) => p.id)).toEqual(["pack-dos-tigrillos"]);
+    expect(getProductById("maduro-con-macambo")?.category).toBe("maduro");
+    void PRODUCT_CHOICES;
+  });
+
+  it("empanada de regalo al RECOGER en el local, del 25 al 29 (desde hoy 20:00)", () => {
+    vi.useFakeTimers();
+    a("2026-11-24T19:00:00");
+    expect(regaloRecogidaAplica("pickup", "2026-11-25")).toBe(false);
+    a("2026-11-24T20:00:00");
+    expect(regaloRecogidaAplica("pickup", "2026-11-25")).toBe(true);
+    expect(regaloRecogidaAplica("pickup", "2026-11-29")).toBe(true);
+    expect(regaloRecogidaAplica("delivery", "2026-11-27")).toBe(false);
+    expect(regaloRecogidaAplica("pickup", "2026-11-30")).toBe(false);
   });
 });

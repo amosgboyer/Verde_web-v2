@@ -286,7 +286,8 @@ export const PACKS: Product[] = [
       "Elige Canoa de Maduro o Bolón Mixto con Maduro y, de postre, Maduro con Macambo: maduro asado con mantequilla, queso, macambo tostado y menta.",
     finalPrice: 16.9,
     depositAmount: 16.9,
-    available: true,
+    // QUITADO 24-11 (Amos): de packs, solo los Dos Tigrillos (y su −30 % en su día).
+    available: false,
     allergens: ["Lácteos", "Maní"],
     category: "pack",
     isPack: true,
@@ -611,8 +612,8 @@ export const EXTRA_PLATOS: Product[] = [
     // Receta: queso + mantequilla → lácteos. El macambo es semilla de la
     // familia del cacao, no fruto seco.
     allergens: ["Lácteos"],
-    // 24-11-2026 (Amos): va en su propio apartado de Postres, no en Maduro.
-    category: "postres",
+    // 24-11-2026 (Amos): va en la sección de Maduro (no en Postres ni Acompañantes).
+    category: "maduro",
     image: "/productos/maduro-con-macambo.jpg",
   },
 ];
@@ -631,8 +632,20 @@ export type NormalizedCategory =
   | "Maduro"
   | "Pesca"
   | "Otros"
-  | "Postres"
+  | "Acompanantes"
   | "Bebidas";
+
+// Platos del Sheet que van en otra sección que la de su categoría (sin tocar
+// la hoja). 24-11-2026 (Amos): la Ración de Patacón pasa a Acompañantes.
+const CATEGORIA_POR_ID: Record<string, NormalizedCategory> = {
+  "ración-patacon": "Acompanantes",
+  "racion-patacon": "Acompanantes",
+};
+/** Sección de la carta de un producto: la de su id si está forzada; si no, la de su categoría. */
+export function categoriaDe(p: { id: string; category?: string }): NormalizedCategory {
+  const forzada = Object.entries(CATEGORIA_POR_ID).find(([id]) => mismoId(id, p.id));
+  return forzada ? forzada[1] : normalizeCategory(p.category ?? "");
+}
 
 export function normalizeCategory(raw: string): NormalizedCategory {
   const lower = (raw ?? "").trim().toLowerCase();
@@ -644,8 +657,9 @@ export function normalizeCategory(raw: string): NormalizedCategory {
   if (lower.startsWith("menu") || lower.startsWith("menú")) return "Menu";
   // "pesca", "pesca del día", "pescado"… → sección Pesca del Día (sep 2026)
   if (lower.startsWith("pesca")) return "Pesca";
-  // "postre", "postres" → sección Postres (24-11-2026, Maduro con Macambo).
-  if (lower.startsWith("postre")) return "Postres";
+  // "acompañante(s)" → sección Acompañantes (24-11-2026, Amos): Ración de
+  // Patacón y Maduro con Macambo. "postre" también cae aquí (ya no hay Postres).
+  if (lower.startsWith("acompa") || lower.startsWith("postre")) return "Acompanantes";
   if (
     lower === "bebida" ||
     lower === "bebidas" ||
