@@ -25,6 +25,22 @@ export interface WeekendOffer {
   // baja (no hay descuento en euros). Sin impares: pides 3, te llevas 6.
   // El nombre del ítem en el pedido lleva "(2×1 · N empanadas)" para cocina.
   regalo?: boolean;
+  // Cómo se llaman las unidades en el nombre del ítem para cocina
+  // ("6 empanadas", "4 chocletizas"). Por defecto, "empanadas".
+  unidadPlural?: string;
+  // Oferta con VARIOS platos, cada uno con sus días de entrega concretos
+  // (Black Friday: Bollo jue+dom, Chocletiza sáb+dom). Si está, manda sobre
+  // productId/productNameMatch/unidadPlural y sobre la ventana de reserva.
+  productos?: {
+    productId: string;
+    productNameMatch: string;
+    unidadPlural: string;
+    fechas: string[]; // "YYYY-MM-DD" de entrega
+    dias: string; // en texto: "jueves 26 y domingo 29"
+  }[];
+  // Instante exacto en que se abre (ISO con zona). Si está, la oferta no se
+  // activa antes aunque `startDate` ya sea hoy.
+  startAt?: string;
 }
 
 // Sweet Weekend — la 2ª Canoa de Maduro al 50%. Solo este fin de semana.
@@ -83,8 +99,88 @@ export const EMPANADA_2X1: WeekendOffer = {
   reservationEndDate: "2026-11-15",
 };
 
+// Black Friday 2026 (Amos, 24-11) — lineup por día de ENTREGA. Se abre hoy
+// martes 24 a las 20:00 (Madrid). Dos 2×1 "pide 1, llévate 2" (como la
+// empanada), cada uno con sus días:
+//   · Bollo de Verde → jueves 26 y domingo 29
+//   · La Chocletiza  → sábado 28 y domingo 29
+// (El trío de salsas y los Dos Tigrillos −30 % son productos con sus propios
+// días de entrega, en lib/products.ts.)
+export const BLACK_FRIDAY_2X1: WeekendOffer = {
+  id: "black-friday-2x1",
+  name: "Black Friday · 2×1",
+  tagline: "Jueves Bollo de Verde 2×1 · Sábado Chocletiza 2×1 · Domingo, los dos",
+  badge: "Black Friday",
+  regalo: true,
+  productId: "bollo-de-verde",
+  productName: "Bollo de Verde",
+  productNameMatch: "bollo de verde",
+  unidadPlural: "bollos",
+  productos: [
+    {
+      productId: "bollo-de-verde",
+      productNameMatch: "bollo de verde",
+      unidadPlural: "bollos",
+      fechas: ["2026-11-26", "2026-11-29"],
+      dias: "jueves 26 y domingo 29",
+    },
+    {
+      productId: "la-chocletiza",
+      productNameMatch: "la chocletiza",
+      unidadPlural: "chocletizas",
+      fechas: ["2026-11-28", "2026-11-29"],
+      dias: "sábado 28 y domingo 29",
+    },
+  ],
+  everyNth: 2,
+  percentOff: 100,
+  startDate: "2026-11-24", // martes — se abre a las 20:00 (startAt)
+  startAt: "2026-11-24T20:00:00+01:00",
+  endDate: "2026-11-29", // domingo
+  reservationStartDate: "2026-11-26",
+  reservationEndDate: "2026-11-29",
+};
+
+// Semana de Black Friday (Amos, 24-11): la zona de ofertas de la home se pone
+// en negro con detalles dorados. De miércoles 25 (sale el trío de salsas) a
+// domingo 29. Se apaga sola el lunes 30.
+export const BLACK_FRIDAY = {
+  abreEn: "2026-11-24T20:00:00+01:00", // martes 24, 20:00 (Madrid): se abre el lineup
+  hasta: "2026-11-29",
+};
+export function esBlackFriday(): boolean {
+  return Date.now() >= Date.parse(BLACK_FRIDAY.abreEn) && todayMadrid() <= BLACK_FRIDAY.hasta;
+}
+
+// Black Friday 2026 (Amos, 24-11): quien RECOGE en el local se lleva una
+// Empanada de Queso de regalo. Recogidas del miércoles 25 al domingo 29; se
+// anuncia desde hoy a las 20:00. Va como línea propia a 0 € en el pedido
+// (Sheet, Verde Host, emails) para que cocina la prepare.
+export const REGALO_RECOGIDA = {
+  id: "empanada-regalo-recogida",
+  nombre: "Empanada de Queso · regalo por recoger en el local",
+  fechas: ["2026-11-25", "2026-11-26", "2026-11-27", "2026-11-28", "2026-11-29"],
+  abreEn: "2026-11-24T20:00:00+01:00",
+};
+/** ¿Este pedido lleva la empanada de regalo? (recogida + día de recogida válido). */
+export function regaloRecogidaAplica(
+  deliveryMethod: string | undefined,
+  reservationDate: string | undefined
+): boolean {
+  if (deliveryMethod !== "pickup") return false;
+  if (Date.now() < Date.parse(REGALO_RECOGIDA.abreEn)) return false;
+  return REGALO_RECOGIDA.fechas.includes((reservationDate ?? "").slice(0, 10));
+}
+/** ¿Se anuncia hoy la empanada de regalo por recoger? */
+export function regaloRecogidaVisible(): boolean {
+  return (
+    Date.now() >= Date.parse(REGALO_RECOGIDA.abreEn) &&
+    todayMadrid() <= REGALO_RECOGIDA.fechas[REGALO_RECOGIDA.fechas.length - 1]
+  );
+}
+
 // Orden de prioridad: la primera que esté activa hoy es la que se aplica.
-const OFERTAS: WeekendOffer[] = [EMPANADA_2X1, TIGRILLO_2X1, SWEET_WEEKEND];
+const OFERTAS: WeekendOffer[] = [BLACK_FRIDAY_2X1, EMPANADA_2X1, TIGRILLO_2X1, SWEET_WEEKEND];
 
 // Normaliza un nombre para comparar (minúsculas, sin acentos, espacios colapsados).
 // El id del producto puede variar entre el Sheet y el fallback estático; casar
@@ -103,6 +199,7 @@ export function productMatchesOffer(
   offer: WeekendOffer,
   product: { id: string; name?: string }
 ): boolean {
+  if (offer.productos) return !!productoDeOferta(offer, product);
   if (product.id === offer.productId) return true;
   if (product.name && normalizeProductName(product.name) === offer.productNameMatch) {
     return true;
@@ -119,7 +216,12 @@ function todayMadrid(): string {
 export function getActiveWeekendOffer(): WeekendOffer | null {
   const today = todayMadrid();
   return (
-    OFERTAS.find((o) => today >= o.startDate && today <= o.endDate) ?? null
+    OFERTAS.find(
+      (o) =>
+        today >= o.startDate &&
+        today <= o.endDate &&
+        (!o.startAt || Date.now() >= Date.parse(o.startAt))
+    ) ?? null
   );
 }
 
@@ -157,6 +259,11 @@ export function offerRuleText(offer: WeekendOffer): string {
 
 // Condición de día de entrega, en texto. null si la oferta no la tiene.
 export function offerReservationText(offer: WeekendOffer): string | null {
+  if (offer.productos) {
+    return offer.productos
+      .map((x) => `${x.productNameMatch.replace(/^./, (c) => c.toUpperCase())}: entregas del ${x.dias}`)
+      .join(" · ");
+  }
   const desde = offer.reservationStartDate;
   const hasta = offer.reservationEndDate;
   if (!desde && !hasta) return null;
@@ -230,6 +337,11 @@ export function offerGiftApplies(
   product: { id: string; name?: string },
   reservationDate: string | undefined
 ): boolean {
+  if (offer?.productos) {
+    const pr = productoDeOferta(offer, product);
+    const d = (reservationDate ?? "").trim().slice(0, 10);
+    return !!offer.regalo && !!pr && pr.fechas.includes(d);
+  }
   return (
     !!offer?.regalo &&
     productMatchesOffer(offer, product) &&
@@ -239,8 +351,33 @@ export function offerGiftApplies(
 
 // Nombre del ítem en el pedido (Sheet, emails, Stripe) cuando va doble.
 // Ej.: "Empanada de Queso (2×1 · 6 empanadas)" con cantidad 3.
-export function giftItemName(name: string, quantity: number): string {
-  return `${name} (2×1 · ${quantity * 2} empanadas)`;
+export function giftItemName(
+  name: string,
+  quantity: number,
+  unidadPlural = "empanadas"
+): string {
+  return `${name} (2×1 · ${quantity * 2} ${unidadPlural})`;
+}
+
+// Plato concreto de una oferta multi-plato (o undefined si no está en ella).
+export function productoDeOferta(
+  offer: WeekendOffer,
+  product: { id: string; name?: string }
+) {
+  return offer.productos?.find(
+    (x) =>
+      x.productId === product.id ||
+      (!!product.name && normalizeProductName(product.name) === x.productNameMatch)
+  );
+}
+
+// Cómo llamar a las unidades de ESTE plato en el nombre del ítem para cocina.
+export function unidadPluralDe(
+  offer: WeekendOffer | null | undefined,
+  product: { id: string; name?: string }
+): string | undefined {
+  if (!offer) return undefined;
+  return (offer.productos && productoDeOferta(offer, product)?.unidadPlural) || offer.unidadPlural;
 }
 
 // ─── Fin de la oferta (cuenta atrás) ───────────────────────────────────────

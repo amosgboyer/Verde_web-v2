@@ -6,10 +6,12 @@ import type { Product, NormalizedCategory } from "@/lib/products";
 import {
   imageForProduct,
   normalizeCategory,
+  categoriaDe,
   mismoId,
   vatRateOf,
   DEFAULT_VAT_RATE,
   agotadoParaFecha,
+  avisoEntrega,
   PRODUCT_CHOICES,
 } from "@/lib/products";
 import { vatBreakdown, formatCents, ratePercent } from "@/lib/vat";
@@ -26,6 +28,8 @@ import {
   offerRuleText,
   offerReservationText,
   offerGiftApplies,
+  regaloRecogidaAplica,
+  regaloRecogidaVisible,
 } from "@/lib/offers";
 import {
   quoteDeliveryByPostalCode,
@@ -202,7 +206,7 @@ function fmtPrice(n: number): string {
 // bloque que toca. Tenerlo duplicado aquí era invitar a que se desincronizara.
 // "Menu" queda fuera a propósito: el menú de la semana no tiene sección en la
 // carta — vive como card destacada en el bloque de Packs de la home (02-09).
-const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Pesca", "Otros", "Bebidas"];
+const CATEGORY_ORDER: NormalizedCategory[] = ["Verde", "Maduro", "Pesca", "Otros", "Acompanantes", "Bebidas"];
 
 const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: string }> = {
   Menu: {
@@ -224,6 +228,10 @@ const CATEGORY_CONFIG: Record<NormalizedCategory, { title: string; subtitle: str
   Otros: {
     title: "OTROS PRODUCTOS",
     subtitle: "Más opciones disponibles por reserva.",
+  },
+  Acompanantes: {
+    title: "ACOMPAÑANTES",
+    subtitle: "Para completar tu plato.",
   },
   Bebidas: {
     title: "BEBIDAS",
@@ -398,10 +406,36 @@ export default function ReservationForm({
   }, [isDirecto, directoAvailable]);
   useEffect(() => {
     function onAddPack(e: Event) {
-      const { items, choice } = (e as CustomEvent<{
+      const { items, choice, fecha, metodo } = (e as CustomEvent<{
         items: { id: string; qty: number }[];
         choice?: { productId: string; value: string };
+        // Lineup de Black Friday: el día de entrega de esa oferta y, para la
+        // empanada de regalo, la recogida en el local.
+        fecha?: string;
+        metodo?: "pickup";
       }>).detail;
+      if (metodo) setFields((prev) => ({ ...prev, deliveryMethod: metodo }));
+      // Aviso visible: desde el lineup se elige el día de TODO el pedido.
+      if (fecha || metodo) {
+        const partes: string[] = [];
+        if (fecha) partes.push(`Vas a pedir para el ${formatDateLabel(fecha)}. Todo el pedido se entrega ese día.`);
+        if (metodo === "pickup") partes.push("Recoges en el local: te regalamos una Empanada de Queso.");
+        setAvisoLineup((items.length ? "✓ Añadido. " : "") + partes.join(" "));
+        if (avisoLineupTimer.current) clearTimeout(avisoLineupTimer.current);
+        avisoLineupTimer.current = setTimeout(() => setAvisoLineup(null), 6000);
+      }
+      if (fecha) {
+        const dia = availabilityRef.current.find((d) => d.date === fecha);
+        if (dia && dia.status === "available") {
+          setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
+          setError(null);
+        } else if (availabilityRef.current.length) {
+          setError("Ese día ya no quedan huecos. Elige otro día en el calendario.");
+        } else {
+          // La disponibilidad aún no ha cargado: se elige igual y el calendario lo comprobará.
+          setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
+        }
+      }
       setCart(prev => {
         const next = {...prev};
         items.forEach(({id, qty}) => { next[id] = (next[id] ?? 0) + qty; });
@@ -444,6 +478,14 @@ export default function ReservationForm({
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
+  // Copia viva para los listeners registrados una sola vez (lineup → carrito).
+  const availabilityRef = useRef<DayAvailability[]>([]);
+  // Aviso flotante al pulsar un día del lineup de Black Friday.
+  const [avisoLineup, setAvisoLineup] = useState<string | null>(null);
+  const avisoLineupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    availabilityRef.current = availability;
+  }, [availability]);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
   const [saveData, setSaveData] = useState(false);
   const [savedDataDetected, setSavedDataDetected] = useState(false);
@@ -830,7 +872,9 @@ export default function ReservationForm({
     // Tras cerrar, avanzar al primer paso pendiente (nunca hacia atrás).
     // goToStep aplica el candado del mínimo: si sigue corto, se queda en el
     // carrito con el aviso en vez de avanzar.
-    if (!step2Done) goToStep(2);
+    // Con el día ya elegido (p. ej. desde el lineup) se salta a la hora, salvo
+    // que algo del carrito no se entregue ese día: entonces, al paso del día con el aviso.
+    if (!step2Done || avisosFecha.length > 0) goToStep(2);
     else if (!step3Done) goToStep(3);
     else if (!step4Done) goToStep(4);
     else if (!step5Done) goToStep(5);
@@ -897,12 +941,16 @@ export default function ReservationForm({
       : { discountAmount: 0, discountedUnits: 0 };
   const offerDiscount = offerResult.discountAmount;
   // "Pide 1, llévate 2": línea informativa en el resumen (no cambia el total).
-  const giftCartLine = (() => {
+  // Black Friday: empanada de regalo al recoger en el local (línea gratis).
+  const regaloRecogida = regaloRecogidaAplica(
+    fields.deliveryMethod,
+    isDirecto ? todayMadrid() : fields.reservationDate
+  );
+  const giftCartLines = (() => {
     const fecha = isDirecto ? todayMadrid() : fields.reservationDate;
-    const p = cartProducts.find(
-      (p) => (cart[p.id] ?? 0) > 0 && offerGiftApplies(weekendOffer, p, fecha)
-    );
-    return p ? { name: p.name, qty: cart[p.id] ?? 0 } : null;
+    return cartProducts
+      .filter((p) => (cart[p.id] ?? 0) > 0 && offerGiftApplies(weekendOffer, p, fecha))
+      .map((p) => ({ name: p.name, qty: cart[p.id] ?? 0 }));
   })();
 
   // Descuento combinado (promo global + oferta finde), nunca mayor que el subtotal.
@@ -942,6 +990,19 @@ export default function ReservationForm({
 
   // Step completion flags
   const step1Done = cartProducts.length > 0;
+  // Productos del carrito que NO se entregan el día elegido (packs de Black
+  // Friday, Mar y Tierra del jueves…): se avisa al elegir el día, no al pagar.
+  const avisosFecha: string[] = fields.reservationDate
+    ? cartProducts
+        .filter((p) => (cart[p.id] ?? 0) > 0 && agotadoParaFecha(p.id, fields.reservationDate))
+        .map(
+          (p) =>
+            avisoEntrega(p.id, fields.reservationDate) ??
+            (p.id === "pack-dos-tigrillos"
+              ? "Para entregas del viernes 27 y del domingo 29 los Dos Tigrillos van con el pack de Black Friday al −30 % (20,30 €). Cámbialo por ese pack."
+              : `${p.name} no está disponible para ese día. Quítalo o elige otra fecha.`)
+        )
+    : [];
   const step2Done = !!fields.reservationDate;
   const step3Done = !!fields.reservationTime;
   const step4Done = !!(
@@ -1038,6 +1099,11 @@ export default function ReservationForm({
     }
     if (!fields.reservationDate) {
       setError("Elige el día de tu reserva.");
+      goToStep(2);
+      return;
+    }
+    if (avisosFecha.length > 0) {
+      setError(avisosFecha[0]);
       goToStep(2);
       return;
     }
@@ -1321,35 +1387,30 @@ export default function ReservationForm({
 
           {weekendOffer && (
             <div
-              className="mt-4 rounded-xl px-4 py-3 max-w-md"
+              className="mt-3 rounded-lg px-3 py-2 max-w-md"
               style={{
                 background:
-                  "linear-gradient(100deg, rgba(200,90,42,0.14), rgba(217,164,65,0.16))",
-                border: "1px solid rgba(200,90,42,0.28)",
+                  "linear-gradient(100deg, rgba(200,90,42,0.12), rgba(217,164,65,0.14))",
+                border: "1px solid rgba(200,90,42,0.25)",
               }}
             >
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="font-extrabold text-[2.2rem] leading-none text-white bg-[#c85a2a] rounded-lg px-3 py-1.5 shrink-0 tabular-nums">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-[1rem] leading-none text-white bg-[#c85a2a] rounded-md px-2 py-1 shrink-0 tabular-nums">
                   {offerBadgeLabel(weekendOffer)}
                 </span>
-                <span className="flex flex-col gap-1">
-                  <span className="font-bold text-[18px] leading-tight text-[#a8451f] tracking-tight">
-                    {weekendOffer.name}
-                  </span>
-                  <span className="self-start text-[10px] font-bold uppercase tracking-[0.15em] text-white bg-[#c85a2a] rounded-full px-2 py-0.5">
-                    {weekendOffer.badge}
-                  </span>
+                <span className="font-bold text-[13px] leading-tight text-[#a8451f]">
+                  {weekendOffer.productos ? weekendOffer.badge : weekendOffer.name}
                 </span>
               </div>
-              <p className="text-[13px] text-negro/70 leading-snug mt-2">
+              <p className="text-[12px] text-negro/70 leading-snug mt-1">
                 {weekendOffer.tagline}. {offerRuleText(weekendOffer)}
               </p>
-              {offerReservationText(weekendOffer) && (
-                <p className="text-[12px] font-semibold text-[#a8451f] leading-snug mt-1.5">
+              {!weekendOffer.productos && offerReservationText(weekendOffer) && (
+                <p className="text-[11px] font-semibold text-[#a8451f] leading-snug mt-1">
                   {offerReservationText(weekendOffer)}
                 </p>
               )}
-              <OfferCountdown offer={weekendOffer} className="mt-2.5" />
+              <OfferCountdown offer={weekendOffer} className="mt-1.5" />
             </div>
           )}
         </div>
@@ -1361,6 +1422,24 @@ export default function ReservationForm({
         {(!requireAccessCode || unlocked) && (
         <>
         <form onSubmit={handleSubmit} noValidate>
+          {avisoLineup && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="fixed left-1/2 -translate-x-1/2 top-[70px] z-[200] w-[min(92vw,420px)] rounded-xl px-4 py-3 text-[13px] font-semibold leading-snug shadow-[0_8px_30px_rgba(0,0,0,0.35)]"
+              style={{ background: "#111", color: "#f2ead8", border: "1.5px solid #e0b23a" }}
+            >
+              <span className="pr-4 block">{avisoLineup}</span>
+              <button
+                type="button"
+                onClick={() => setAvisoLineup(null)}
+                className="absolute top-1.5 right-2.5 text-[#e0b23a] text-base leading-none"
+                aria-label="Cerrar aviso"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
           {/* ── PASO 1: PRODUCTO ── */}
           <StepSection
@@ -1428,7 +1507,13 @@ export default function ReservationForm({
                   {(
                     [
                       { v: "delivery", t: "A domicilio", s: `Pedido mínimo ${defaultMinOrder()} €` },
-                      { v: "pickup", t: "Recoger en el local", s: "Sin mínimo · sin envío" },
+                      {
+                        v: "pickup",
+                        t: "Recoger en el local",
+                        s: regaloRecogidaVisible()
+                          ? "Sin mínimo · empanada de regalo"
+                          : "Sin mínimo · sin envío",
+                      },
                     ] as const
                   ).map((o) => (
                     <button
@@ -1515,7 +1600,7 @@ export default function ReservationForm({
                 if (p.soloNovedades) continue; // solo se pide desde Novedades
                 if (hiddenVariantIds.has(p.id)) continue; // variante → va como selector
                 if ((p.category ?? "").trim().toLowerCase() === "salsas") continue; // salsas → popup
-                const cat = normalizeCategory(p.category ?? "");
+                const cat = categoriaDe(p);
                 (grouped[cat] ??= []).push(p);
               }
               const activeGroups = CATEGORY_ORDER.filter((c) => (grouped[c]?.length ?? 0) > 0);
@@ -1904,13 +1989,21 @@ export default function ReservationForm({
             >
               {renderCalendar()}
 
+              {avisosFecha.length > 0 && (
+                <div className="mt-4 border-l-2 border-tierra/50 bg-tierra/5 pl-4 pr-3 py-2 space-y-1">
+                  {avisosFecha.map((a) => (
+                    <p key={a} className="text-tierra text-sm">{a}</p>
+                  ))}
+                </div>
+              )}
+
               <button
                 type="button"
-                disabled={!step2Done}
-                onClick={() => step2Done && goToStep(3)}
+                disabled={!step2Done || avisosFecha.length > 0}
+                onClick={() => step2Done && avisosFecha.length === 0 && goToStep(3)}
                 className={clsx(
                   "mt-5 w-full sticky bottom-3 z-10 shadow-[0_6px_24px_rgba(0,0,0,0.18)] text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
-                  step2Done
+                  step2Done && avisosFecha.length === 0
                     ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
                     : "bg-[#ddd3bd] text-negro/35 cursor-not-allowed"
                 )}
@@ -2548,14 +2641,20 @@ export default function ReservationForm({
                     <span>−{discountAmount.toFixed(2).replace(".", ",")} €</span>
                   </div>
                 )}
-                {giftCartLine && (
+                {regaloRecogida && (
                   <div className="flex justify-between text-[#c85a2a] font-semibold">
-                    <span>
-                      {weekendOffer!.name} · te llevas {giftCartLine.qty * 2} {giftCartLine.name}
-                    </span>
+                    <span>Regalo por recoger · 1 Empanada de Queso</span>
                     <span>gratis</span>
                   </div>
                 )}
+                {giftCartLines.map((g) => (
+                  <div key={g.name} className="flex justify-between text-[#c85a2a] font-semibold">
+                    <span>
+                      {weekendOffer!.name} · te llevas {g.qty * 2} {g.name}
+                    </span>
+                    <span>gratis</span>
+                  </div>
+                ))}
                 {weekendOffer && offerDiscount > 0 && (
                   <div className="flex justify-between text-[#c85a2a]">
                     <span>

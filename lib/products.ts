@@ -21,6 +21,45 @@ export interface Product {
   // azucarados irán al 0.21 cuando se añadan. Opcional: la carta real viene del
   // Sheet (sin columna de IVA), así que se resuelve con `vatRateOf` (default 10%).
   vatRate?: number;
+  // Precio rebajado SOLO para pedidos hechos entre `desde` y `hasta` (ambos
+  // inclusive, día natural de Madrid). Lo aplica `conPromo` en getPacks y en
+  // getProductById, así que la carta y el cobro de Stripe ven el mismo precio.
+  // Se apaga sola al pasar `hasta`.
+  promo?: { precio: number; desde: string; hasta: string; etiqueta: string };
+  // El producto SOLO se ve y se puede pedir en pedidos hechos entre `desde` y
+  // `hasta` (inclusive, día natural de Madrid). Fuera de la ventana no sale en
+  // la web y el checkout lo rechaza como no disponible.
+  ventana?: { desde: string; hasta: string; abreEn?: string };
+  // Días de ENTREGA en los que se puede reservar (inclusive). Fuera de ellos,
+  // `agotadoParaFecha` lo da por agotado: la carta lo marca y el checkout lo
+  // rechaza con un aviso que dice para qué días es.
+  entrega?: { fechas: string[]; texto: string };
+  // Extras en oferta (popup «Completa tu pedido»): van primero, con el color de
+  // oferta, esta etiqueta y el precio de antes tachado.
+  oferta?: { etiqueta: string; precioAntes: number };
+}
+
+/** ¿El producto está dentro de su ventana de venta hoy (Madrid)? Sin ventana, siempre. */
+export function enVentana(p: Product): boolean {
+  if (!p.ventana) return true;
+  if (p.ventana.abreEn && Date.now() < Date.parse(p.ventana.abreEn)) return false;
+  const hoy = todayMadrid();
+  return hoy >= p.ventana.desde && hoy <= p.ventana.hasta;
+}
+
+/** ¿La promo de precio del producto está vigente hoy (Madrid)? */
+export function promoVigente(p: Product): boolean {
+  if (!p.promo) return false;
+  const hoy = todayMadrid();
+  return hoy >= p.promo.desde && hoy <= p.promo.hasta;
+}
+
+/** El producto con su precio de promo si está vigente hoy; si no, tal cual.
+ *  Fuera de su ventana de venta sale como no disponible. */
+export function conPromo(p: Product): Product {
+  if (!enVentana(p)) return { ...p, available: false };
+  if (!promoVigente(p)) return p;
+  return { ...p, finalPrice: p.promo!.precio, depositAmount: p.promo!.precio };
 }
 
 // IVA que incluye el precio de un producto. Toda la comida actual va al 10 %;
@@ -144,12 +183,31 @@ export const PRODUCTS: Product[] = [
 // Stripe cobren exactamente el precio anunciado. No se muestran en la carta.
 export const PACKS: Product[] = [
   {
+    // Black Friday 2026 (Amos, 24-11): Dos Tigrillos −30 % (29 → 20,30 €) para
+    // ENTREGAS del viernes 27 y del domingo 29. Se abre hoy martes a las 20:00.
+    // Escandallo: 7,42 € → deja ~12,90 €.
+    id: "pack-dos-tigrillos-bf",
+    name: "Pack · Los Dos Tigrillos −30% (Black Friday)",
+    description:
+      "2× Tigrillo Mixto con un 30 % de descuento. Para entregas del viernes 27 y del domingo 29.",
+    finalPrice: 20.3,
+    depositAmount: 20.3,
+    ventana: { desde: "2026-11-24", hasta: "2026-11-29", abreEn: "2026-11-24T20:00:00+01:00" },
+    entrega: { fechas: ["2026-11-27", "2026-11-29"], texto: "del viernes 27 y del domingo 29" },
+    available: true,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
     id: "pack-dos-tigrillos",
     name: "Pack · Los Dos Tigrillos",
     description:
       "2× Tigrillo Mixto. Hecho en demiglass de carne, chicharrón, mix de quesos y sal prieta.",
     finalPrice: 29,
     depositAmount: 29,
+    // Black Friday 2026: para entregas del 27 al 29 este pack está bloqueado
+    // (AGOTADO_POR_FECHA) y se vende el de Black Friday a 27 €.
     available: true,
     allergens: ["Lácteos", "Maní"],
     category: "pack",
@@ -162,7 +220,74 @@ export const PACKS: Product[] = [
       "Bolón Mixto de la Casa + Ración de Patacón con salsa verde de queso y queso manaba.",
     finalPrice: 15,
     depositAmount: 15,
-    available: true,
+    // APAGADO 24-11-2026 (Amos): el pack que menos deja (8,82 €) y en caída.
+    // Lo sustituyen los packs con Maduro con Macambo de postre.
+    available: false,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    // 24-11-2026 (Amos): Canoa + el Maduro con Macambo de postre. Suelto 20 €.
+    // Escandallo: 2,63 + 3,00 € → deja ~11,50 €.
+    id: "pack-canoa-macambo",
+    name: "Pack · Canoa + Maduro con Macambo",
+    description:
+      "Canoa de Maduro y, de postre, Maduro con Macambo: maduro asado con mantequilla, queso, macambo tostado y menta.",
+    finalPrice: 17,
+    depositAmount: 17,
+    // APAGADO 24-11 (Amos): lo sustituye el pack Black Friday Dulce (con elección).
+    available: false,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    // Semana de Black Friday (Amos, 24-11): SOLO entregas del jueves 26. Corviche +
+    // Patacón de Rabo de Toro; sueltos 26 €. Escandallo: 2,85 + 2,30 € → deja ~17,85 €.
+    id: "pack-mar-y-tierra",
+    name: "Pack · Mar y Tierra",
+    description:
+      "Corviche de Pescado + Patacón de Rabo de Toro. Solo para entregas del jueves 26.",
+    finalPrice: 23,
+    depositAmount: 23,
+    // Se puede pedir desde ya; solo se ENTREGA el jueves 26.
+    ventana: { desde: "2026-11-24", hasta: "2026-11-26" },
+    entrega: { fechas: ["2026-11-26"], texto: "del jueves 26" },
+    // QUITADO 24-11 (Amos): lo sustituye el lineup de Black Friday.
+    available: false,
+    allergens: ["Pescado", "Maní", "Lácteos", "Apio", "Mostaza", "Sulfitos"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    // 24-11-2026 (Amos): Bolón con Maduro + Maduro con Macambo de postre.
+    // Suelto 18 €. Escandallo: 4,30 + 3,00 € → deja ~8,80 €.
+    id: "pack-bolon-macambo",
+    name: "Pack · Bolón con Maduro + Maduro con Macambo",
+    description:
+      "Bolón Mixto con Maduro y, de postre, Maduro con Macambo: maduro asado con mantequilla, queso, macambo tostado y menta.",
+    finalPrice: 15.9,
+    depositAmount: 15.9,
+    // APAGADO 24-11 (Amos): lo sustituye el pack Black Friday Dulce (con elección).
+    available: false,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
+    // 24-11-2026 (Amos): un solo pack con elección — Canoa de Maduro o Bolón
+    // Mixto con Maduro — y el Maduro con Macambo de postre. Fijo (no caduca).
+    // La elección va a las notas del pedido ("Pack Dulce: …", PRODUCT_CHOICES).
+    // Sueltos: 20 € (Canoa) / 18 € (Bolón). Deja ~11,30 € / ~9,60 €.
+    id: "pack-black-friday-dulce",
+    name: "Pack · Black Friday Dulce",
+    description:
+      "Elige Canoa de Maduro o Bolón Mixto con Maduro y, de postre, Maduro con Macambo: maduro asado con mantequilla, queso, macambo tostado y menta.",
+    finalPrice: 16.9,
+    depositAmount: 16.9,
+    // QUITADO 24-11 (Amos): de packs, solo los Dos Tigrillos (y su −30 % en su día).
+    available: false,
     allergens: ["Lácteos", "Maní"],
     category: "pack",
     isPack: true,
@@ -257,6 +382,11 @@ export const PRODUCT_CHOICES: {
       "Agua",
     ],
   },
+  {
+    productId: "pack-black-friday-dulce",
+    label: "Pack Dulce",
+    options: ["Canoa de Maduro", "Bolón Mixto con Maduro"],
+  },
 ];
 
 // Fotos de los platos (en /public/productos). Se usan si el producto no trae
@@ -295,6 +425,27 @@ export function imageForProduct(p: { id: string; image?: string }): string | und
 // Se ofrecen en el popup de extras (no como card en la carta). Se validan y
 // cobran como productos normales (categoría "Salsas").
 export const EXTRA_SALSAS: Product[] = [
+  {
+    // 24-11-2026 (Amos): las tres salsas de la casa juntas a precio cerrado,
+    // para cualquier plato de la carta (sale el primero en el popup de extras).
+    // Sueltas 6 €. Escandallo: 0,17 + 0,45 + 0,84 € → deja ~3 €.
+    id: "trio-salsas",
+    name: "Trío de salsas",
+    description: "Ají de la casa, salsa verde de queso y nuestra salsa de maní secreta. Las tres por 4,50 €.",
+    finalPrice: 4.5,
+    depositAmount: 4.5,
+    // Semana de Black Friday (Amos, 24-11): entregas de miércoles 25 a domingo 29.
+    // Se ve desde ya (lo antes que se entrega es mañana miércoles).
+    ventana: { desde: "2026-11-24", hasta: "2026-11-29", abreEn: "2026-11-24T20:00:00+01:00" },
+    entrega: {
+      fechas: ["2026-11-25", "2026-11-26", "2026-11-27", "2026-11-28", "2026-11-29"],
+      texto: "del miércoles 25 al domingo 29",
+    },
+    oferta: { etiqueta: "Oferta · ahorras 1,50 €", precioAntes: 6 },
+    available: true,
+    allergens: ["Lácteos", "Cacahuetes", "Huevos", "Sésamo"],
+    category: "Salsas",
+  },
   {
     id: "salsa-aji-extra",
     name: "Salsa de ají extra",
@@ -353,7 +504,7 @@ export const SALSAS_DESTACADAS: { id: string; baseId: string; etiqueta: string }
 ];
 
 export function getSalsas(): Product[] {
-  return EXTRA_SALSAS.filter((s) => s.available);
+  return EXTRA_SALSAS.filter((s) => s.available && enVentana(s));
 }
 
 // ─── BEBIDAS DE LA CARTA (definidas en código) ─────────────────────────────
@@ -461,6 +612,7 @@ export const EXTRA_PLATOS: Product[] = [
     // Receta: queso + mantequilla → lácteos. El macambo es semilla de la
     // familia del cacao, no fruto seco.
     allergens: ["Lácteos"],
+    // 24-11-2026 (Amos): va en la sección de Maduro (no en Postres ni Acompañantes).
     category: "maduro",
     image: "/productos/maduro-con-macambo.jpg",
   },
@@ -480,7 +632,20 @@ export type NormalizedCategory =
   | "Maduro"
   | "Pesca"
   | "Otros"
+  | "Acompanantes"
   | "Bebidas";
+
+// Platos del Sheet que van en otra sección que la de su categoría (sin tocar
+// la hoja). 24-11-2026 (Amos): la Ración de Patacón pasa a Acompañantes.
+const CATEGORIA_POR_ID: Record<string, NormalizedCategory> = {
+  "ración-patacon": "Acompanantes",
+  "racion-patacon": "Acompanantes",
+};
+/** Sección de la carta de un producto: la de su id si está forzada; si no, la de su categoría. */
+export function categoriaDe(p: { id: string; category?: string }): NormalizedCategory {
+  const forzada = Object.entries(CATEGORIA_POR_ID).find(([id]) => mismoId(id, p.id));
+  return forzada ? forzada[1] : normalizeCategory(p.category ?? "");
+}
 
 export function normalizeCategory(raw: string): NormalizedCategory {
   const lower = (raw ?? "").trim().toLowerCase();
@@ -492,6 +657,9 @@ export function normalizeCategory(raw: string): NormalizedCategory {
   if (lower.startsWith("menu") || lower.startsWith("menú")) return "Menu";
   // "pesca", "pesca del día", "pescado"… → sección Pesca del Día (sep 2026)
   if (lower.startsWith("pesca")) return "Pesca";
+  // "acompañante(s)" → sección Acompañantes (24-11-2026, Amos): Ración de
+  // Patacón y Maduro con Macambo. "postre" también cae aquí (ya no hay Postres).
+  if (lower.startsWith("acompa") || lower.startsWith("postre")) return "Acompanantes";
   if (
     lower === "bebida" ||
     lower === "bebidas" ||
@@ -558,8 +726,12 @@ const PLATOS_CON_BOLON = [
   "bolon-mixto-con-maduro",
   "Ahora -comen",
   "pack-bolon-patacon",
+  "pack-bolon-macambo",
 ];
 export const AGOTADO_POR_FECHA: Record<string, string[]> = {
+  // Black Friday: esos días los Dos Tigrillos van con el pack al −30 %.
+  "2026-11-27": ["pack-dos-tigrillos"],
+  "2026-11-29": ["pack-dos-tigrillos"],
   // Sin bolón (Amos): bloqueado el miércoles 21 y el jueves 22. Vuelve el viernes.
   "2026-10-21": PLATOS_CON_BOLON,
   "2026-10-22": PLATOS_CON_BOLON,
@@ -567,8 +739,29 @@ export const AGOTADO_POR_FECHA: Record<string, string[]> = {
 
 /** ¿Este producto está sin stock para esa fecha de entrega concreta? */
 export function agotadoParaFecha(id: string, fecha: string): boolean {
+  if (fueraDeEntrega(id, fecha)) return true;
   const lista = AGOTADO_POR_FECHA[fecha];
   return !!lista && lista.some((x) => mismoId(x, id));
+}
+
+/** Producto con días de entrega propios (`entrega`) y fecha fuera de ellos. */
+function fueraDeEntrega(id: string, fecha: string): boolean {
+  const p = productoEstatico(id);
+  if (!p?.entrega || !fecha) return false;
+  return !p.entrega.fechas.includes(fecha.slice(0, 10));
+}
+
+/** Aviso para el cliente si el producto no se entrega ese día por su `entrega`. */
+export function avisoEntrega(id: string, fecha: string): string | null {
+  const p = productoEstatico(id);
+  if (!p?.entrega || !fueraDeEntrega(id, fecha)) return null;
+  return `${p.name.replace(/^Pack · /, "")} es solo para entregas ${p.entrega.texto}. Quítalo o cambia el día de entrega.`;
+}
+
+function productoEstatico(id: string): Product | undefined {
+  return [...PRODUCTS, ...PACKS, ...EXTRA_SALSAS, ...EXTRA_BEBIDAS, ...EXTRA_PLATOS].find((p) =>
+    mismoId(p.id, id)
+  );
 }
 
 /**
@@ -665,7 +858,7 @@ export function withExtraProducts(products: Product[]): Product[] {
 }
 
 export function getPacks(): Product[] {
-  return PACKS.filter((p) => p.available);
+  return PACKS.filter((p) => p.available && enVentana(p)).map(conPromo);
 }
 
 // ─── Novedades del escaparate ──────────────────────────────────────────────
@@ -700,13 +893,14 @@ export function getDestacados(products: Product[]): Product[] {
 }
 
 export function getProductById(id: string): Product | undefined {
-  return [
+  const prod = [
     ...PRODUCTS,
     ...PACKS,
     ...EXTRA_SALSAS,
     ...EXTRA_BEBIDAS,
     ...EXTRA_PLATOS,
   ].find((p) => p.id === id);
+  return prod ? conPromo(prod) : undefined;
 }
 
 export function getAvailableProducts(): Product[] {

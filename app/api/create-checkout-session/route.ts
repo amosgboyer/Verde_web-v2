@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { getProductById, estaAgotadoTemporal, agotadoParaFecha, DEFAULT_VAT_RATE } from "@/lib/products";
+import { getProductById, estaAgotadoTemporal, agotadoParaFecha, avisoEntrega, DEFAULT_VAT_RATE } from "@/lib/products";
 import { vatBreakdown } from "@/lib/vat";
 import { getProductsRows, getSettings, getOrdersRows } from "@/lib/google-sheets";
 import { comprobarStockCarrito } from "@/lib/stock";
@@ -13,6 +13,9 @@ import {
   computeOfferDiscount,
   offerBadgeLabel,
   offerGiftApplies,
+  unidadPluralDe,
+  regaloRecogidaAplica,
+  REGALO_RECOGIDA,
   giftItemName,
 } from "@/lib/offers";
 import {
@@ -189,6 +192,13 @@ export async function POST(req: NextRequest) {
       }
       // Sin stock para ESA fecha de entrega (p. ej. bolón solo para mañana).
       if (agotadoParaFecha(item.productId, parsed.reservationDate)) {
+        const aviso = avisoEntrega(item.productId, parsed.reservationDate);
+        if (aviso) throw new ErrorCliente(aviso);
+        if (item.productId === "pack-dos-tigrillos") {
+          throw new ErrorCliente(
+            "Para entregas del viernes 27 y del domingo 29 los Dos Tigrillos van con el pack de Black Friday al −30 % (20,30 €). Cámbialo por ese pack."
+          );
+        }
         throw new ErrorCliente(
           "Uno de los platos no está disponible para el día que has elegido. Quítalo o elige otra fecha."
         );
@@ -347,10 +357,11 @@ export async function POST(req: NextRequest) {
     if (discount.isActive) {
       discountNotes.push(`${discount.promoName} −${discount.promoValue}%`);
     }
-    const giftLine = validatedItems.find(({ product }) =>
+    const giftLines = validatedItems.filter(({ product }) =>
       offerGiftApplies(weekendOffer, product, parsed.reservationDate)
     );
-    if (giftLine && weekendOffer) {
+    for (const giftLine of giftLines) {
+      if (!weekendOffer) break;
       discountNotes.push(
         `${weekendOffer.name}: te llevas ${giftLine.quantity * 2} ${giftLine.product.name}`
       );
@@ -360,6 +371,9 @@ export async function POST(req: NextRequest) {
         `${weekendOffer.name}: ${offer.discountedUnits}× ${offerBadgeLabel(weekendOffer)}`
       );
     }
+    // Black Friday: empanada de regalo por recoger en el local → línea a 0 €.
+    const conRegaloRecogida = regaloRecogidaAplica(parsed.deliveryMethod, parsed.reservationDate);
+    if (conRegaloRecogida) discountNotes.push(`Regalo: ${REGALO_RECOGIDA.nombre}`);
     const lineItemDescription =
       productSummary +
       (discountNotes.length > 0 ? ` — ${discountNotes.join(" · ")}` : "") +
@@ -382,19 +396,22 @@ export async function POST(req: NextRequest) {
       },
     ];
 
-    const itemsMeta = JSON.stringify(
-      validatedItems.map(({ product, quantity }) => ({
+    const itemsMeta = JSON.stringify([
+      ...validatedItems.map(({ product, quantity }) => ({
         id: product.id,
         // "Pide 1, llévate 2": el nombre lleva cuántas se entregan, para que
         // cocina (Sheet, email interno) y cliente no tengan que adivinarlo.
         name: offerGiftApplies(weekendOffer, product, parsed.reservationDate)
-          ? giftItemName(product.name, quantity)
+          ? giftItemName(product.name, quantity, unidadPluralDe(weekendOffer, product))
           : product.name,
         qty: quantity,
         price: product.finalPrice,
         deposit: product.depositAmount,
-      }))
-    );
+      })),
+      ...(conRegaloRecogida
+        ? [{ id: REGALO_RECOGIDA.id, name: REGALO_RECOGIDA.nombre, qty: 1, price: 0, deposit: 0 }]
+        : []),
+    ]);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -447,7 +464,7 @@ export async function POST(req: NextRequest) {
         subtotalBeforeDiscount: String(productsSubtotal),
         totalAfterDiscount: String(subtotalAfterDiscount),
         // Oferta de fin de semana (nivel ítem) — desglose propio
-        offerApplied: String(offer.discountAmount > 0 || !!giftLine),
+        offerApplied: String(offer.discountAmount > 0 || giftLines.length > 0),
         offerName: weekendOffer?.name ?? "",
         offerDiscount: String(offer.discountAmount),
         offerUnits: String(offer.discountedUnits),
