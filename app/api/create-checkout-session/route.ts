@@ -388,7 +388,7 @@ export async function POST(req: NextRequest) {
         // "Pide 1, llévate 2": el nombre lleva cuántas se entregan, para que
         // cocina (Sheet, email interno) y cliente no tengan que adivinarlo.
         name: offerGiftApplies(weekendOffer, product, parsed.reservationDate)
-          ? giftItemName(product.name, quantity)
+          ? giftItemName(product.name, quantity, weekendOffer?.unidadPlural)
           : product.name,
         qty: quantity,
         price: product.finalPrice,

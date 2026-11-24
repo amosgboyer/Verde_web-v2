@@ -25,6 +25,9 @@ export interface WeekendOffer {
   // baja (no hay descuento en euros). Sin impares: pides 3, te llevas 6.
   // El nombre del ítem en el pedido lleva "(2×1 · N empanadas)" para cocina.
   regalo?: boolean;
+  // Cómo se llaman las unidades en el nombre del ítem para cocina
+  // ("6 empanadas", "4 chocletizas"). Por defecto, "empanadas".
+  unidadPlural?: string;
 }
 
 // Sweet Weekend — la 2ª Canoa de Maduro al 50%. Solo este fin de semana.
@@ -83,18 +86,22 @@ export const EMPANADA_2X1: WeekendOffer = {
   reservationEndDate: "2026-11-15",
 };
 
-// Black Friday 2026 (Amos, 24-11) — la 2ª Chocletiza al 50 %. Se ve y vale
-// para pedidos hechos del viernes 27 al domingo 29. Se apaga sola el lunes 30.
+// Black Friday 2026 (Amos, 24-11) — 2×1 en Chocletiza, igual que el de la
+// empanada: pide 1 y te llevas 2, sin bajar el precio. Se ve y vale para
+// pedidos hechos del viernes 27 al domingo 29. Se apaga sola el lunes 30.
+// Escandallo: 2 chocletizas cuestan 5,98 € → por 9,90 € deja ~3,90 €.
 export const CHOCLETIZA_BF: WeekendOffer = {
   id: "chocletiza-black-friday",
-  name: "Black Friday · 2ª Chocletiza al 50%",
-  tagline: "La 2ª Chocletiza, a mitad de precio",
+  name: "Black Friday · 2×1 en Chocletiza",
+  tagline: "Pide 1 Chocletiza y llévate 2",
   badge: "Black Friday",
+  regalo: true,
+  unidadPlural: "chocletizas",
   productId: "la-chocletiza",
   productName: "La Chocletiza",
   productNameMatch: "la chocletiza",
   everyNth: 2,
-  percentOff: 50,
+  percentOff: 100,
   startDate: "2026-11-27", // viernes
   endDate: "2026-11-29", // domingo
 };
@@ -255,8 +262,12 @@ export function offerGiftApplies(
 
 // Nombre del ítem en el pedido (Sheet, emails, Stripe) cuando va doble.
 // Ej.: "Empanada de Queso (2×1 · 6 empanadas)" con cantidad 3.
-export function giftItemName(name: string, quantity: number): string {
-  return `${name} (2×1 · ${quantity * 2} empanadas)`;
+export function giftItemName(
+  name: string,
+  quantity: number,
+  unidadPlural = "empanadas"
+): string {
+  return `${name} (2×1 · ${quantity * 2} ${unidadPlural})`;
 }
 
 // ─── Fin de la oferta (cuenta atrás) ───────────────────────────────────────

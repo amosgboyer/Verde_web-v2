@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getPacks, getProductById, getSalsas } from "./products";
-import { getActiveWeekendOffer, computeOfferDiscount } from "./offers";
+import {
+  getActiveWeekendOffer,
+  computeOfferDiscount,
+  offerGiftApplies,
+  giftItemName,
+} from "./offers";
 
 // 12:00 en Madrid del día indicado (UTC+1 en noviembre).
 const enMadrid = (dia: string) => vi.setSystemTime(new Date(`${dia}T11:00:00Z`));
@@ -22,7 +27,7 @@ describe("Black Friday 2026", () => {
     }
   });
 
-  it("2ª Chocletiza al 50 % activa solo del 27 al 29", () => {
+  it("2×1 en Chocletiza (pide 1, llévate 2) activo solo del 27 al 29", () => {
     vi.useFakeTimers();
     enMadrid("2026-11-26");
     expect(getActiveWeekendOffer()?.id).not.toBe("chocletiza-black-friday");
@@ -34,7 +39,14 @@ describe("Black Friday 2026", () => {
       [{ productId: "la-chocletiza", productName: "La Chocletiza", quantity: 3, unitPrice: 9.9 }],
       "2026-11-29"
     );
-    expect(d).toEqual({ discountAmount: 4.95, discountedUnits: 1 });
+    // El precio no baja: el regalo va en unidades, y cocina lo ve en el nombre.
+    expect(d).toEqual({ discountAmount: 0, discountedUnits: 0 });
+    expect(offerGiftApplies(oferta, { id: "la-chocletiza", name: "La Chocletiza" }, "2026-11-29")).toBe(true);
+    expect(giftItemName("La Chocletiza", 2, oferta!.unidadPlural)).toBe(
+      "La Chocletiza (2×1 · 4 chocletizas)"
+    );
+    // La empanada sigue diciendo "empanadas".
+    expect(giftItemName("Empanada de Queso", 3)).toBe("Empanada de Queso (2×1 · 6 empanadas)");
     enMadrid("2026-11-30");
     expect(getActiveWeekendOffer()?.id).not.toBe("chocletiza-black-friday");
   });
