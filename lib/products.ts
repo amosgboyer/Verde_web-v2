@@ -675,7 +675,9 @@ export function getPacks(): Product[] {
 // 24-11-2026 (Amos): se quita la zona de Novedades. Los platos siguen en su
 // sección de la carta. Antes: ahora-comen-todos-rabo, empanada-de-queso,
 // la-chocletiza, ceviche-jipijapa.
-export const DESTACADOS_IDS: string[] = [];
+export const DESTACADOS_IDS: string[] = [
+  "maduro-con-macambo", // 24-11-2026 (Amos): novedad
+];
 
 // Platos que en la CARTA se resaltan con el dorado del menú (borde + brillo)
 // para llamar la atención. Añadir/quitar ids aquí.
