@@ -164,7 +164,11 @@ export default function DrinkUpsellModal({
 
   // El precio de las salsas sale del producto real (Sheet/código), no de un
   // texto fijo: así una subida de carta no deja este copy desactualizado.
-  const salsaPrecio = salsas[0]?.finalPrice;
+  // Precio de la salsa SUELTA (la más barata): el trío (4,50 €) va primero en
+  // la lista y no puede ser el que se anuncie como "salsas a X €".
+  const salsaPrecio = salsas.length
+    ? Math.min(...salsas.map((x) => x.finalPrice))
+    : undefined;
   const salsaPrecioTxt = salsaPrecio
     ? ` a ${Number.isInteger(salsaPrecio) ? salsaPrecio : salsaPrecio.toFixed(2).replace(".", ",")} €`
     : "";

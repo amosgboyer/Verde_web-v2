@@ -58,7 +58,31 @@ describe("Black Friday 2026", () => {
     expect(getProductById("pack-bolon-macambo")?.finalPrice).toBe(15.9);
   });
 
-  it("trío de salsas a 4,50 €, el primero del popup de extras", () => {
+  it("trío de salsas a 4,50 €, solo del miércoles 25 al domingo 29", () => {
+    vi.useFakeTimers();
+    enMadrid("2026-11-24");
+    expect(getSalsas().some((p) => p.id === "trio-salsas")).toBe(false);
+    expect(getProductById("trio-salsas")?.available).toBe(false);
+    enMadrid("2026-11-25");
     expect(getSalsas()[0]).toMatchObject({ id: "trio-salsas", finalPrice: 4.5 });
+    expect(getProductById("trio-salsas")?.available).toBe(true);
+    enMadrid("2026-11-29");
+    expect(getSalsas()[0]?.id).toBe("trio-salsas");
+    enMadrid("2026-11-30");
+    expect(getProductById("trio-salsas")?.available).toBe(false);
+  });
+
+  it("Mar y Tierra a 23 € solo el jueves 26", () => {
+    vi.useFakeTimers();
+    for (const [dia, sale] of [
+      ["2026-11-25", false],
+      ["2026-11-26", true],
+      ["2026-11-27", false],
+    ] as const) {
+      enMadrid(dia);
+      expect(getPacks().some((p) => p.id === "pack-mar-y-tierra"), dia).toBe(sale);
+      expect(getProductById("pack-mar-y-tierra")?.available, dia).toBe(sale);
+    }
+    expect(getProductById("pack-mar-y-tierra")?.finalPrice).toBe(23);
   });
 });

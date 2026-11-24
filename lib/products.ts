@@ -26,6 +26,17 @@ export interface Product {
   // getProductById, así que la carta y el cobro de Stripe ven el mismo precio.
   // Se apaga sola al pasar `hasta`.
   promo?: { precio: number; desde: string; hasta: string; etiqueta: string };
+  // El producto SOLO se ve y se puede pedir en pedidos hechos entre `desde` y
+  // `hasta` (inclusive, día natural de Madrid). Fuera de la ventana no sale en
+  // la web y el checkout lo rechaza como no disponible.
+  ventana?: { desde: string; hasta: string };
+}
+
+/** ¿El producto está dentro de su ventana de venta hoy (Madrid)? Sin ventana, siempre. */
+export function enVentana(p: Product): boolean {
+  if (!p.ventana) return true;
+  const hoy = todayMadrid();
+  return hoy >= p.ventana.desde && hoy <= p.ventana.hasta;
 }
 
 /** ¿La promo de precio del producto está vigente hoy (Madrid)? */
@@ -35,8 +46,10 @@ export function promoVigente(p: Product): boolean {
   return hoy >= p.promo.desde && hoy <= p.promo.hasta;
 }
 
-/** El producto con su precio de promo si está vigente hoy; si no, tal cual. */
+/** El producto con su precio de promo si está vigente hoy; si no, tal cual.
+ *  Fuera de su ventana de venta sale como no disponible. */
 export function conPromo(p: Product): Product {
+  if (!enVentana(p)) return { ...p, available: false };
   if (!promoVigente(p)) return p;
   return { ...p, finalPrice: p.promo!.precio, depositAmount: p.promo!.precio };
 }
@@ -204,6 +217,21 @@ export const PACKS: Product[] = [
     isPack: true,
   },
   {
+    // Semana de Black Friday (Amos, 24-11): SOLO el jueves 26. Corviche +
+    // Patacón de Rabo de Toro; sueltos 26 €. Escandallo: 2,85 + 2,30 € → deja ~17,85 €.
+    id: "pack-mar-y-tierra",
+    name: "Pack · Mar y Tierra",
+    description:
+      "Corviche de Pescado + Patacón de Rabo de Toro. Lo mejor del mar y de la tierra, solo este jueves.",
+    finalPrice: 23,
+    depositAmount: 23,
+    ventana: { desde: "2026-11-26", hasta: "2026-11-26" },
+    available: true,
+    allergens: ["Pescado", "Maní", "Lácteos", "Apio", "Mostaza", "Sulfitos"],
+    category: "pack",
+    isPack: true,
+  },
+  {
     // 24-11-2026 (Amos): Bolón con Maduro + Maduro con Macambo de postre.
     // Suelto 18 €. Escandallo: 4,30 + 3,00 € → deja ~8,80 €.
     id: "pack-bolon-macambo",
@@ -354,6 +382,8 @@ export const EXTRA_SALSAS: Product[] = [
     description: "Ají de la casa, salsa verde de queso y nuestra salsa de maní secreta. Las tres por 4,50 €.",
     finalPrice: 4.5,
     depositAmount: 4.5,
+    // Semana de Black Friday (Amos, 24-11): de miércoles 25 a domingo 29.
+    ventana: { desde: "2026-11-25", hasta: "2026-11-29" },
     available: true,
     allergens: ["Lácteos", "Cacahuetes", "Huevos", "Sésamo"],
     category: "Salsas",
@@ -416,7 +446,7 @@ export const SALSAS_DESTACADAS: { id: string; baseId: string; etiqueta: string }
 ];
 
 export function getSalsas(): Product[] {
-  return EXTRA_SALSAS.filter((s) => s.available);
+  return EXTRA_SALSAS.filter((s) => s.available && enVentana(s));
 }
 
 // ─── BEBIDAS DE LA CARTA (definidas en código) ─────────────────────────────
@@ -733,7 +763,7 @@ export function withExtraProducts(products: Product[]): Product[] {
 }
 
 export function getPacks(): Product[] {
-  return PACKS.filter((p) => p.available).map(conPromo);
+  return PACKS.filter((p) => p.available && enVentana(p)).map(conPromo);
 }
 
 // ─── Novedades del escaparate ──────────────────────────────────────────────

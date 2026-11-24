@@ -27,6 +27,12 @@ const PRESENTACION: Record<
     ahorro: "ahorras 3€",
     ribbon: "Nuevo",
   },
+  "pack-mar-y-tierra": {
+    titulo: "Mar y Tierra",
+    ahorro: "ahorras 3€",
+    featured: true,
+    ribbon: "Solo jueves",
+  },
   "pack-bolon-macambo": {
     titulo: "Bolón con Maduro + Macambo",
     ahorro: "ahorras 2,10€",
