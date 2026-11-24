@@ -902,12 +902,11 @@ export default function ReservationForm({
       : { discountAmount: 0, discountedUnits: 0 };
   const offerDiscount = offerResult.discountAmount;
   // "Pide 1, llévate 2": línea informativa en el resumen (no cambia el total).
-  const giftCartLine = (() => {
+  const giftCartLines = (() => {
     const fecha = isDirecto ? todayMadrid() : fields.reservationDate;
-    const p = cartProducts.find(
-      (p) => (cart[p.id] ?? 0) > 0 && offerGiftApplies(weekendOffer, p, fecha)
-    );
-    return p ? { name: p.name, qty: cart[p.id] ?? 0 } : null;
+    return cartProducts
+      .filter((p) => (cart[p.id] ?? 0) > 0 && offerGiftApplies(weekendOffer, p, fecha))
+      .map((p) => ({ name: p.name, qty: cart[p.id] ?? 0 }));
   })();
 
   // Descuento combinado (promo global + oferta finde), nunca mayor que el subtotal.
@@ -956,7 +955,7 @@ export default function ReservationForm({
           (p) =>
             avisoEntrega(p.id, fields.reservationDate) ??
             (p.id === "pack-dos-tigrillos"
-              ? "Para entregas del viernes 27 al domingo 29 los Dos Tigrillos van con el pack de Black Friday a 27 €. Cámbialo por ese pack."
+              ? "Para entregas del viernes 27 y del domingo 29 los Dos Tigrillos van con el pack de Black Friday al −30 % (20,30 €). Cámbialo por ese pack."
               : `${p.name} no está disponible para ese día. Quítalo o elige otra fecha.`)
         )
     : [];
@@ -2579,14 +2578,14 @@ export default function ReservationForm({
                     <span>−{discountAmount.toFixed(2).replace(".", ",")} €</span>
                   </div>
                 )}
-                {giftCartLine && (
-                  <div className="flex justify-between text-[#c85a2a] font-semibold">
+                {giftCartLines.map((g) => (
+                  <div key={g.name} className="flex justify-between text-[#c85a2a] font-semibold">
                     <span>
-                      {weekendOffer!.name} · te llevas {giftCartLine.qty * 2} {giftCartLine.name}
+                      {weekendOffer!.name} · te llevas {g.qty * 2} {g.name}
                     </span>
                     <span>gratis</span>
                   </div>
-                )}
+                ))}
                 {weekendOffer && offerDiscount > 0 && (
                   <div className="flex justify-between text-[#c85a2a]">
                     <span>

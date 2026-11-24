@@ -13,6 +13,7 @@ import {
   computeOfferDiscount,
   offerBadgeLabel,
   offerGiftApplies,
+  unidadPluralDe,
   giftItemName,
 } from "@/lib/offers";
 import {
@@ -193,7 +194,7 @@ export async function POST(req: NextRequest) {
         if (aviso) throw new ErrorCliente(aviso);
         if (item.productId === "pack-dos-tigrillos") {
           throw new ErrorCliente(
-            "Para entregas del viernes 27 al domingo 29 los Dos Tigrillos van con el pack de Black Friday a 27 €. Cámbialo por ese pack."
+            "Para entregas del viernes 27 y del domingo 29 los Dos Tigrillos van con el pack de Black Friday al −30 % (20,30 €). Cámbialo por ese pack."
           );
         }
         throw new ErrorCliente(
@@ -354,10 +355,11 @@ export async function POST(req: NextRequest) {
     if (discount.isActive) {
       discountNotes.push(`${discount.promoName} −${discount.promoValue}%`);
     }
-    const giftLine = validatedItems.find(({ product }) =>
+    const giftLines = validatedItems.filter(({ product }) =>
       offerGiftApplies(weekendOffer, product, parsed.reservationDate)
     );
-    if (giftLine && weekendOffer) {
+    for (const giftLine of giftLines) {
+      if (!weekendOffer) break;
       discountNotes.push(
         `${weekendOffer.name}: te llevas ${giftLine.quantity * 2} ${giftLine.product.name}`
       );
@@ -395,7 +397,7 @@ export async function POST(req: NextRequest) {
         // "Pide 1, llévate 2": el nombre lleva cuántas se entregan, para que
         // cocina (Sheet, email interno) y cliente no tengan que adivinarlo.
         name: offerGiftApplies(weekendOffer, product, parsed.reservationDate)
-          ? giftItemName(product.name, quantity, weekendOffer?.unidadPlural)
+          ? giftItemName(product.name, quantity, unidadPluralDe(weekendOffer, product))
           : product.name,
         qty: quantity,
         price: product.finalPrice,
@@ -454,7 +456,7 @@ export async function POST(req: NextRequest) {
         subtotalBeforeDiscount: String(productsSubtotal),
         totalAfterDiscount: String(subtotalAfterDiscount),
         // Oferta de fin de semana (nivel ítem) — desglose propio
-        offerApplied: String(offer.discountAmount > 0 || !!giftLine),
+        offerApplied: String(offer.discountAmount > 0 || giftLines.length > 0),
         offerName: weekendOffer?.name ?? "",
         offerDiscount: String(offer.discountAmount),
         offerUnits: String(offer.discountedUnits),

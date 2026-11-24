@@ -29,11 +29,11 @@ export interface Product {
   // El producto SOLO se ve y se puede pedir en pedidos hechos entre `desde` y
   // `hasta` (inclusive, día natural de Madrid). Fuera de la ventana no sale en
   // la web y el checkout lo rechaza como no disponible.
-  ventana?: { desde: string; hasta: string };
+  ventana?: { desde: string; hasta: string; abreEn?: string };
   // Días de ENTREGA en los que se puede reservar (inclusive). Fuera de ellos,
   // `agotadoParaFecha` lo da por agotado: la carta lo marca y el checkout lo
   // rechaza con un aviso que dice para qué días es.
-  entrega?: { desde: string; hasta: string; texto: string };
+  entrega?: { fechas: string[]; texto: string };
   // Extras en oferta (popup «Completa tu pedido»): van primero, con el color de
   // oferta, esta etiqueta y el precio de antes tachado.
   oferta?: { etiqueta: string; precioAntes: number };
@@ -42,6 +42,7 @@ export interface Product {
 /** ¿El producto está dentro de su ventana de venta hoy (Madrid)? Sin ventana, siempre. */
 export function enVentana(p: Product): boolean {
   if (!p.ventana) return true;
+  if (p.ventana.abreEn && Date.now() < Date.parse(p.ventana.abreEn)) return false;
   const hoy = todayMadrid();
   return hoy >= p.ventana.desde && hoy <= p.ventana.hasta;
 }
@@ -182,16 +183,17 @@ export const PRODUCTS: Product[] = [
 // Stripe cobren exactamente el precio anunciado. No se muestran en la carta.
 export const PACKS: Product[] = [
   {
-    // Black Friday 2026 (Amos, 24-11): 2 Tigrillos a 27 € (normal 29 €) para
-    // ENTREGAS del viernes 27 al domingo 29. Se puede pedir desde el jueves 26.
+    // Black Friday 2026 (Amos, 24-11): Dos Tigrillos −30 % (29 → 20,30 €) para
+    // ENTREGAS del viernes 27 y del domingo 29. Se abre hoy martes a las 20:00.
+    // Escandallo: 7,42 € → deja ~12,90 €.
     id: "pack-dos-tigrillos-bf",
-    name: "Pack · Los Dos Tigrillos (Black Friday)",
+    name: "Pack · Los Dos Tigrillos −30% (Black Friday)",
     description:
-      "2× Tigrillo Mixto a precio de Black Friday. Para entregas del viernes 27 al domingo 29.",
-    finalPrice: 27,
-    depositAmount: 27,
-    ventana: { desde: "2026-11-26", hasta: "2026-11-29" },
-    entrega: { desde: "2026-11-27", hasta: "2026-11-29", texto: "del viernes 27 al domingo 29" },
+      "2× Tigrillo Mixto con un 30 % de descuento. Para entregas del viernes 27 y del domingo 29.",
+    finalPrice: 20.3,
+    depositAmount: 20.3,
+    ventana: { desde: "2026-11-24", hasta: "2026-11-29", abreEn: "2026-11-24T20:00:00+01:00" },
+    entrega: { fechas: ["2026-11-27", "2026-11-29"], texto: "del viernes 27 y del domingo 29" },
     available: true,
     allergens: ["Lácteos", "Maní"],
     category: "pack",
@@ -251,8 +253,9 @@ export const PACKS: Product[] = [
     depositAmount: 23,
     // Se puede pedir desde ya; solo se ENTREGA el jueves 26.
     ventana: { desde: "2026-11-24", hasta: "2026-11-26" },
-    entrega: { desde: "2026-11-26", hasta: "2026-11-26", texto: "del jueves 26" },
-    available: true,
+    entrega: { fechas: ["2026-11-26"], texto: "del jueves 26" },
+    // QUITADO 24-11 (Amos): lo sustituye el lineup de Black Friday.
+    available: false,
     allergens: ["Pescado", "Maní", "Lácteos", "Apio", "Mostaza", "Sulfitos"],
     category: "pack",
     isPack: true,
@@ -432,8 +435,11 @@ export const EXTRA_SALSAS: Product[] = [
     depositAmount: 4.5,
     // Semana de Black Friday (Amos, 24-11): entregas de miércoles 25 a domingo 29.
     // Se ve desde ya (lo antes que se entrega es mañana miércoles).
-    ventana: { desde: "2026-11-24", hasta: "2026-11-29" },
-    entrega: { desde: "2026-11-25", hasta: "2026-11-29", texto: "del miércoles 25 al domingo 29" },
+    ventana: { desde: "2026-11-24", hasta: "2026-11-29", abreEn: "2026-11-24T20:00:00+01:00" },
+    entrega: {
+      fechas: ["2026-11-25", "2026-11-26", "2026-11-27", "2026-11-28", "2026-11-29"],
+      texto: "del miércoles 25 al domingo 29",
+    },
     oferta: { etiqueta: "Oferta · ahorras 1,50 €", precioAntes: 6 },
     available: true,
     allergens: ["Lácteos", "Cacahuetes", "Huevos", "Sésamo"],
@@ -709,9 +715,8 @@ const PLATOS_CON_BOLON = [
   "pack-bolon-macambo",
 ];
 export const AGOTADO_POR_FECHA: Record<string, string[]> = {
-  // Black Friday: esos días los Dos Tigrillos van con el pack de 27 €.
+  // Black Friday: esos días los Dos Tigrillos van con el pack al −30 %.
   "2026-11-27": ["pack-dos-tigrillos"],
-  "2026-11-28": ["pack-dos-tigrillos"],
   "2026-11-29": ["pack-dos-tigrillos"],
   // Sin bolón (Amos): bloqueado el miércoles 21 y el jueves 22. Vuelve el viernes.
   "2026-10-21": PLATOS_CON_BOLON,
@@ -729,8 +734,7 @@ export function agotadoParaFecha(id: string, fecha: string): boolean {
 function fueraDeEntrega(id: string, fecha: string): boolean {
   const p = productoEstatico(id);
   if (!p?.entrega || !fecha) return false;
-  const d = fecha.slice(0, 10);
-  return d < p.entrega.desde || d > p.entrega.hasta;
+  return !p.entrega.fechas.includes(fecha.slice(0, 10));
 }
 
 /** Aviso para el cliente si el producto no se entrega ese día por su `entrega`. */

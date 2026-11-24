@@ -28,8 +28,8 @@ const PRESENTACION: Record<
     ribbon: "Nuevo",
   },
   "pack-dos-tigrillos-bf": {
-    titulo: "Los Dos Tigrillos · Black Friday",
-    ahorro: "ahorras 5€",
+    titulo: "Los Dos Tigrillos −30%",
+    ahorro: "antes 29€ · vie 27 y dom 29",
     featured: true,
     ribbon: "Black Friday",
   },
@@ -57,6 +57,17 @@ const PRESENTACION: Record<
   "menu-ceviche": { titulo: "Menú Ceviche", ahorro: "bebida a 1,90€" },
   "menu-sango": { titulo: "Menú Sango", ahorro: "bebida a 1,90€" },
 };
+
+// Lineup de Black Friday 2026 (Amos, 24-11). Días = días de ENTREGA. Las
+// reglas de verdad están en lib/offers.ts (2×1) y lib/products.ts (trío y
+// Tigrillos −30 %); esto solo lo cuenta.
+const LINEUP_BF: { dia: string; oferta: string; nota?: string; sello: string; todo?: boolean }[] = [
+  { dia: "Mié 25", oferta: "Trío de salsas", nota: "Ají + verde + maní, toda la semana", sello: "4,50€" },
+  { dia: "Jue 26", oferta: "Bollo de Verde", nota: "Pide 1 y llévate 2", sello: "2×1" },
+  { dia: "Vie 27", oferta: "Pack Dos Tigrillos", nota: "20,30 € en vez de 29 €", sello: "−30%" },
+  { dia: "Sáb 28", oferta: "La Chocletiza", nota: "Pide 1 y llévate 2", sello: "2×1" },
+  { dia: "Dom 29", oferta: "Todas las ofertas", nota: "Bollo 2×1 · Tigrillos −30% · Chocletiza 2×1 · Trío", sello: "TODO", todo: true },
+];
 
 // Precio en formato español, entero sin decimales: "27€", "14,50€".
 function fmtPrecio(n: number): string {
@@ -117,9 +128,9 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
   // El bloque admite las dos cosas, así que el texto se adapta a lo que hay.
   const copy = blackFriday
     ? {
-        eyebrow: "Black Friday · Hasta el domingo 29",
+        eyebrow: "Black Friday · Lineup de la semana",
         titulo: "Black Friday en Verde",
-        sub: "Ofertas toda la semana: trío de salsas, Mar y Tierra para el jueves y, para entregas del viernes al domingo, Tigrillos a 27 € y Chocletiza 2×1.",
+        sub: "Una oferta para cada día de entrega. El domingo, todas a la vez.",
       }
     : hayNovedades
     ? {
@@ -179,6 +190,44 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
             {copy.sub}
           </p>
         </div>
+
+        {/* ── Lineup de Black Friday: una oferta por día de ENTREGA ── */}
+        {blackFriday && (
+          <ol className="max-w-[520px] mx-auto mb-8 sm:mb-12 rounded-[14px] overflow-hidden"
+            style={{ border: "1px solid rgba(224,178,58,0.45)" }}>
+            {LINEUP_BF.map((d, i) => (
+              <li
+                key={d.dia}
+                className="flex items-center gap-3 px-4 py-3 text-left"
+                style={{
+                  background: d.todo ? "rgba(224,178,58,0.16)" : i % 2 ? "rgba(255,255,255,0.03)" : "transparent",
+                  borderTop: i ? "1px solid rgba(224,178,58,0.18)" : undefined,
+                }}
+              >
+                <span
+                  className="font-mono text-[0.68rem] tracking-[0.12em] uppercase w-[64px] shrink-0"
+                  style={{ color: "#e0b23a" }}
+                >
+                  {d.dia}
+                </span>
+                <span className="flex-1 text-[0.86rem] font-semibold" style={{ color: "var(--cream, #f2ead8)" }}>
+                  {d.oferta}
+                  {d.nota && (
+                    <span className="block text-[0.72rem] font-normal" style={{ color: "rgba(255,255,255,0.5)" }}>
+                      {d.nota}
+                    </span>
+                  )}
+                </span>
+                <span
+                  className="text-[0.7rem] font-bold px-2 py-0.5 rounded-full shrink-0"
+                  style={{ background: "#e0b23a", color: "#111" }}
+                >
+                  {d.sello}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
 
         {/* ── Novedades: platos nuevos, antes de los packs ── */}
         {hayNovedades && (
