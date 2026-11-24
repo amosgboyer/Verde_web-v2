@@ -27,6 +27,12 @@ const PRESENTACION: Record<
     ahorro: "ahorras 3€",
     ribbon: "Nuevo",
   },
+  "pack-dos-tigrillos-bf": {
+    titulo: "Los Dos Tigrillos · Black Friday",
+    ahorro: "ahorras 5€",
+    featured: true,
+    ribbon: "Black Friday",
+  },
   "pack-black-friday-dulce": {
     titulo: "Black Friday Dulce",
     ahorro: "ahorras hasta 3,10€",
@@ -37,7 +43,7 @@ const PRESENTACION: Record<
     titulo: "Mar y Tierra",
     ahorro: "ahorras 3€",
     featured: true,
-    ribbon: "Solo jueves",
+    ribbon: "Jueves 26",
   },
   "pack-bolon-macambo": {
     titulo: "Bolón con Maduro + Macambo",
@@ -113,7 +119,7 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
     ? {
         eyebrow: "Black Friday · Hasta el domingo 29",
         titulo: "Black Friday en Verde",
-        sub: "Ofertas toda la semana: packs nuevos, trío de salsas, Mar y Tierra el jueves y, del viernes al domingo, Tigrillos y Chocletiza 2×1.",
+        sub: "Ofertas toda la semana: trío de salsas, Mar y Tierra para el jueves y, para entregas del viernes al domingo, Tigrillos a 27 € y Chocletiza 2×1.",
       }
     : hayNovedades
     ? {

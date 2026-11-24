@@ -87,8 +87,8 @@ export const EMPANADA_2X1: WeekendOffer = {
 };
 
 // Black Friday 2026 (Amos, 24-11) — 2×1 en Chocletiza, igual que el de la
-// empanada: pide 1 y te llevas 2, sin bajar el precio. Se ve y vale para
-// pedidos hechos del viernes 27 al domingo 29. Se apaga sola el lunes 30.
+// empanada: pide 1 y te llevas 2, sin bajar el precio. Se anuncia desde el
+// jueves 26 y vale para ENTREGAS del viernes 27 al domingo 29.
 // Escandallo: 2 chocletizas cuestan 5,98 € → por 9,90 € deja ~3,90 €.
 export const CHOCLETIZA_BF: WeekendOffer = {
   id: "chocletiza-black-friday",
@@ -102,8 +102,10 @@ export const CHOCLETIZA_BF: WeekendOffer = {
   productNameMatch: "la chocletiza",
   everyNth: 2,
   percentOff: 100,
-  startDate: "2026-11-27", // viernes
+  startDate: "2026-11-26", // jueves — se abre
   endDate: "2026-11-29", // domingo
+  reservationStartDate: "2026-11-27", // entregas vie–dom
+  reservationEndDate: "2026-11-29",
 };
 
 // Semana de Black Friday (Amos, 24-11): la zona de ofertas de la home se pone

@@ -10,6 +10,7 @@ import {
   vatRateOf,
   DEFAULT_VAT_RATE,
   agotadoParaFecha,
+  avisoEntrega,
   PRODUCT_CHOICES,
 } from "@/lib/products";
 import { vatBreakdown, formatCents, ratePercent } from "@/lib/vat";
@@ -946,6 +947,19 @@ export default function ReservationForm({
 
   // Step completion flags
   const step1Done = cartProducts.length > 0;
+  // Productos del carrito que NO se entregan el día elegido (packs de Black
+  // Friday, Mar y Tierra del jueves…): se avisa al elegir el día, no al pagar.
+  const avisosFecha: string[] = fields.reservationDate
+    ? cartProducts
+        .filter((p) => (cart[p.id] ?? 0) > 0 && agotadoParaFecha(p.id, fields.reservationDate))
+        .map(
+          (p) =>
+            avisoEntrega(p.id, fields.reservationDate) ??
+            (p.id === "pack-dos-tigrillos"
+              ? "Para entregas del viernes 27 al domingo 29 los Dos Tigrillos van con el pack de Black Friday a 27 €. Cámbialo por ese pack."
+              : `${p.name} no está disponible para ese día. Quítalo o elige otra fecha.`)
+        )
+    : [];
   const step2Done = !!fields.reservationDate;
   const step3Done = !!fields.reservationTime;
   const step4Done = !!(
@@ -1042,6 +1056,11 @@ export default function ReservationForm({
     }
     if (!fields.reservationDate) {
       setError("Elige el día de tu reserva.");
+      goToStep(2);
+      return;
+    }
+    if (avisosFecha.length > 0) {
+      setError(avisosFecha[0]);
       goToStep(2);
       return;
     }
@@ -1908,13 +1927,21 @@ export default function ReservationForm({
             >
               {renderCalendar()}
 
+              {avisosFecha.length > 0 && (
+                <div className="mt-4 border-l-2 border-tierra/50 bg-tierra/5 pl-4 pr-3 py-2 space-y-1">
+                  {avisosFecha.map((a) => (
+                    <p key={a} className="text-tierra text-sm">{a}</p>
+                  ))}
+                </div>
+              )}
+
               <button
                 type="button"
-                disabled={!step2Done}
-                onClick={() => step2Done && goToStep(3)}
+                disabled={!step2Done || avisosFecha.length > 0}
+                onClick={() => step2Done && avisosFecha.length === 0 && goToStep(3)}
                 className={clsx(
                   "mt-5 w-full sticky bottom-3 z-10 shadow-[0_6px_24px_rgba(0,0,0,0.18)] text-[11px] font-semibold tracking-[0.2em] uppercase py-4 px-6 transition-all duration-300",
-                  step2Done
+                  step2Done && avisosFecha.length === 0
                     ? "bg-[#c85a2a] text-crema hover:bg-[#d96535]"
                     : "bg-[#ddd3bd] text-negro/35 cursor-not-allowed"
                 )}

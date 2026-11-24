@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { getProductById, estaAgotadoTemporal, agotadoParaFecha, DEFAULT_VAT_RATE } from "@/lib/products";
+import { getProductById, estaAgotadoTemporal, agotadoParaFecha, avisoEntrega, DEFAULT_VAT_RATE } from "@/lib/products";
 import { vatBreakdown } from "@/lib/vat";
 import { getProductsRows, getSettings, getOrdersRows } from "@/lib/google-sheets";
 import { comprobarStockCarrito } from "@/lib/stock";
@@ -189,6 +189,13 @@ export async function POST(req: NextRequest) {
       }
       // Sin stock para ESA fecha de entrega (p. ej. bolón solo para mañana).
       if (agotadoParaFecha(item.productId, parsed.reservationDate)) {
+        const aviso = avisoEntrega(item.productId, parsed.reservationDate);
+        if (aviso) throw new ErrorCliente(aviso);
+        if (item.productId === "pack-dos-tigrillos") {
+          throw new ErrorCliente(
+            "Para entregas del viernes 27 al domingo 29 los Dos Tigrillos van con el pack de Black Friday a 27 €. Cámbialo por ese pack."
+          );
+        }
         throw new ErrorCliente(
           "Uno de los platos no está disponible para el día que has elegido. Quítalo o elige otra fecha."
         );

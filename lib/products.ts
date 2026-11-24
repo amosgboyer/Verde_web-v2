@@ -30,6 +30,10 @@ export interface Product {
   // `hasta` (inclusive, día natural de Madrid). Fuera de la ventana no sale en
   // la web y el checkout lo rechaza como no disponible.
   ventana?: { desde: string; hasta: string };
+  // Días de ENTREGA en los que se puede reservar (inclusive). Fuera de ellos,
+  // `agotadoParaFecha` lo da por agotado: la carta lo marca y el checkout lo
+  // rechaza con un aviso que dice para qué días es.
+  entrega?: { desde: string; hasta: string; texto: string };
   // Extras en oferta (popup «Completa tu pedido»): van primero, con el color de
   // oferta, esta etiqueta y el precio de antes tachado.
   oferta?: { etiqueta: string; precioAntes: number };
@@ -178,14 +182,30 @@ export const PRODUCTS: Product[] = [
 // Stripe cobren exactamente el precio anunciado. No se muestran en la carta.
 export const PACKS: Product[] = [
   {
+    // Black Friday 2026 (Amos, 24-11): 2 Tigrillos a 27 € (normal 29 €) para
+    // ENTREGAS del viernes 27 al domingo 29. Se puede pedir desde el jueves 26.
+    id: "pack-dos-tigrillos-bf",
+    name: "Pack · Los Dos Tigrillos (Black Friday)",
+    description:
+      "2× Tigrillo Mixto a precio de Black Friday. Para entregas del viernes 27 al domingo 29.",
+    finalPrice: 27,
+    depositAmount: 27,
+    ventana: { desde: "2026-11-26", hasta: "2026-11-29" },
+    entrega: { desde: "2026-11-27", hasta: "2026-11-29", texto: "del viernes 27 al domingo 29" },
+    available: true,
+    allergens: ["Lácteos", "Maní"],
+    category: "pack",
+    isPack: true,
+  },
+  {
     id: "pack-dos-tigrillos",
     name: "Pack · Los Dos Tigrillos",
     description:
       "2× Tigrillo Mixto. Hecho en demiglass de carne, chicharrón, mix de quesos y sal prieta.",
     finalPrice: 29,
     depositAmount: 29,
-    // Black Friday 2026 (Amos, 24-11): 27 € para pedidos del vie 27 al dom 29.
-    promo: { precio: 27, desde: "2026-11-27", hasta: "2026-11-29", etiqueta: "Black Friday" },
+    // Black Friday 2026: para entregas del 27 al 29 este pack está bloqueado
+    // (AGOTADO_POR_FECHA) y se vende el de Black Friday a 27 €.
     available: true,
     allergens: ["Lácteos", "Maní"],
     category: "pack",
@@ -221,15 +241,17 @@ export const PACKS: Product[] = [
     isPack: true,
   },
   {
-    // Semana de Black Friday (Amos, 24-11): SOLO el jueves 26. Corviche +
+    // Semana de Black Friday (Amos, 24-11): SOLO entregas del jueves 26. Corviche +
     // Patacón de Rabo de Toro; sueltos 26 €. Escandallo: 2,85 + 2,30 € → deja ~17,85 €.
     id: "pack-mar-y-tierra",
     name: "Pack · Mar y Tierra",
     description:
-      "Corviche de Pescado + Patacón de Rabo de Toro. Lo mejor del mar y de la tierra, solo este jueves.",
+      "Corviche de Pescado + Patacón de Rabo de Toro. Solo para entregas del jueves 26.",
     finalPrice: 23,
     depositAmount: 23,
-    ventana: { desde: "2026-11-26", hasta: "2026-11-26" },
+    // Se puede pedir desde ya; solo se ENTREGA el jueves 26.
+    ventana: { desde: "2026-11-24", hasta: "2026-11-26" },
+    entrega: { desde: "2026-11-26", hasta: "2026-11-26", texto: "del jueves 26" },
     available: true,
     allergens: ["Pescado", "Maní", "Lácteos", "Apio", "Mostaza", "Sulfitos"],
     category: "pack",
@@ -408,8 +430,10 @@ export const EXTRA_SALSAS: Product[] = [
     description: "Ají de la casa, salsa verde de queso y nuestra salsa de maní secreta. Las tres por 4,50 €.",
     finalPrice: 4.5,
     depositAmount: 4.5,
-    // Semana de Black Friday (Amos, 24-11): de miércoles 25 a domingo 29.
-    ventana: { desde: "2026-11-25", hasta: "2026-11-29" },
+    // Semana de Black Friday (Amos, 24-11): entregas de miércoles 25 a domingo 29.
+    // Se ve desde ya (lo antes que se entrega es mañana miércoles).
+    ventana: { desde: "2026-11-24", hasta: "2026-11-29" },
+    entrega: { desde: "2026-11-25", hasta: "2026-11-29", texto: "del miércoles 25 al domingo 29" },
     oferta: { etiqueta: "Oferta · ahorras 1,50 €", precioAntes: 6 },
     available: true,
     allergens: ["Lácteos", "Cacahuetes", "Huevos", "Sésamo"],
@@ -685,6 +709,10 @@ const PLATOS_CON_BOLON = [
   "pack-bolon-macambo",
 ];
 export const AGOTADO_POR_FECHA: Record<string, string[]> = {
+  // Black Friday: esos días los Dos Tigrillos van con el pack de 27 €.
+  "2026-11-27": ["pack-dos-tigrillos"],
+  "2026-11-28": ["pack-dos-tigrillos"],
+  "2026-11-29": ["pack-dos-tigrillos"],
   // Sin bolón (Amos): bloqueado el miércoles 21 y el jueves 22. Vuelve el viernes.
   "2026-10-21": PLATOS_CON_BOLON,
   "2026-10-22": PLATOS_CON_BOLON,
@@ -692,8 +720,30 @@ export const AGOTADO_POR_FECHA: Record<string, string[]> = {
 
 /** ¿Este producto está sin stock para esa fecha de entrega concreta? */
 export function agotadoParaFecha(id: string, fecha: string): boolean {
+  if (fueraDeEntrega(id, fecha)) return true;
   const lista = AGOTADO_POR_FECHA[fecha];
   return !!lista && lista.some((x) => mismoId(x, id));
+}
+
+/** Producto con días de entrega propios (`entrega`) y fecha fuera de ellos. */
+function fueraDeEntrega(id: string, fecha: string): boolean {
+  const p = productoEstatico(id);
+  if (!p?.entrega || !fecha) return false;
+  const d = fecha.slice(0, 10);
+  return d < p.entrega.desde || d > p.entrega.hasta;
+}
+
+/** Aviso para el cliente si el producto no se entrega ese día por su `entrega`. */
+export function avisoEntrega(id: string, fecha: string): string | null {
+  const p = productoEstatico(id);
+  if (!p?.entrega || !fueraDeEntrega(id, fecha)) return null;
+  return `${p.name.replace(/^Pack · /, "")} es solo para entregas ${p.entrega.texto}. Quítalo o cambia el día de entrega.`;
+}
+
+function productoEstatico(id: string): Product | undefined {
+  return [...PRODUCTS, ...PACKS, ...EXTRA_SALSAS, ...EXTRA_BEBIDAS, ...EXTRA_PLATOS].find((p) =>
+    mismoId(p.id, id)
+  );
 }
 
 /**

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getPacks, getProductById, getSalsas, PRODUCT_CHOICES } from "./products";
+import { getPacks, getProductById, getSalsas, PRODUCT_CHOICES, agotadoParaFecha, avisoEntrega } from "./products";
 import {
   getActiveWeekendOffer,
   computeOfferDiscount,
@@ -13,24 +13,29 @@ const enMadrid = (dia: string) => vi.setSystemTime(new Date(`${dia}T11:00:00Z`))
 afterEach(() => vi.useRealTimers());
 
 describe("Black Friday 2026", () => {
-  it("Dos Tigrillos a 27 € solo del 27 al 29, en la carta y en el cobro", () => {
+  it("Dos Tigrillos: pack de 27 € solo para entregas 27-29; el de 29 € bloqueado esos días", () => {
     vi.useFakeTimers();
-    for (const [dia, precio] of [
-      ["2026-11-26", 29],
-      ["2026-11-27", 27],
-      ["2026-11-29", 27],
-      ["2026-11-30", 29],
-    ] as const) {
-      enMadrid(dia);
-      expect(getProductById("pack-dos-tigrillos")?.depositAmount, dia).toBe(precio);
-      expect(getPacks().find((p) => p.id === "pack-dos-tigrillos")?.finalPrice, dia).toBe(precio);
-    }
+    enMadrid("2026-11-25");
+    expect(getPacks().some((p) => p.id === "pack-dos-tigrillos-bf")).toBe(false);
+    enMadrid("2026-11-26");
+    expect(getPacks().some((p) => p.id === "pack-dos-tigrillos-bf")).toBe(true);
+    expect(getProductById("pack-dos-tigrillos-bf")?.finalPrice).toBe(27);
+    expect(agotadoParaFecha("pack-dos-tigrillos-bf", "2026-11-26")).toBe(true);
+    expect(agotadoParaFecha("pack-dos-tigrillos-bf", "2026-11-27")).toBe(false);
+    expect(agotadoParaFecha("pack-dos-tigrillos-bf", "2026-11-30")).toBe(true);
+    expect(agotadoParaFecha("pack-dos-tigrillos", "2026-11-26")).toBe(false);
+    expect(agotadoParaFecha("pack-dos-tigrillos", "2026-11-28")).toBe(true);
+    expect(getProductById("pack-dos-tigrillos")?.finalPrice).toBe(29);
   });
 
   it("2×1 en Chocletiza (pide 1, llévate 2) activo solo del 27 al 29", () => {
     vi.useFakeTimers();
-    enMadrid("2026-11-26");
+    enMadrid("2026-11-25");
     expect(getActiveWeekendOffer()?.id).not.toBe("chocletiza-black-friday");
+    enMadrid("2026-11-26"); // se abre el jueves…
+    expect(getActiveWeekendOffer()?.id).toBe("chocletiza-black-friday");
+    // …pero solo vale para entregas vie-dom
+    expect(offerGiftApplies(getActiveWeekendOffer(), { id: "la-chocletiza" }, "2026-11-26")).toBe(false);
     enMadrid("2026-11-28");
     const oferta = getActiveWeekendOffer();
     expect(oferta?.id).toBe("chocletiza-black-friday");
@@ -64,31 +69,28 @@ describe("Black Friday 2026", () => {
     ]);
   });
 
-  it("trío de salsas a 4,50 €, solo del miércoles 25 al domingo 29", () => {
+  it("trío de salsas a 4,50 €: se ve desde ya, entregas del 25 al 29", () => {
     vi.useFakeTimers();
     enMadrid("2026-11-24");
-    expect(getSalsas().some((p) => p.id === "trio-salsas")).toBe(false);
-    expect(getProductById("trio-salsas")?.available).toBe(false);
-    enMadrid("2026-11-25");
     expect(getSalsas()[0]).toMatchObject({ id: "trio-salsas", finalPrice: 4.5 });
-    expect(getProductById("trio-salsas")?.available).toBe(true);
-    enMadrid("2026-11-29");
-    expect(getSalsas()[0]?.id).toBe("trio-salsas");
+    expect(agotadoParaFecha("trio-salsas", "2026-11-24")).toBe(true);
+    expect(agotadoParaFecha("trio-salsas", "2026-11-25")).toBe(false);
+    expect(agotadoParaFecha("trio-salsas", "2026-11-29")).toBe(false);
+    expect(agotadoParaFecha("trio-salsas", "2026-11-30")).toBe(true);
     enMadrid("2026-11-30");
     expect(getProductById("trio-salsas")?.available).toBe(false);
   });
 
-  it("Mar y Tierra a 23 € solo el jueves 26", () => {
+  it("Mar y Tierra a 23 €: se pide desde ya, solo para entregas del jueves 26", () => {
     vi.useFakeTimers();
-    for (const [dia, sale] of [
-      ["2026-11-25", false],
-      ["2026-11-26", true],
-      ["2026-11-27", false],
-    ] as const) {
-      enMadrid(dia);
-      expect(getPacks().some((p) => p.id === "pack-mar-y-tierra"), dia).toBe(sale);
-      expect(getProductById("pack-mar-y-tierra")?.available, dia).toBe(sale);
-    }
+    enMadrid("2026-11-24");
+    expect(getPacks().some((p) => p.id === "pack-mar-y-tierra")).toBe(true);
+    expect(agotadoParaFecha("pack-mar-y-tierra", "2026-11-25")).toBe(true);
+    expect(agotadoParaFecha("pack-mar-y-tierra", "2026-11-26")).toBe(false);
+    expect(agotadoParaFecha("pack-mar-y-tierra", "2026-11-27")).toBe(true);
+    expect(avisoEntrega("pack-mar-y-tierra", "2026-11-27")).toContain("jueves 26");
+    enMadrid("2026-11-27");
+    expect(getPacks().some((p) => p.id === "pack-mar-y-tierra")).toBe(false);
     expect(getProductById("pack-mar-y-tierra")?.finalPrice).toBe(23);
   });
 });
