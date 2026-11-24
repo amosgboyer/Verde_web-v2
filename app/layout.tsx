@@ -1,3 +1,4 @@
+import { SCRIPT_RELOJ } from "@/lib/reloj-prueba";
 import type { Metadata } from "next";
 import { Lilita_One, Caveat, Space_Mono, DM_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
@@ -81,6 +82,11 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${lilitaOne.variable} ${caveat.variable} ${spaceMono.variable} ${dmSans.variable} font-sans bg-cream text-ink antialiased`}>
+        {/* SOLO RAMA DE PRUEBA: reloj adelantado + cartel. Nunca se publica. */}
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_RELOJ }} />
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#c00", color: "#fff", textAlign: "center", fontSize: 12, fontWeight: 700, padding: "6px 8px" }}>
+          WEB DE PRUEBA · reloj en miércoles 25, 12:00 · no se cobra nada
+        </div>
 
         {/* Ahrefs Web Analytics (verificación + analítica de visitas) */}
         <script

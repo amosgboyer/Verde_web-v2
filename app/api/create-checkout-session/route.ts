@@ -32,6 +32,11 @@ import { trocearMeta, ErrorCliente } from "@/lib/stripe-meta";
 import { ZodError } from "zod";
 
 export async function POST(req: NextRequest) {
+  // SOLO RAMA DE PRUEBA: nunca crear un cobro real.
+  if ((req as unknown) !== null) return NextResponse.json(
+    { error: "Web de prueba: aquí no se cobra. El pedido llegaría hasta aquí correctamente." },
+    { status: 400 }
+  );
   try {
     if (SOLD_OUT) {
       return NextResponse.json(
