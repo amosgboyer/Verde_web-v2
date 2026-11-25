@@ -1,4 +1,5 @@
 "use client";
+import { todayMadrid } from "@/lib/directo";
 
 import { useState } from "react";
 import type { Product } from "@/lib/products";
@@ -214,7 +215,10 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
         {blackFriday && (
           <ol className="max-w-[520px] mx-auto mb-8 sm:mb-12 rounded-[14px] overflow-hidden"
             style={{ border: "1px solid rgba(224,178,58,0.45)" }}>
-            {LINEUP_BF.map((d, i) => (
+            {LINEUP_BF.map((d, i) => {
+              // Días de entrega que ya pasaron o son hoy (se pide con 1 día de antelación).
+              const cerrado = !!d.fecha && d.fecha <= todayMadrid();
+              return (
               <li
                 key={d.dia}
                 style={{
@@ -224,7 +228,7 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
               >
                 <button
                   type="button"
-                  disabled={readOnly}
+                  disabled={readOnly || cerrado}
                   onClick={() => {
                     window.dispatchEvent(
                       new CustomEvent("verde:add-pack", {
@@ -234,6 +238,7 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
                   }}
                   aria-label={`${d.dia}: ${d.oferta}. ${d.accion}`}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/5 disabled:cursor-default"
+                  style={cerrado ? { opacity: 0.4 } : undefined}
                 >
                 <span
                   className="font-mono text-[0.68rem] tracking-[0.12em] uppercase w-[72px] shrink-0"
@@ -258,13 +263,14 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
                   </span>
                   {!readOnly && (
                     <span className="text-[0.62rem] font-semibold whitespace-nowrap" style={{ color: "#e0b23a" }}>
-                      {d.items?.length ? "+ Añadir" : "Elegir →"}
+                      {cerrado ? "Cerrado" : d.items?.length ? "+ Añadir" : "Elegir →"}
                     </span>
                   )}
                 </span>
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ol>
         )}
 

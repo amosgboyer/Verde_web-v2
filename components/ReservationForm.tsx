@@ -416,27 +416,31 @@ export default function ReservationForm({
         metodo?: "pickup";
       }>).detail;
       if (metodo) setFields((prev) => ({ ...prev, deliveryMethod: metodo }));
-      // Aviso visible: desde el lineup se elige el día de TODO el pedido.
+      // Desde el lineup se elige el día de TODO el pedido. Primero se comprueba
+      // que ese día admita pedidos; el aviso dice lo que ha pasado de verdad.
+      let fechaOk = false;
+      let fechaCerrada = false;
+      if (fecha) {
+        const dia = availabilityRef.current.find((d) => d.date === fecha);
+        if (dia && dia.status === "available") fechaOk = true;
+        else if (availabilityRef.current.length) fechaCerrada = true;
+        else fechaOk = true; // disponibilidad aún sin cargar: el calendario lo comprobará
+        if (fechaOk) {
+          setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
+          setError(null);
+        }
+      }
       if (fecha || metodo) {
         const partes: string[] = [];
-        if (fecha) partes.push(`Vas a pedir para el ${formatDateLabel(fecha)}. Todo el pedido se entrega ese día.`);
+        if (fechaOk) partes.push(`Vas a pedir para el ${formatDateLabel(fecha!)}. Todo el pedido se entrega ese día.`);
+        if (fechaCerrada)
+          partes.push(`El ${formatDateLabel(fecha!)} ya no admite pedidos: elige otro día en el calendario.`);
         if (metodo === "pickup") partes.push("Recoges en el local: te regalamos una Empanada de Queso.");
         setAvisoLineup((items.length ? "✓ Añadido. " : "") + partes.join(" "));
         if (avisoLineupTimer.current) clearTimeout(avisoLineupTimer.current);
         avisoLineupTimer.current = setTimeout(() => setAvisoLineup(null), 6000);
       }
-      if (fecha) {
-        const dia = availabilityRef.current.find((d) => d.date === fecha);
-        if (dia && dia.status === "available") {
-          setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
-          setError(null);
-        } else if (availabilityRef.current.length) {
-          setError("Ese día ya no quedan huecos. Elige otro día en el calendario.");
-        } else {
-          // La disponibilidad aún no ha cargado: se elige igual y el calendario lo comprobará.
-          setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
-        }
-      }
+
       setCart(prev => {
         const next = {...prev};
         items.forEach(({id, qty}) => { next[id] = (next[id] ?? 0) + qty; });
