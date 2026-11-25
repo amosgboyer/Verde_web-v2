@@ -29,6 +29,7 @@ import {
   offerRuleText,
   offerReservationText,
   offerGiftApplies,
+  productoDeOferta,
   regaloRecogidaAplica,
   regaloRecogidaVisible,
 } from "@/lib/offers";
@@ -1030,6 +1031,16 @@ export default function ReservationForm({
     avisoLineupTimer.current = setTimeout(() => setAvisoLineup(null), 7000);
   }, [fields.reservationDate, cart, isDirecto]);
 
+  // Ofertas 2×1 del carrito que NO aplican al día elegido (informativo, no bloquea).
+  const ofertasSinAplicar: string[] =
+    fields.reservationDate && weekendOffer?.productos && weekendOffer.regalo
+      ? cartProducts
+          .filter((p) => (cart[p.id] ?? 0) > 0)
+          .map((p) => ({ p, pr: productoDeOferta(weekendOffer, p) }))
+          .filter(({ p, pr }) => pr && !offerGiftApplies(weekendOffer, p, fields.reservationDate))
+          .map(({ p, pr }) => `${p.name}: sin 2×1 ese día (el 2×1 es para entregas del ${pr!.dias}).`)
+      : [];
+
   const avisosFecha: string[] = fields.reservationDate
     ? cartProducts
         .filter((p) => (cart[p.id] ?? 0) > 0 && agotadoParaFecha(p.id, fields.reservationDate))
@@ -1808,6 +1819,27 @@ export default function ReservationForm({
                               })}
                             </div>
                           )}
+                          {(() => {
+                            // 2×1 de Black Friday visible en cada línea: si aplica al día
+                            // elegido, cuántas se lleva; si no, para qué días es.
+                            const pr = weekendOffer?.productos ? productoDeOferta(weekendOffer, p) : undefined;
+                            if (!pr || !weekendOffer?.regalo) return null;
+                            const fecha = isDirecto ? todayMadrid() : fields.reservationDate;
+                            if (fecha && offerGiftApplies(weekendOffer, p, fecha)) {
+                              return (
+                                <p className="text-[11px] font-bold text-[#c85a2a] mt-0.5">
+                                  2×1 · te llevas {qty * 2}
+                                </p>
+                              );
+                            }
+                            return (
+                              <p className="text-[11px] text-[#a8451f] mt-0.5">
+                                {fecha
+                                  ? `Sin 2×1 ese día: el 2×1 es para entregas del ${pr.dias}`
+                                  : `2×1 para entregas del ${pr.dias}`}
+                              </p>
+                            );
+                          })()}
                           <p className="text-xs font-semibold text-verde-bosque mt-0.5">
                             {fmtPrice(p.depositAmount * qty)} €
                             {qty > 1 && (
@@ -2026,6 +2058,14 @@ export default function ReservationForm({
               onEdit={() => goToStep(2)}
             >
               {renderCalendar()}
+
+              {ofertasSinAplicar.length > 0 && avisosFecha.length === 0 && (
+                <div className="mt-4 border-l-2 border-[#e0b23a] bg-[#e0b23a]/10 pl-4 pr-3 py-2 space-y-1">
+                  {ofertasSinAplicar.map((a) => (
+                    <p key={a} className="text-[#7a5a0a] text-sm">{a}</p>
+                  ))}
+                </div>
+              )}
 
               {avisosFecha.length > 0 && (
                 <div className="mt-4 border-l-2 border-tierra/50 bg-tierra/5 pl-4 pr-3 py-2 space-y-1">
