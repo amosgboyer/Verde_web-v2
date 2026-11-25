@@ -1,12 +1,12 @@
 "use client";
 import { todayMadrid } from "@/lib/directo";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Product } from "@/lib/products";
 import type { WeekendOffer } from "@/lib/offers";
 import { productMatchesOffer, offerBadgeLabel, offerReservationText } from "@/lib/offers";
 import OfferCountdown from "./OfferCountdown";
-import { getPacks, PRODUCT_CHOICES, mismoId, esPlatoDorado, promoVigente } from "@/lib/products";
+import { getPacks, PRODUCT_CHOICES, mismoId, esPlatoDorado, promoVigente, packParaFecha } from "@/lib/products";
 
 // Nombre, descripción y PRECIO salen de lib/products.ts — que es lo que cobra
 // el checkout. Antes estaban copiados aquí a mano y un cambio de precio en el
@@ -82,7 +82,7 @@ const LINEUP_BF: FilaLineup[] = [
   { dia: "Jue 26", oferta: "Bollo de Verde", nota: "Pide 1 y llévate 2", sello: "2×1",
     items: [{ id: "bollo-de-verde", qty: 1 }], fecha: "2026-11-26", accion: "Añadir para el jueves" },
   { dia: "Vie 27", oferta: "Pack Dos Tigrillos", nota: "20,30 € en vez de 29 €", sello: "−30%",
-    items: [{ id: "pack-dos-tigrillos-bf", qty: 1 }], fecha: "2026-11-27", accion: "Añadir para el viernes" },
+    items: [{ id: "pack-dos-tigrillos", qty: 1 }], fecha: "2026-11-27", accion: "Añadir para el viernes" },
   { dia: "Sáb 28", oferta: "La Chocletiza", nota: "Pide 1 y llévate 2", sello: "2×1",
     items: [{ id: "la-chocletiza", qty: 1 }], fecha: "2026-11-28", accion: "Añadir para el sábado" },
   { dia: "Dom 29", oferta: "Todas las ofertas", nota: "Bollo 2×1 · Tigrillos −30% · Chocletiza 2×1 · Trío", sello: "TODO", todo: true,
@@ -144,6 +144,31 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
   // Packs con elección (p. ej. Black Friday Dulce: Canoa o Bolón). Igual que la
   // bebida del menú: se elige en la tarjeta y viaja con el evento al carrito.
   const [packChoices, setPackChoices] = useState<Record<string, string>>({});
+
+  // Día de entrega elegido en el pedido (lo emite ReservationForm). Con él, la
+  // tarjeta de Dos Tigrillos enseña el precio que de verdad se va a cobrar.
+  const [fechaPedido, setFechaPedido] = useState("");
+  useEffect(() => {
+    const on = (e: Event) => setFechaPedido((e as CustomEvent<string>).detail || "");
+    window.addEventListener("verde:fecha", on);
+    return () => window.removeEventListener("verde:fecha", on);
+  }, []);
+
+  // Black Friday: UNA sola tarjeta de Dos Tigrillos. Si el día elegido es
+  // viernes 27 o domingo 29 sale a 20,30 €; si no, a 29 € con el aviso del −30 %.
+  // (El carrito y el checkout cambian el pack solos con `packParaFecha`.)
+  const tigBf = PACKS.find((p) => p.id === "pack-dos-tigrillos-bf");
+  const packsVisibles = PACKS.filter((p) => !(tigBf && p.id === "pack-dos-tigrillos-bf")).map((p) => {
+    if (!tigBf || p.id !== "pack-dos-tigrillos") return p;
+    const esBf = !!fechaPedido && packParaFecha(p.id, fechaPedido) === "pack-dos-tigrillos-bf";
+    return esBf
+      ? { ...p, price: tigBf.price, saving: "antes 29€ · Black Friday", ribbon: "Black Friday −30%", featured: true }
+      : {
+          ...p,
+          saving: fechaPedido ? "el −30% es vie 27 y dom 29" : "−30% (20,30€) para vie 27 y dom 29",
+          ribbon: "Black Friday",
+        };
+  });
 
   // El bloque admite las dos cosas, así que el texto se adapta a lo que hay.
   const copy = blackFriday
@@ -500,7 +525,7 @@ export default function Packs({ readOnly = false, destacados = [], menuSemana, w
               </div>
             </div>
           )}
-          {PACKS.map((pack) => (
+          {packsVisibles.map((pack) => (
             <div
               key={pack.id}
               className="relative rounded-[14px] p-4 sm:p-[1.6rem] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 flex flex-col items-center text-center"

@@ -997,6 +997,13 @@ export default function ReservationForm({
   const step1Done = cartProducts.length > 0;
   // Productos del carrito que NO se entregan el día elegido (packs de Black
   // Friday, Mar y Tierra del jueves…): se avisa al elegir el día, no al pagar.
+  // Avisa a la tarjeta de packs del día elegido (precio de los Dos Tigrillos).
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("verde:fecha", { detail: isDirecto ? todayMadrid() : fields.reservationDate })
+    );
+  }, [fields.reservationDate, isDirecto]);
+
   // Black Friday: al elegir el día, los Dos Tigrillos pasan solos al pack que
   // toca (−30 % el viernes 27 y el domingo 29; 29 € cualquier otro día).
   useEffect(() => {
