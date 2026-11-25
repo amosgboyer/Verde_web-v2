@@ -12,6 +12,7 @@ import {
   DEFAULT_VAT_RATE,
   agotadoParaFecha,
   avisoEntrega,
+  packParaFecha,
   PRODUCT_CHOICES,
 } from "@/lib/products";
 import { vatBreakdown, formatCents, ratePercent } from "@/lib/vat";
@@ -992,6 +993,32 @@ export default function ReservationForm({
   const step1Done = cartProducts.length > 0;
   // Productos del carrito que NO se entregan el día elegido (packs de Black
   // Friday, Mar y Tierra del jueves…): se avisa al elegir el día, no al pagar.
+  // Black Friday: al elegir el día, los Dos Tigrillos pasan solos al pack que
+  // toca (−30 % el viernes 27 y el domingo 29; 29 € cualquier otro día).
+  useEffect(() => {
+    const fecha = isDirecto ? todayMadrid() : fields.reservationDate;
+    if (!fecha) return;
+    const cambios = Object.keys(cart).filter((id) => (cart[id] ?? 0) > 0 && packParaFecha(id, fecha) !== id);
+    if (!cambios.length) return;
+    setCart((prev) => {
+      const next = { ...prev };
+      for (const id of cambios) {
+        const nuevo = packParaFecha(id, fecha);
+        next[nuevo] = (next[nuevo] ?? 0) + (next[id] ?? 0);
+        delete next[id];
+      }
+      return next;
+    });
+    const aBf = cambios.some((id) => packParaFecha(id, fecha) === "pack-dos-tigrillos-bf");
+    setAvisoLineup(
+      aBf
+        ? `Black Friday: para el ${formatDateLabel(fecha)} tus Dos Tigrillos salen a 20,30 € (−30 %).`
+        : `Para el ${formatDateLabel(fecha)} los Dos Tigrillos vuelven a su precio normal (29 €): el −30 % es solo viernes 27 y domingo 29.`
+    );
+    if (avisoLineupTimer.current) clearTimeout(avisoLineupTimer.current);
+    avisoLineupTimer.current = setTimeout(() => setAvisoLineup(null), 7000);
+  }, [fields.reservationDate, cart, isDirecto]);
+
   const avisosFecha: string[] = fields.reservationDate
     ? cartProducts
         .filter((p) => (cart[p.id] ?? 0) > 0 && agotadoParaFecha(p.id, fields.reservationDate))

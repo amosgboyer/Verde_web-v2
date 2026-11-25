@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { getProductById, estaAgotadoTemporal, agotadoParaFecha, avisoEntrega, DEFAULT_VAT_RATE } from "@/lib/products";
+import { getProductById, estaAgotadoTemporal, agotadoParaFecha, avisoEntrega, packParaFecha, DEFAULT_VAT_RATE } from "@/lib/products";
 import { vatBreakdown } from "@/lib/vat";
 import { getProductsRows, getSettings, getOrdersRows } from "@/lib/google-sheets";
 import { comprobarStockCarrito } from "@/lib/stock";
@@ -182,7 +182,16 @@ export async function POST(req: NextRequest) {
       // continue with static fallback
     }
 
-    const validatedItems = parsed.items.map((item) => {
+    // Dos Tigrillos: al pack que toca según el día de entrega (−30 % vie 27 y dom 29).
+    const itemsPorFecha: typeof parsed.items = [];
+    for (const it of parsed.items) {
+      const id = packParaFecha(it.productId, parsed.reservationDate);
+      const ya = itemsPorFecha.find((x) => x.productId === id);
+      if (ya) ya.quantity += it.quantity;
+      else itemsPorFecha.push({ ...it, productId: id });
+    }
+
+    const validatedItems = itemsPorFecha.map((item) => {
       // Agotados temporales definidos en código: la hoja sigue diciendo TRUE,
       // así que sin esta comprobación un carrito abierto podría comprarlos.
       if (estaAgotadoTemporal(item.productId)) {
