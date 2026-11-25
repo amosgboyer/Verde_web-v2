@@ -12,6 +12,7 @@ import {
   DEFAULT_VAT_RATE,
   agotadoParaFecha,
   avisoEntrega,
+  packParaFecha,
   PRODUCT_CHOICES,
 } from "@/lib/products";
 import { vatBreakdown, formatCents, ratePercent } from "@/lib/vat";
@@ -28,6 +29,7 @@ import {
   offerRuleText,
   offerReservationText,
   offerGiftApplies,
+  productoDeOferta,
   regaloRecogidaAplica,
   regaloRecogidaVisible,
 } from "@/lib/offers";
@@ -415,27 +417,31 @@ export default function ReservationForm({
         metodo?: "pickup";
       }>).detail;
       if (metodo) setFields((prev) => ({ ...prev, deliveryMethod: metodo }));
-      // Aviso visible: desde el lineup se elige el día de TODO el pedido.
+      // Desde el lineup se elige el día de TODO el pedido. Primero se comprueba
+      // que ese día admita pedidos; el aviso dice lo que ha pasado de verdad.
+      let fechaOk = false;
+      let fechaCerrada = false;
+      if (fecha) {
+        const dia = availabilityRef.current.find((d) => d.date === fecha);
+        if (dia && dia.status === "available") fechaOk = true;
+        else if (availabilityRef.current.length) fechaCerrada = true;
+        else fechaOk = true; // disponibilidad aún sin cargar: el calendario lo comprobará
+        if (fechaOk) {
+          setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
+          setError(null);
+        }
+      }
       if (fecha || metodo) {
         const partes: string[] = [];
-        if (fecha) partes.push(`Vas a pedir para el ${formatDateLabel(fecha)}. Todo el pedido se entrega ese día.`);
+        if (fechaOk) partes.push(`Vas a pedir para el ${formatDateLabel(fecha!)}. Todo el pedido se entrega ese día.`);
+        if (fechaCerrada)
+          partes.push(`El ${formatDateLabel(fecha!)} ya no admite pedidos: elige otro día en el calendario.`);
         if (metodo === "pickup") partes.push("Recoges en el local: te regalamos una Empanada de Queso.");
         setAvisoLineup((items.length ? "✓ Añadido. " : "") + partes.join(" "));
         if (avisoLineupTimer.current) clearTimeout(avisoLineupTimer.current);
         avisoLineupTimer.current = setTimeout(() => setAvisoLineup(null), 6000);
       }
-      if (fecha) {
-        const dia = availabilityRef.current.find((d) => d.date === fecha);
-        if (dia && dia.status === "available") {
-          setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
-          setError(null);
-        } else if (availabilityRef.current.length) {
-          setError("Ese día ya no quedan huecos. Elige otro día en el calendario.");
-        } else {
-          // La disponibilidad aún no ha cargado: se elige igual y el calendario lo comprobará.
-          setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
-        }
-      }
+
       setCart(prev => {
         const next = {...prev};
         items.forEach(({id, qty}) => { next[id] = (next[id] ?? 0) + qty; });
@@ -992,6 +998,49 @@ export default function ReservationForm({
   const step1Done = cartProducts.length > 0;
   // Productos del carrito que NO se entregan el día elegido (packs de Black
   // Friday, Mar y Tierra del jueves…): se avisa al elegir el día, no al pagar.
+  // Avisa a la tarjeta de packs del día elegido (precio de los Dos Tigrillos).
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("verde:fecha", { detail: isDirecto ? todayMadrid() : fields.reservationDate })
+    );
+  }, [fields.reservationDate, isDirecto]);
+
+  // Black Friday: al elegir el día, los Dos Tigrillos pasan solos al pack que
+  // toca (−30 % el viernes 27 y el domingo 29; 29 € cualquier otro día).
+  useEffect(() => {
+    const fecha = isDirecto ? todayMadrid() : fields.reservationDate;
+    if (!fecha) return;
+    const cambios = Object.keys(cart).filter((id) => (cart[id] ?? 0) > 0 && packParaFecha(id, fecha) !== id);
+    if (!cambios.length) return;
+    setCart((prev) => {
+      const next = { ...prev };
+      for (const id of cambios) {
+        const nuevo = packParaFecha(id, fecha);
+        next[nuevo] = (next[nuevo] ?? 0) + (next[id] ?? 0);
+        delete next[id];
+      }
+      return next;
+    });
+    const aBf = cambios.some((id) => packParaFecha(id, fecha) === "pack-dos-tigrillos-bf");
+    setAvisoLineup(
+      aBf
+        ? `Black Friday: para el ${formatDateLabel(fecha)} tus Dos Tigrillos salen a 20,30 € (−30 %).`
+        : `Para el ${formatDateLabel(fecha)} los Dos Tigrillos vuelven a su precio normal (29 €): el −30 % es solo viernes 27 y domingo 29.`
+    );
+    if (avisoLineupTimer.current) clearTimeout(avisoLineupTimer.current);
+    avisoLineupTimer.current = setTimeout(() => setAvisoLineup(null), 7000);
+  }, [fields.reservationDate, cart, isDirecto]);
+
+  // Ofertas 2×1 del carrito que NO aplican al día elegido (informativo, no bloquea).
+  const ofertasSinAplicar: string[] =
+    fields.reservationDate && weekendOffer?.productos && weekendOffer.regalo
+      ? cartProducts
+          .filter((p) => (cart[p.id] ?? 0) > 0)
+          .map((p) => ({ p, pr: productoDeOferta(weekendOffer, p) }))
+          .filter(({ p, pr }) => pr && !offerGiftApplies(weekendOffer, p, fields.reservationDate))
+          .map(({ p, pr }) => `${p.name}: sin 2×1 ese día (el 2×1 es para entregas del ${pr!.dias}).`)
+      : [];
+
   const avisosFecha: string[] = fields.reservationDate
     ? cartProducts
         .filter((p) => (cart[p.id] ?? 0) > 0 && agotadoParaFecha(p.id, fields.reservationDate))
@@ -1770,6 +1819,27 @@ export default function ReservationForm({
                               })}
                             </div>
                           )}
+                          {(() => {
+                            // 2×1 de Black Friday visible en cada línea: si aplica al día
+                            // elegido, cuántas se lleva; si no, para qué días es.
+                            const pr = weekendOffer?.productos ? productoDeOferta(weekendOffer, p) : undefined;
+                            if (!pr || !weekendOffer?.regalo) return null;
+                            const fecha = isDirecto ? todayMadrid() : fields.reservationDate;
+                            if (fecha && offerGiftApplies(weekendOffer, p, fecha)) {
+                              return (
+                                <p className="text-[11px] font-bold text-[#c85a2a] mt-0.5">
+                                  2×1 · te llevas {qty * 2}
+                                </p>
+                              );
+                            }
+                            return (
+                              <p className="text-[11px] text-[#a8451f] mt-0.5">
+                                {fecha
+                                  ? `Sin 2×1 ese día: el 2×1 es para entregas del ${pr.dias}`
+                                  : `2×1 para entregas del ${pr.dias}`}
+                              </p>
+                            );
+                          })()}
                           <p className="text-xs font-semibold text-verde-bosque mt-0.5">
                             {fmtPrice(p.depositAmount * qty)} €
                             {qty > 1 && (
@@ -1988,6 +2058,14 @@ export default function ReservationForm({
               onEdit={() => goToStep(2)}
             >
               {renderCalendar()}
+
+              {ofertasSinAplicar.length > 0 && avisosFecha.length === 0 && (
+                <div className="mt-4 border-l-2 border-[#e0b23a] bg-[#e0b23a]/10 pl-4 pr-3 py-2 space-y-1">
+                  {ofertasSinAplicar.map((a) => (
+                    <p key={a} className="text-[#7a5a0a] text-sm">{a}</p>
+                  ))}
+                </div>
+              )}
 
               {avisosFecha.length > 0 && (
                 <div className="mt-4 border-l-2 border-tierra/50 bg-tierra/5 pl-4 pr-3 py-2 space-y-1">

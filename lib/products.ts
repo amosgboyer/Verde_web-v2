@@ -751,6 +751,23 @@ function fueraDeEntrega(id: string, fecha: string): boolean {
   return !p.entrega.fechas.includes(fecha.slice(0, 10));
 }
 
+/**
+ * Black Friday: los Dos Tigrillos se cambian SOLOS al pack que toca según el día
+ * de entrega — viernes 27 y domingo 29 → el de −30 % (20,30 €); cualquier otro
+ * día → el normal (29 €). Así el cliente no tiene que acertar con la tarjeta:
+ * antes, si cogía el de 29 € y elegía el domingo, no se le aplicaba el −30 %
+ * (aviso de Amos, 25-11). Lo usan el carrito y el checkout (fuente de verdad).
+ */
+export function packParaFecha(id: string, fecha: string): string {
+  const bf = productoEstatico("pack-dos-tigrillos-bf");
+  const d = (fecha || "").slice(0, 10);
+  if (!bf?.entrega || !d) return id;
+  const esDiaBf = bf.entrega.fechas.includes(d);
+  if (mismoId(id, "pack-dos-tigrillos") && esDiaBf) return "pack-dos-tigrillos-bf";
+  if (mismoId(id, "pack-dos-tigrillos-bf") && !esDiaBf) return "pack-dos-tigrillos";
+  return id;
+}
+
 /** Aviso para el cliente si el producto no se entrega ese día por su `entrega`. */
 export function avisoEntrega(id: string, fecha: string): string | null {
   const p = productoEstatico(id);

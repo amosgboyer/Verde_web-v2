@@ -6,6 +6,7 @@ import {
   PRODUCT_CHOICES,
   agotadoParaFecha,
   avisoEntrega,
+  packParaFecha,
 } from "./products";
 import {
   getActiveWeekendOffer,
@@ -77,6 +78,16 @@ describe("Black Friday 2026 — lineup por día de entrega", () => {
     expect(agotadoParaFecha("pack-dos-tigrillos", "2026-11-28")).toBe(false);
     expect(agotadoParaFecha("pack-dos-tigrillos", "2026-11-29")).toBe(true);
     expect(getProductById("pack-dos-tigrillos")?.finalPrice).toBe(29);
+  });
+
+  it("Dos Tigrillos: el pack cambia solo según el día (bug 25-11: domingo sin −30 %)", () => {
+    expect(packParaFecha("pack-dos-tigrillos", "2026-11-29")).toBe("pack-dos-tigrillos-bf");
+    expect(packParaFecha("pack-dos-tigrillos", "2026-11-27")).toBe("pack-dos-tigrillos-bf");
+    expect(packParaFecha("pack-dos-tigrillos", "2026-11-28")).toBe("pack-dos-tigrillos");
+    expect(packParaFecha("pack-dos-tigrillos-bf", "2026-11-28")).toBe("pack-dos-tigrillos");
+    expect(packParaFecha("pack-dos-tigrillos-bf", "2026-11-29")).toBe("pack-dos-tigrillos-bf");
+    expect(packParaFecha("pack-dos-tigrillos", "")).toBe("pack-dos-tigrillos");
+    expect(packParaFecha("tigrillo-mixto", "2026-11-29")).toBe("tigrillo-mixto");
   });
 
   it("trío de salsas: entregas del miércoles 25 al domingo 29", () => {
