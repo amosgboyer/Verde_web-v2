@@ -2697,8 +2697,8 @@ export default function ReservationForm({
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#a8451f] mb-1">
                   {fields.deliveryMethod === "pickup" ? "Recoges tu pedido el" : "Te llevamos tu pedido el"}
                 </p>
-                <p className="text-[1.35rem] font-extrabold leading-tight text-negro capitalize">
-                  {formatDateLabel(isDirecto ? todayMadrid() : fields.reservationDate)}
+                <p className="text-[1.35rem] font-extrabold leading-tight text-negro">
+                  {formatDateLabel(isDirecto ? todayMadrid() : fields.reservationDate).replace(/^./, (c) => c.toUpperCase())}
                 </p>
                 <p className="text-sm font-semibold text-negro/70 mt-0.5">
                   {formatDeliveryWindow(isDirecto ? etaFromNow() : fields.reservationTime)}
