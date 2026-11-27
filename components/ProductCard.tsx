@@ -25,6 +25,8 @@ interface ProductCardProps {
   offerBadge?: string;
   /** "Pide 1, llévate 2": cuántas se entregan por cada una pedida (2). */
   offerMultiplier?: number;
+  /** Texto bajo el precio sobre la oferta (p. ej. «2×1 para entregas del jueves 26 y domingo 29»). */
+  offerNota?: string;
   sizeOptions?: SizeOption[];
   quantityOf?: (productId: string) => number;
   addons?: { label: string; product: Product }[];
@@ -40,6 +42,7 @@ interface ProductCardProps {
 export default function ProductCard({
   product, quantity, maxQuantity, onAdd, onIncrement, onDecrement, offerBadge,
   offerMultiplier,
+  offerNota,
   sizeOptions, quantityOf, addons, image,
   choiceLabel, choiceOptions, choiceValue, onChoiceChange,
 }: ProductCardProps) {
@@ -377,6 +380,11 @@ export default function ProductCard({
                 {inCart
                   ? `Te llevas ${qty * offerMultiplier}`
                   : `Pide 1, llévate ${offerMultiplier}`}
+              </span>
+            )}
+            {offerNota && (
+              <span style={{ fontSize: "0.62rem", color: "#ffb48a", marginTop: 2, lineHeight: 1.25 }}>
+                {offerNota}
               </span>
             )}
           </span>

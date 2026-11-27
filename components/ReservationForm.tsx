@@ -22,6 +22,7 @@ import type { StoreConfig } from "@/lib/store-config";
 import { PICKUP_ADDRESS, PICKUP_ENABLED, PICKUP_MAPS_URL, pickupMinTimeFor, pickupTimeError } from "@/lib/store-config";
 import type { ActivePromotion } from "@/lib/promotions";
 import type { WeekendOffer } from "@/lib/offers";
+import { decidirDiaLineup } from "@/lib/lineup";
 import {
   computeOfferDiscount,
   productMatchesOffer,
@@ -403,9 +404,19 @@ export default function ReservationForm({
         reservationTime: etaFromNow(),
       }));
     } else if (directoAvailable) {
-      setFields((prev) => ({ ...prev, reservationDate: "", reservationTime: "" }));
+      // Solo se limpia la fecha AUTOMÁTICA del directo (hoy); si el cliente ya
+      // eligió otro día (p. ej. desde el lineup), se respeta.
+      setFields((prev) =>
+        prev.reservationDate === todayMadrid()
+          ? { ...prev, reservationDate: "", reservationTime: "" }
+          : prev
+      );
     }
   }, [isDirecto, directoAvailable]);
+  const isDirectoRef = useRef(isDirecto);
+  useEffect(() => {
+    isDirectoRef.current = isDirecto;
+  }, [isDirecto]);
   useEffect(() => {
     function onAddPack(e: Event) {
       const { items, choice, fecha, metodo } = (e as CustomEvent<{
@@ -423,8 +434,11 @@ export default function ReservationForm({
       //  · Si YA hay día elegido y la fila añade platos → se respeta su día; solo
       //    se añaden los platos y se avisa si la oferta no vale para ese día.
       //  · Si no hay día, o la fila es solo un día (Dom 29 · Todas) → se elige ese día.
-      const diaActual = fieldsRef.current.reservationDate;
-      const respetarDia = !!fecha && !!diaActual && diaActual !== fecha && items.length > 0;
+      // En modo «para hoy» la fecha es automática (hoy): el cliente que pulsa un
+      // día del lineup quiere ESE día → se pasa a «otro día» con esa fecha.
+      const diaActual = isDirectoRef.current ? "" : fieldsRef.current.reservationDate;
+      const respetarDia =
+        decidirDiaLineup({ diaActual, fechaFila: fecha, hayPlatos: items.length > 0 }) === "respetar";
       let fechaOk = false;
       let fechaCerrada = false;
       if (fecha && !respetarDia) {
@@ -433,6 +447,7 @@ export default function ReservationForm({
         else if (availabilityRef.current.length) fechaCerrada = true;
         else fechaOk = true; // disponibilidad aún sin cargar: el calendario lo comprobará
         if (fechaOk) {
+          if (isDirectoRef.current) setOrderMode("otro");
           setFields((prev) => ({ ...prev, reservationDate: fecha, reservationTime: "" }));
           setError(null);
         }
@@ -505,6 +520,29 @@ export default function ReservationForm({
   useEffect(() => {
     fieldsRef.current = fields;
   }, [fields]);
+  // Cómo anuncia la tarjeta de la carta la oferta de un plato. En ofertas con
+  // días (Black Friday) el «2×1 · te llevas N» SOLO sale si el día elegido la
+  // tiene: antes salía siempre y un cliente con el pedido en viernes vio «te
+  // llevas 4 bollos» y le llegaron 2 (27-11).
+  const ofertaEnTarjeta = (product: { id: string; name: string }) => {
+    if (!weekendOffer || !productMatchesOffer(weekendOffer, product)) return {};
+    const pr = weekendOffer.productos ? productoDeOferta(weekendOffer, product) : undefined;
+    if (!pr) {
+      return {
+        offerBadge: offerBadgeLabel(weekendOffer),
+        offerMultiplier: weekendOffer.regalo ? 2 : undefined,
+      };
+    }
+    const fecha = isDirecto ? todayMadrid() : fields.reservationDate;
+    if (!fecha) {
+      return { offerBadge: offerBadgeLabel(weekendOffer), offerNota: `2×1 para entregas del ${pr.dias}` };
+    }
+    if (offerGiftApplies(weekendOffer, product, fecha)) {
+      return { offerBadge: offerBadgeLabel(weekendOffer), offerMultiplier: 2 };
+    }
+    return { offerNota: `2×1 solo para entregas del ${pr.dias}` };
+  };
+
   // ¿La oferta de este plato vale para ese día de entrega? (lineup Black Friday)
   const ofertaValePara = (id: string, fecha: string): boolean => {
     if (/pack-dos-tigrillos/.test(id)) return packParaFecha(id, fecha) === "pack-dos-tigrillos-bf";
@@ -1736,24 +1774,7 @@ export default function ReservationForm({
                               onChoiceChange={(v) =>
                                 setChoices((prev) => ({ ...prev, [product.id]: v }))
                               }
-                              offerBadge={
-                                weekendOffer &&
-                                productMatchesOffer(weekendOffer, {
-                                  id: product.id,
-                                  name: product.name,
-                                })
-                                  ? offerBadgeLabel(weekendOffer)
-                                  : undefined
-                              }
-                              offerMultiplier={
-                                weekendOffer?.regalo &&
-                                productMatchesOffer(weekendOffer, {
-                                  id: product.id,
-                                  name: product.name,
-                                })
-                                  ? 2
-                                  : undefined
-                              }
+                              {...ofertaEnTarjeta(product)}
                             />
                           </div>
                           );
@@ -2667,6 +2688,32 @@ export default function ReservationForm({
                 </div>
               )}
 
+              {/* DÍA DE ENTREGA bien visible antes de pagar (27-11: un pedido salió
+                  dos días antes y el cliente no lo vio; el día iba en letra pequeña). */}
+              <div
+                className="rounded-xl px-5 py-4 mb-4 border-2"
+                style={{ borderColor: "#c85a2a", background: "rgba(200,90,42,0.07)" }}
+              >
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#a8451f] mb-1">
+                  {fields.deliveryMethod === "pickup" ? "Recoges tu pedido el" : "Te llevamos tu pedido el"}
+                </p>
+                <p className="text-[1.35rem] font-extrabold leading-tight text-negro capitalize">
+                  {formatDateLabel(isDirecto ? todayMadrid() : fields.reservationDate)}
+                </p>
+                <p className="text-sm font-semibold text-negro/70 mt-0.5">
+                  {formatDeliveryWindow(isDirecto ? etaFromNow() : fields.reservationTime)}
+                </p>
+                {!isDirecto && (
+                  <button
+                    type="button"
+                    onClick={() => goToStep(2)}
+                    className="mt-2 text-[12px] font-semibold underline text-[#a8451f]"
+                  >
+                    ¿No es el día que querías? Cámbialo
+                  </button>
+                )}
+              </div>
+
               <div className="bg-verde-bosque/5 rounded-xl p-6 mb-6">
               {/* Products */}
               <div className="space-y-2 mb-6">
@@ -2689,7 +2736,7 @@ export default function ReservationForm({
                 <div className="flex justify-between text-sm text-negro/45">
                   <span>Fecha</span>
                   <span className="capitalize text-right">
-                    {formatDateLabel(fields.reservationDate)}
+                    {formatDateLabel(isDirecto ? todayMadrid() : fields.reservationDate)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm text-negro/45">
@@ -2886,7 +2933,9 @@ export default function ReservationForm({
                 {loading && (
                   <span className="w-4 h-4 border border-crema/30 border-t-crema rounded-full animate-spin shrink-0" />
                 )}
-                {loading ? "Procesando..." : "Pagar y confirmar pedido"}
+                {loading
+                  ? "Procesando..."
+                  : `Pagar · ${formatDateLabel(isDirecto ? todayMadrid() : fields.reservationDate).split(",")[0]} ${(isDirecto ? todayMadrid() : fields.reservationDate).slice(8, 10).replace(/^0/, "")}`}
               </button>
 
               <p className="text-[10px] font-medium text-negro/25 uppercase tracking-wider mt-4 text-center">
