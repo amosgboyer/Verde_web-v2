@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { Product } from "@/lib/products";
 import type { AddOrderContext } from "@/lib/google-sheets";
 import { deliveryWindowSentence } from "@/lib/delivery-window";
+import { getActiveWeekendOffer, offerGiftApplies } from "@/lib/offers";
 
 function fmtPrice(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
@@ -21,6 +22,8 @@ export default function AddToOrder({
   closed: boolean;
 }) {
   const [cart, setCart] = useState<Record<string, number>>({});
+  // Oferta «pide 1, llévate 2» si aplica al día del pedido (Black Friday).
+  const oferta = useMemo(() => getActiveWeekendOffer(), []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -133,6 +136,11 @@ export default function AddToOrder({
             >
               <p className="font-semibold text-sm text-negro/85 leading-snug">
                 {p.name}
+                {offerGiftApplies(oferta, p, ctx.reservationDate) && (
+                  <span className="ml-2 text-[10px] font-bold uppercase tracking-wide text-white bg-[#c85a2a] rounded-full px-1.5 py-0.5">
+                    2×1 · te llevas el doble
+                  </span>
+                )}
               </p>
               {p.description && (
                 <p className="text-[11px] text-negro/45 mt-1 leading-relaxed">

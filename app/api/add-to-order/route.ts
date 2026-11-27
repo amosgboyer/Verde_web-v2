@@ -10,6 +10,7 @@ import {
   getOrdersRows,
 } from "@/lib/google-sheets";
 import { SOLD_OUT } from "@/lib/store-config";
+import { getActiveWeekendOffer, offerGiftApplies, giftItemName, unidadPluralDe } from "@/lib/offers";
 import { trocearMeta, ErrorCliente } from "@/lib/stripe-meta";
 
 const addSchema = z.object({
@@ -140,14 +141,22 @@ export async function POST(req: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
     const acceptedAt = new Date().toISOString();
 
+    // «Pide 1, llévate 2» (Black Friday: Bollo jue/dom, Chocletiza sáb/dom) también al
+    // AMPLIAR un pedido de ese día: mismo nombre para cocina que en el pedido normal.
+    const oferta = getActiveWeekendOffer();
+    const nombreLinea = (product: { id: string; name: string }, quantity: number) =>
+      offerGiftApplies(oferta, product, ctx.reservationDate)
+        ? giftItemName(product.name, quantity, unidadPluralDe(oferta, product))
+        : product.name;
+
     const productSummary = validatedItems
-      .map(({ product, quantity }) => `${product.name} ×${quantity}`)
+      .map(({ product, quantity }) => `${nombreLinea(product, quantity)} ×${quantity}`)
       .join(", ");
 
     const itemsMeta = JSON.stringify(
       validatedItems.map(({ product, quantity }) => ({
         id: product.id,
-        name: product.name,
+        name: nombreLinea(product, quantity),
         qty: quantity,
         price: product.finalPrice,
         deposit: product.depositAmount,
