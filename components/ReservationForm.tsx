@@ -417,11 +417,17 @@ export default function ReservationForm({
         metodo?: "pickup";
       }>).detail;
       if (metodo) setFields((prev) => ({ ...prev, deliveryMethod: metodo }));
-      // Desde el lineup se elige el día de TODO el pedido. Primero se comprueba
-      // que ese día admita pedidos; el aviso dice lo que ha pasado de verdad.
+      // BUG 27-11 (cliente con pedido para el domingo): pulsar una oferta del
+      // lineup cambiaba el día de TODO el pedido al de esa fila (los Tigrillos lo
+      // movían al viernes) y el pedido salió dos días antes. Ahora:
+      //  · Si YA hay día elegido y la fila añade platos → se respeta su día; solo
+      //    se añaden los platos y se avisa si la oferta no vale para ese día.
+      //  · Si no hay día, o la fila es solo un día (Dom 29 · Todas) → se elige ese día.
+      const diaActual = fieldsRef.current.reservationDate;
+      const respetarDia = !!fecha && !!diaActual && diaActual !== fecha && items.length > 0;
       let fechaOk = false;
       let fechaCerrada = false;
-      if (fecha) {
+      if (fecha && !respetarDia) {
         const dia = availabilityRef.current.find((d) => d.date === fecha);
         if (dia && dia.status === "available") fechaOk = true;
         else if (availabilityRef.current.length) fechaCerrada = true;
@@ -433,13 +439,21 @@ export default function ReservationForm({
       }
       if (fecha || metodo) {
         const partes: string[] = [];
+        if (respetarDia) {
+          partes.push(`Añadido a tu pedido del ${formatDateLabel(diaActual)}.`);
+          const sinOferta = items.filter(({ id }) => !ofertaValePara(id, diaActual));
+          if (sinOferta.length)
+            partes.push(
+              `Ojo: esta oferta no aplica ese día (es para el ${formatDateLabel(fecha!)}). Si la quieres, cambia el día del pedido en el calendario.`
+            );
+        }
         if (fechaOk) partes.push(`Vas a pedir para el ${formatDateLabel(fecha!)}. Todo el pedido se entrega ese día.`);
         if (fechaCerrada)
           partes.push(`El ${formatDateLabel(fecha!)} ya no admite pedidos: elige otro día en el calendario.`);
         if (metodo === "pickup") partes.push("Recoges en el local: te regalamos una Empanada de Queso.");
-        setAvisoLineup((items.length ? "✓ Añadido. " : "") + partes.join(" "));
+        setAvisoLineup((items.length && !respetarDia ? "✓ Añadido. " : "") + partes.join(" "));
         if (avisoLineupTimer.current) clearTimeout(avisoLineupTimer.current);
-        avisoLineupTimer.current = setTimeout(() => setAvisoLineup(null), 6000);
+        avisoLineupTimer.current = setTimeout(() => setAvisoLineup(null), 8000);
       }
 
       setCart(prev => {
@@ -486,6 +500,19 @@ export default function ReservationForm({
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
   // Copia viva para los listeners registrados una sola vez (lineup → carrito).
   const availabilityRef = useRef<DayAvailability[]>([]);
+  // Copia viva del formulario para los listeners registrados una vez (lineup).
+  const fieldsRef = useRef(fields);
+  useEffect(() => {
+    fieldsRef.current = fields;
+  }, [fields]);
+  // ¿La oferta de este plato vale para ese día de entrega? (lineup Black Friday)
+  const ofertaValePara = (id: string, fecha: string): boolean => {
+    if (/pack-dos-tigrillos/.test(id)) return packParaFecha(id, fecha) === "pack-dos-tigrillos-bf";
+    if (weekendOffer?.productos && productoDeOferta(weekendOffer, { id })) {
+      return offerGiftApplies(weekendOffer, { id }, fecha);
+    }
+    return !agotadoParaFecha(id, fecha);
+  };
   // Aviso flotante al pulsar un día del lineup de Black Friday.
   const [avisoLineup, setAvisoLineup] = useState<string | null>(null);
   const avisoLineupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
